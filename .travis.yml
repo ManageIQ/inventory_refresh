@@ -1,15 +1,9 @@
-language: ruby
-rvm:
-- '2.3.1'
-- '2.4.2'
+---
 sudo: false
+language: ruby
 cache: bundler
-env:
-  global:
-  - RUBY_GC_HEAP_GROWTH_MAX_SLOTS=300000
-  - RUBY_GC_HEAP_INIT_SLOTS=600000
-  - RUBY_GC_HEAP_GROWTH_FACTOR=1.25
+rvm:
+  - 2.4.2
 addons:
   postgresql: '9.4'
-install: bin/setup
-after_script: bundle exec codeclimate-test-reporter
+before_install: gem install bundler -v 1.16.4

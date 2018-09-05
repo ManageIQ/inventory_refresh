@@ -1,7 +1,5 @@
-.rubocop-*
 /.bundle/
 /.yardoc
-/Gemfile.lock
 /_yardoc/
 /coverage/
 /doc/
@@ -9,6 +7,7 @@
 /spec/reports/
 /tmp/
 
-/config/settings.local.yml
-/config/settings/*.local.yml
-/config/environments/*.local.yml
+/Gemfile.lock
+
+# rspec failure tracking
+.rspec_status
