@@ -13,7 +13,8 @@ end
 
 Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
 
-Dir.glob(File.join(__dir__, "models/*")) do |f|
+$LOAD_PATH << File.join(__dir__, "models")
+Dir.glob(File.join(__dir__, "models/**/*.rb")) do |f|
   require f
 end
 
