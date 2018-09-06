@@ -1,3 +1,5 @@
+require "manageiq/providers/inflector"
+
 module ManageIQ::Providers::Inflector::Methods
   extend ActiveSupport::Concern
 
