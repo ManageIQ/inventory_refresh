@@ -50,7 +50,6 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collections([:vms, :hardwares, :disks])
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
@@ -80,7 +79,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -135,7 +133,6 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collections([:vms, :hardwares])
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
@@ -184,7 +181,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -252,7 +248,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk32       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_32")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk32.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -327,7 +322,6 @@ describe InventoryRefresh::SaveInventory do
         )
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
@@ -360,7 +354,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -426,12 +419,10 @@ describe InventoryRefresh::SaveInventory do
         )
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
         @vm_data_5 = vm_data(5).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
@@ -462,10 +453,8 @@ describe InventoryRefresh::SaveInventory do
         @vm_hardware5 = Hardware.find_by(:vm_or_template => @vm5)
         @disk5        = Disk.find_by(:hardware => @vm_hardware5, :device_name => "disk_name_5")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
 
-        expect(@vm5.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm5.hardware.id).to eq(@vm_hardware5.id)
         expect(@vm5.hardware.disks.pluck(:id)).to match_array([@disk5.id])
         expect(@vm5.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -549,9 +538,6 @@ describe InventoryRefresh::SaveInventory do
     expect(@orchestration_stack_0_1.parent).to eq(nil)
     expect(@orchestration_stack_1_11.parent).to eq(@orchestration_stack_0_1)
     expect(@orchestration_stack_1_12.parent).to eq(@orchestration_stack_0_1)
-
-    expect(@vm1.genealogy_parent.id).to eq(@miq_template1.id)
-    expect(@vm2.genealogy_parent.id).to eq(@miq_template2.id)
 
     expect(@vm1.hardware.id).to eq(@hardware1.id)
     expect(@vm2.hardware.id).to eq(@hardware2.id)
@@ -733,11 +719,9 @@ describe InventoryRefresh::SaveInventory do
     )
 
     @vm_data_1 = vm_data(1).merge(
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])]
     )
     @vm_data_2 = vm_data(2).merge(
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(21)[:name])]
     )
