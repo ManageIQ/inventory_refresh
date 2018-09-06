@@ -463,8 +463,6 @@ describe InventoryRefresh::SaveInventory do
           initialize_mocked_records
 
           service = FactoryGirl.create(:service)
-          # Add service to this Vm1
-          service.add_resource!(@vm1)
 
           @vm1_dup1 = FactoryGirl.create(
             :vm_cloud,
