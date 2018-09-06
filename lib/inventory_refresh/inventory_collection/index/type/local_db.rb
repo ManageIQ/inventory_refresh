@@ -1,6 +1,7 @@
 require "inventory_refresh/inventory_collection/index/type/base"
 require "inventory_refresh/application_record_reference"
 require "active_support/core_ext/module/delegation"
+require "more_core_extensions/core_ext/hash"
 
 module InventoryRefresh
   class InventoryCollection
