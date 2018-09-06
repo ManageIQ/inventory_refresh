@@ -14,7 +14,7 @@ module ManageIQ
 
             def key_pairs
               add_properties(
-                :model_class => CloudManager::AuthKeyPair,
+                :model_class => ManageIQ::Providers::CloudManager::AuthKeyPair,
                 :manager_ref => %i(name)
               )
               add_default_values(
