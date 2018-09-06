@@ -276,15 +276,13 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive},].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       before do
         @ems         = FactoryGirl.create(:ems_cloud)
         @ems_network = FactoryGirl.create(:ems_network, :parent_manager => @ems)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
       end
 
       context 'with empty DB' do
@@ -317,7 +315,7 @@ describe InventoryRefresh::SaveInventory do
                                              @orchestration_stack_resource_data_12_23)
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             assert_full_inventory_collections_graph
@@ -349,7 +347,7 @@ describe InventoryRefresh::SaveInventory do
                                              @orchestration_stack_resource_data_12_23)
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             assert_full_inventory_collections_graph
@@ -387,7 +385,7 @@ describe InventoryRefresh::SaveInventory do
                                              @orchestration_stack_resource_data_12_23)
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             assert_full_inventory_collections_graph
@@ -419,7 +417,7 @@ describe InventoryRefresh::SaveInventory do
                                              @orchestration_stack_resource_data_12_23)
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             assert_full_inventory_collections_graph
@@ -484,7 +482,7 @@ describe InventoryRefresh::SaveInventory do
                                            @network_port_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -557,7 +555,7 @@ describe InventoryRefresh::SaveInventory do
                                            @network_port_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
           # Assert saved data
           assert_full_inventory_collections_graph
 
@@ -598,7 +596,7 @@ describe InventoryRefresh::SaveInventory do
 
           # Invoke the InventoryCollections saving and check we raise an exception that a cycle was found, after we
           # attempted to remove the cycles.
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/^Cycle from /)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/^Cycle from /)
         end
 
         it 'test network_port -> network_port -> stack -> resource -> stack' do
@@ -688,7 +686,7 @@ describe InventoryRefresh::SaveInventory do
           # Invoke the InventoryCollections saving and check we raise an exception that a cycle was found, after we
           # attempted to remove the cycles.
           # TODO(lsmola) make this spec pass, by enhancing the logic around transitive edges
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/^Cycle from /)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/^Cycle from /)
         end
 
         it 'test network_port -> stack -> resource -> stack and network_port -> resource -> stack -> resource -> stack ' do
@@ -751,7 +749,7 @@ describe InventoryRefresh::SaveInventory do
                                            @network_port_4)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -805,7 +803,7 @@ describe InventoryRefresh::SaveInventory do
                                            @orchestration_stack_resource_data_12_23)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -888,7 +886,7 @@ describe InventoryRefresh::SaveInventory do
                                            @orchestration_stack_resource_data_12_23)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph

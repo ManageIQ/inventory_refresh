@@ -12,9 +12,8 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test :default saver strategy and :batch saver strategy with having :use_ar_object true or false
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive}].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       [
         {:saver_strategy => :default},
         {:saver_strategy => :batch, :use_ar_object => true},
@@ -26,7 +25,6 @@ describe InventoryRefresh::SaveInventory do
                                       :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
-            allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
           end
 
           before do
@@ -258,7 +256,7 @@ describe InventoryRefresh::SaveInventory do
             time_before_refresh = Time.now.utc
             sleep(1)
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             #### Assert saved data ####
             @vm1           = Vm.find_by(:ems_ref => vm_data(1)[:ems_ref])
