@@ -280,9 +280,8 @@ describe InventoryRefresh::SaveInventory do
    {:inventory_object_saving_strategy => :recursive},].each do |inventory_object_settings|
     context "with settings #{inventory_object_settings}" do
       before do
-        @zone        = FactoryGirl.create(:zone)
-        @ems         = FactoryGirl.create(:ems_cloud, :zone => @zone)
-        @ems_network = FactoryGirl.create(:ems_network, :zone => @zone, :parent_manager => @ems)
+        @ems         = FactoryGirl.create(:ems_cloud)
+        @ems_network = FactoryGirl.create(:ems_network, :parent_manager => @ems)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
         allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)

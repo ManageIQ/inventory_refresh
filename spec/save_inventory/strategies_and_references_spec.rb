@@ -18,10 +18,8 @@ describe InventoryRefresh::SaveInventory do
       [:local_db_find_references, :local_db_cache_all].each do |db_strategy|
         context "with db strategy #{db_strategy}" do
           before do
-            @zone = FactoryGirl.create(:zone)
             @ems = FactoryGirl.create(:ems_cloud,
-                                      :zone            => @zone,
-                                      :network_manager => FactoryGirl.create(:ems_network, :zone => @zone))
+                                      :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
             allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)

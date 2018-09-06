@@ -1,8 +1,7 @@
 describe InventoryRefresh::TargetCollection do
   before do
-    @zone               = FactoryGirl.create(:zone)
-    @ems                = FactoryGirl.create(:ems_cloud, :zone => @zone, :name => "ems_name")
-    @ems_physical_infra = FactoryGirl.create(:ems_physical_infra, :zone => @zone)
+    @ems                = FactoryGirl.create(:ems_cloud, :name => "ems_name")
+    @ems_physical_infra = FactoryGirl.create(:ems_physical_infra)
     @ems_event          = FactoryGirl.create(:ems_event)
 
     @vm_1 = FactoryGirl.create(
