@@ -332,9 +332,6 @@ describe InventoryRefresh::SaveInventory do
           vm2  = Vm.find_by(:ems_ref => "vm_ems_ref_2")
 
           # Check that all records were only updated
-          expect(vm1.genealogy_parent.id).to eq(@image1.id)
-          expect(vm12.genealogy_parent.id).to eq(@image1.id)
-          expect(vm2.genealogy_parent.id).to eq(@image2.id)
           expect(vm1.hardware.id).to eq(@hardware1.id)
           expect(vm12.hardware.id).to eq(@hardware12.id)
           expect(vm2.hardware.id).to eq(@hardware2.id)
@@ -359,7 +356,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1.com',
               :ext_management_system => @ems,
@@ -370,7 +366,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1.com',
               :ext_management_system => @ems,
@@ -475,7 +470,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1_dup_1.com',
               :ext_management_system => @ems,
@@ -486,7 +480,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1_dup_2.com',
               :ext_management_system => @ems,
@@ -699,17 +692,6 @@ describe InventoryRefresh::SaveInventory do
     vm2  = Vm.find_by(:ems_ref => "vm_ems_ref_2")
     vm4  = Vm.find_by(:ems_ref => "vm_ems_ref_4")
 
-    expect(vm1.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_1"))
-    )
-    expect(vm12.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_1"))
-    )
-    expect(vm2.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_2"))
-    )
-    expect(vm4.genealogy_parent).to(eq(nil))
-
     expect(vm1.hardware.virtualization_type).to eq("virtualization_type_1")
     expect(vm1.hardware.disks.collect(&:device_name)).to match_array(["disk_name_1"])
     expect(vm1.hardware.networks.collect(&:ipaddress)).to match_array(["10.10.10.1"])
@@ -807,7 +789,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_1 = vm_data(1).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])],
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                       {:key     => :hostname,
@@ -816,7 +797,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_12 = vm_data(12).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(12)[:name])],
@@ -827,7 +807,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_2 = vm_data(2).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(2)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
                                                       {:key     => :hostname,
@@ -836,7 +815,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_4 = vm_data(4).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(4)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(4)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(4)[:name])].compact,
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
                                                       {:key     => :hostname,
