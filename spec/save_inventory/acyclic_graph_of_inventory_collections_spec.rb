@@ -65,14 +65,12 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive},].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       before do
         @ems = FactoryGirl.create(:ems_cloud)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
       end
 
       context 'with empty DB' do
@@ -93,7 +91,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -133,7 +131,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values, checking id to make sure the original records are updated
           assert_full_inventory_collections_graph
@@ -184,7 +182,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -273,7 +271,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -432,7 +430,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values and the duplicate vm_ems_ref_1 are gone
           assert_all_records_match_hashes(
@@ -548,7 +546,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values and we kept the Vm with service association while deleting
           # others
@@ -613,7 +611,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           hardware1 = Hardware.find_by!(:virtualization_type => "virtualization_type_1")
@@ -632,7 +630,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -652,7 +650,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -685,17 +683,17 @@ describe InventoryRefresh::SaveInventory do
         end
 
         it "raises in test if field used in manager_ref nil" do
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/referential integrity/i)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
         end
 
         it "raises in developement if field used in manager_ref nil" do
           allow(Rails).to receive(:env).and_return("developement".inquiry)
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/referential integrity/i)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
         end
 
         it "skips the record in production if manager_ref field is nil" do
           allow(Rails).to receive(:env).and_return("production".inquiry)
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
           expect(Vm.count).to eq(1)
           expect(Hardware.count).to eq(0)
         end

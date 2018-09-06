@@ -12,9 +12,8 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive}].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       [:local_db_find_references, :local_db_cache_all].each do |db_strategy|
         context "with db strategy #{db_strategy}" do
           before do
@@ -22,7 +21,6 @@ describe InventoryRefresh::SaveInventory do
                                       :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
-            allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
           end
 
           before do
@@ -185,7 +183,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -228,7 +226,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -334,7 +332,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@vm4.ext_management_system).to eq @ems
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             #### Assert saved data ####
             @vm3           = Vm.find_by(:ems_ref => vm_data(3)[:ems_ref])
