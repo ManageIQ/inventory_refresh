@@ -687,15 +687,7 @@ describe InventoryRefresh::SaveInventory do
         end
 
         it "raises in developement if field used in manager_ref nil" do
-          allow(Rails).to receive(:env).and_return("developement".inquiry)
           expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
-        end
-
-        it "skips the record in production if manager_ref field is nil" do
-          allow(Rails).to receive(:env).and_return("production".inquiry)
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
-          expect(Vm.count).to eq(1)
-          expect(Hardware.count).to eq(0)
         end
       end
     end
