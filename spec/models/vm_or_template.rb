@@ -4,7 +4,7 @@ class VmOrTemplate < ActiveRecord::Base
   belongs_to :ext_management_system, :foreign_key => :ems_id
   belongs_to :flavor
 
-  has_one :hardware
+  has_one :hardware, :dependent => :destroy
   has_many :disks, :through => :hardware
 
   def disconnect_inv
