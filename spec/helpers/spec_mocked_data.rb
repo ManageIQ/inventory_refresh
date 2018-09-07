@@ -1,8 +1,8 @@
 module SpecMockedData
   def initialize_mocked_records
-    @flavor1 = FactoryGirl.create(:flavor, flavor_data(1).merge(:ext_management_system => @ems))
-    @flavor2 = FactoryGirl.create(:flavor, flavor_data(2).merge(:ext_management_system => @ems))
-    @flavor3 = FactoryGirl.create(:flavor, flavor_data(3).merge(:ext_management_system => @ems))
+    @flavor1 = FactoryGirl.create(:flavor_cloud, flavor_data(1).merge(:ext_management_system => @ems))
+    @flavor2 = FactoryGirl.create(:flavor_cloud, flavor_data(2).merge(:ext_management_system => @ems))
+    @flavor3 = FactoryGirl.create(:flavor_cloud, flavor_data(3).merge(:ext_management_system => @ems))
 
     @image1 = FactoryGirl.create(:miq_template, image_data(1).merge(:ext_management_system => @ems))
     @image2 = FactoryGirl.create(:miq_template, image_data(2).merge(:ext_management_system => @ems))
