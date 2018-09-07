@@ -12,9 +12,8 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test :default saver strategy and :batch saver strategy with having :use_ar_object true or false
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive}].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       [
         {:saver_strategy => :default},
         {:saver_strategy => :batch, :use_ar_object => true},
@@ -22,13 +21,10 @@ describe InventoryRefresh::SaveInventory do
       ].each do |options|
         context "with options #{options}" do
           before do
-            @zone = FactoryGirl.create(:zone)
-            @ems  = FactoryGirl.create(:ems_cloud,
-                                       :zone            => @zone,
-                                       :network_manager => FactoryGirl.create(:ems_network, :zone => @zone))
+            @ems = FactoryGirl.create(:ems_cloud,
+                                      :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
-            allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
           end
 
           before do
@@ -67,7 +63,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(1).merge(
                 :flavor           => @flavor_1,
-                :genealogy_parent => @image1,
                 :key_pairs        => [@key_pair1],
                 :location         => 'host_10_10_10_1.com',
               )
@@ -76,7 +71,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(12).merge(
                 :flavor           => @flavor1,
-                :genealogy_parent => @image1,
                 :key_pairs        => [@key_pair1, @key_pair12],
                 :location         => 'host_10_10_10_12.com',
               )
@@ -85,7 +79,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(2).merge(
                 :flavor           => @flavor2,
-                :genealogy_parent => @image2,
                 :key_pairs        => [@key_pair2],
                 :location         => 'host_10_10_10_2.com',
               )
@@ -171,12 +164,6 @@ describe InventoryRefresh::SaveInventory do
                 )
               )
             )
-            @data[:container_quota_items] = ::InventoryRefresh::InventoryCollection.new(
-              container_quota_items_init_data(inventory_collection_options(options))
-            )
-            @data[:container_quota_items_attrs] = ::InventoryRefresh::InventoryCollection.new(
-              container_quota_items_attrs_init_data(inventory_collection_options(options))
-            )
 
             # Parse data for InventoryCollections
             @network_port_data_1  = network_port_data(1).merge(
@@ -217,16 +204,6 @@ describe InventoryRefresh::SaveInventory do
             @image_data_2 = image_data(2).merge(:name => "image_changed_name_2")
             @image_data_3 = image_data(3).merge(:name => "image_changed_name_3")
 
-            @container_quota_items_data_1 = container_quota_items_data(1)
-            @container_quota_items_data_2 = container_quota_items_data(2)
-
-            @container_quota_items_attrs_data_1 = container_quota_items_attrs_data(1).merge(
-              :resource => @data[:container_quota_items].lazy_find(container_quota_items_data(1)[:quota_desired])
-            )
-            @container_quota_items_attrs_data_2 = container_quota_items_attrs_data(2).merge(
-              :resource => @data[:container_quota_items].lazy_find(container_quota_items_data(2)[:quota_desired])
-            )
-
             # Fill InventoryCollections with data
             add_data_to_inventory_collection(@data[:network_ports],
                                              @network_port_data_1,
@@ -243,12 +220,6 @@ describe InventoryRefresh::SaveInventory do
             add_data_to_inventory_collection(@data[:miq_templates],
                                              @image_data_2,
                                              @image_data_3)
-            add_data_to_inventory_collection(@data[:container_quota_items],
-                                             @container_quota_items_data_1,
-                                             @container_quota_items_data_2)
-            add_data_to_inventory_collection(@data[:container_quota_items_attrs],
-                                             @container_quota_items_attrs_data_1,
-                                             @container_quota_items_attrs_data_2)
             # Assert data before save
             expect(@network_port1.device).to eq @vm1
             expect(@network_port1.name).to eq "network_port_name_1"
@@ -260,7 +231,7 @@ describe InventoryRefresh::SaveInventory do
             time_before_refresh = Time.now.utc
             sleep(1)
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             #### Assert saved data ####
             @vm1           = Vm.find_by(:ems_ref => vm_data(1)[:ems_ref])
@@ -274,11 +245,6 @@ describe InventoryRefresh::SaveInventory do
             @network_port12.reload
 
             @image2 = MiqTemplate.find(@image2.id)
-
-            @quota_item_1 = ContainerQuotaItem.find_by(:quota_desired => container_quota_items_data(1)[:quota_desired])
-            @quota_item_2 = ContainerQuotaItem.find_by(:quota_desired => container_quota_items_data(2)[:quota_desired])
-            @quota_attr_1 = CustomAttribute.find_by(:name => container_quota_items_attrs_data(1)[:name])
-            @quota_attr_2 = CustomAttribute.find_by(:name => container_quota_items_attrs_data(2)[:name])
 
             # Check ICs stats
             expect(@data[:vms].created_records).to match_array(record_stats([@vm3, @vm31]))
@@ -418,19 +384,6 @@ describe InventoryRefresh::SaveInventory do
             )
 
             expect(::ManageIQ::Providers::CloudManager::AuthKeyPair.all).to eq([])
-
-            assert_all_records_match_hashes(
-              [CustomAttribute.where(:resource_type => 'ContainerQuotaItem')],
-              {
-                :id          => @quota_attr_1.id,
-                :name        => @quota_attr_1.name,
-                :resource_id => @quota_item_1.id,
-              }, {
-                :id          => @quota_attr_2.id,
-                :name        => @quota_attr_2.name,
-                :resource_id => @quota_item_2.id,
-              }
-            )
           end
         end
       end

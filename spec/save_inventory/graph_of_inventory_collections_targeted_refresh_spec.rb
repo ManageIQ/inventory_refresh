@@ -12,15 +12,12 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive}].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       before do
-        @zone = FactoryGirl.create(:zone)
-        @ems  = FactoryGirl.create(:ems_cloud, :zone => @zone)
+        @ems = FactoryGirl.create(:ems_cloud)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
       end
 
       it "refreshing all records and data collects everything" do
@@ -29,7 +26,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -42,7 +39,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -53,7 +50,6 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collections([:vms, :hardwares, :disks])
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
@@ -75,7 +71,7 @@ describe InventoryRefresh::SaveInventory do
         add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         load_records
         @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
@@ -83,7 +79,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -127,7 +122,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -138,7 +133,6 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collections([:vms, :hardwares])
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
@@ -153,7 +147,7 @@ describe InventoryRefresh::SaveInventory do
                                          @hardware_data_3)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         ### Third refresh ###
         # Initialize the InventoryCollections and data for the disks with new disk under a vm
@@ -178,7 +172,7 @@ describe InventoryRefresh::SaveInventory do
         add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -187,7 +181,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -246,7 +239,7 @@ describe InventoryRefresh::SaveInventory do
         add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_32)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -255,7 +248,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk32       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_32")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk32.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -299,7 +291,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -330,7 +322,6 @@ describe InventoryRefresh::SaveInventory do
         )
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
@@ -354,7 +345,7 @@ describe InventoryRefresh::SaveInventory do
         add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -363,7 +354,6 @@ describe InventoryRefresh::SaveInventory do
         @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
         @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
         expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -429,12 +419,10 @@ describe InventoryRefresh::SaveInventory do
         )
 
         @vm_data_3 = vm_data(3).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
         @vm_data_5 = vm_data(5).merge(
-          :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
           :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
@@ -456,7 +444,7 @@ describe InventoryRefresh::SaveInventory do
                                          @disk_data_5)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
         # Assert all data were filled
         load_records
@@ -465,10 +453,8 @@ describe InventoryRefresh::SaveInventory do
         @vm_hardware5 = Hardware.find_by(:vm_or_template => @vm5)
         @disk5        = Disk.find_by(:hardware => @vm_hardware5, :device_name => "disk_name_5")
 
-        expect(@vm3.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
 
-        expect(@vm5.genealogy_parent.id).to eq(@miq_template2.id)
         expect(@vm5.hardware.id).to eq(@vm_hardware5.id)
         expect(@vm5.hardware.disks.pluck(:id)).to match_array([@disk5.id])
         expect(@vm5.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
@@ -552,9 +538,6 @@ describe InventoryRefresh::SaveInventory do
     expect(@orchestration_stack_0_1.parent).to eq(nil)
     expect(@orchestration_stack_1_11.parent).to eq(@orchestration_stack_0_1)
     expect(@orchestration_stack_1_12.parent).to eq(@orchestration_stack_0_1)
-
-    expect(@vm1.genealogy_parent.id).to eq(@miq_template1.id)
-    expect(@vm2.genealogy_parent.id).to eq(@miq_template2.id)
 
     expect(@vm1.hardware.id).to eq(@hardware1.id)
     expect(@vm2.hardware.id).to eq(@hardware2.id)
@@ -736,11 +719,9 @@ describe InventoryRefresh::SaveInventory do
     )
 
     @vm_data_1 = vm_data(1).merge(
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])]
     )
     @vm_data_2 = vm_data(2).merge(
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(21)[:name])]
     )

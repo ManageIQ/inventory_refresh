@@ -65,15 +65,12 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive},].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       before do
-        @zone = FactoryGirl.create(:zone)
-        @ems  = FactoryGirl.create(:ems_cloud, :zone => @zone)
+        @ems = FactoryGirl.create(:ems_cloud)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
       end
 
       context 'with empty DB' do
@@ -94,7 +91,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -134,7 +131,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values, checking id to make sure the original records are updated
           assert_full_inventory_collections_graph
@@ -185,7 +182,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -274,7 +271,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -335,9 +332,6 @@ describe InventoryRefresh::SaveInventory do
           vm2  = Vm.find_by(:ems_ref => "vm_ems_ref_2")
 
           # Check that all records were only updated
-          expect(vm1.genealogy_parent.id).to eq(@image1.id)
-          expect(vm12.genealogy_parent.id).to eq(@image1.id)
-          expect(vm2.genealogy_parent.id).to eq(@image2.id)
           expect(vm1.hardware.id).to eq(@hardware1.id)
           expect(vm12.hardware.id).to eq(@hardware12.id)
           expect(vm2.hardware.id).to eq(@hardware2.id)
@@ -362,7 +356,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1.com',
               :ext_management_system => @ems,
@@ -373,7 +366,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1.com',
               :ext_management_system => @ems,
@@ -433,7 +425,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values and the duplicate vm_ems_ref_1 are gone
           assert_all_records_match_hashes(
@@ -471,14 +463,11 @@ describe InventoryRefresh::SaveInventory do
           initialize_mocked_records
 
           service = FactoryGirl.create(:service)
-          # Add service to this Vm1
-          service.add_resource!(@vm1)
 
           @vm1_dup1 = FactoryGirl.create(
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1_dup_1.com',
               :ext_management_system => @ems,
@@ -489,7 +478,6 @@ describe InventoryRefresh::SaveInventory do
             :vm_cloud,
             vm_data(1).merge(
               :flavor                => @flavor_1,
-              :genealogy_parent      => @image1,
               :key_pairs             => [@key_pair1],
               :location              => 'host_10_10_10_1_dup_2.com',
               :ext_management_system => @ems,
@@ -549,7 +537,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert that saved data have the updated values and we kept the Vm with service association while deleting
           # others
@@ -614,7 +602,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           hardware1 = Hardware.find_by!(:virtualization_type => "virtualization_type_1")
@@ -633,7 +621,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -653,7 +641,7 @@ describe InventoryRefresh::SaveInventory do
           add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -686,19 +674,11 @@ describe InventoryRefresh::SaveInventory do
         end
 
         it "raises in test if field used in manager_ref nil" do
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/referential integrity/i)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
         end
 
         it "raises in developement if field used in manager_ref nil" do
-          allow(Rails).to receive(:env).and_return("developement".inquiry)
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values) }.to raise_error(/referential integrity/i)
-        end
-
-        it "skips the record in production if manager_ref field is nil" do
-          allow(Rails).to receive(:env).and_return("production".inquiry)
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
-          expect(Vm.count).to eq(1)
-          expect(Hardware.count).to eq(0)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
         end
       end
     end
@@ -709,17 +689,6 @@ describe InventoryRefresh::SaveInventory do
     vm12 = Vm.find_by(:ems_ref => "vm_ems_ref_12")
     vm2  = Vm.find_by(:ems_ref => "vm_ems_ref_2")
     vm4  = Vm.find_by(:ems_ref => "vm_ems_ref_4")
-
-    expect(vm1.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_1"))
-    )
-    expect(vm12.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_1"))
-    )
-    expect(vm2.genealogy_parent).to(
-      eq(ManageIQ::Providers::CloudManager::Template.find_by(:ems_ref => "image_ems_ref_2"))
-    )
-    expect(vm4.genealogy_parent).to(eq(nil))
 
     expect(vm1.hardware.virtualization_type).to eq("virtualization_type_1")
     expect(vm1.hardware.disks.collect(&:device_name)).to match_array(["disk_name_1"])
@@ -789,7 +758,7 @@ describe InventoryRefresh::SaveInventory do
       :manager_ref => %i(hardware description)
     )
     @data[:flavors] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => Flavor,
+      :model_class => ManageIQ::Providers::CloudManager::Flavor,
       :parent      => @ems,
       :association => :flavors,
       :manager_ref => [:name]
@@ -818,7 +787,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_1 = vm_data(1).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])],
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                       {:key     => :hostname,
@@ -827,7 +795,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_12 = vm_data(12).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
                             @data[:key_pairs].lazy_find(key_pair_data(12)[:name])],
@@ -838,7 +805,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_2 = vm_data(2).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(2)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
                                                       {:key     => :hostname,
@@ -847,7 +813,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_4 = vm_data(4).merge(
       :flavor           => @data[:flavors].lazy_find(flavor_data(4)[:name]),
-      :genealogy_parent => @data[:miq_templates].lazy_find(image_data(4)[:ems_ref]),
       :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(4)[:name])].compact,
       :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
                                                       {:key     => :hostname,

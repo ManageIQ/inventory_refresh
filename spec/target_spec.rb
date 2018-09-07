@@ -1,7 +1,6 @@
 describe InventoryRefresh::Target do
   before do
-    @zone = FactoryGirl.create(:zone)
-    @ems  = FactoryGirl.create(:ems_cloud, :zone => @zone)
+    @ems = FactoryGirl.create(:ems_cloud)
 
     @vm_1 = FactoryGirl.create(
       :vm_cloud,
