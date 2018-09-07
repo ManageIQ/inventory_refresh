@@ -3,17 +3,16 @@ require "rspec/core/rake_task"
 
 namespace :spec do
   task :db_drop do
-    connection("template1").execute("DROP DATABASE IF EXISTS #{test_database_name}")
+    with_connection("template1") { |conn| conn.execute("DROP DATABASE IF EXISTS #{test_database_name}") }
   end
 
   task :db_create do
-    connection("template1").execute("CREATE DATABASE #{test_database_name}")
+    with_connection("template1") { |conn| conn.execute("CREATE DATABASE #{test_database_name}") }
   end
 
   task :db_load_schema do
     require "active_record"
-    ActiveRecord::Schema.verbose = false
-    load File.join(__dir__, %w{spec schema.rb})
+    with_connection(test_database_name) { load File.join(__dir__, %w{spec schema.rb}) }
   end
 
   desc "Setup test database"
@@ -34,10 +33,12 @@ namespace :spec do
     "inventory_refresh_dummy_test"
   end
 
-  def connection(database_name)
+  def with_connection(database_name)
     require "active_record"
-    ActiveRecord::Base.establish_connection pg_opts.merge(:database => database_name)
-    ActiveRecord::Base.connection
+    pool = ActiveRecord::Base.establish_connection pg_opts.merge(:database => database_name)
+    yield ActiveRecord::Base.connection
+  ensure
+    pool&.disconnect!
   end
 end
 

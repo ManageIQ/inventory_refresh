@@ -12,19 +12,15 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   #
   # Test all settings for InventoryRefresh::SaveInventory
-  [{:inventory_object_saving_strategy => nil},
-   {:inventory_object_saving_strategy => :recursive}].each do |inventory_object_settings|
-    context "with settings #{inventory_object_settings}" do
+  [nil, :recursive].each do |strategy|
+    context "with settings #{strategy}" do
       [:local_db_find_references, :local_db_cache_all].each do |db_strategy|
         context "with db strategy #{db_strategy}" do
           before do
-            @zone = FactoryGirl.create(:zone)
             @ems = FactoryGirl.create(:ems_cloud,
-                                      :zone            => @zone,
-                                      :network_manager => FactoryGirl.create(:ems_network, :zone => @zone))
+                                      :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
-            allow(Settings.ems_refresh).to receive(:mock).and_return(inventory_object_settings)
           end
 
           before do
@@ -63,7 +59,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(1).merge(
                 :flavor           => @flavor_1,
-                :genealogy_parent => @image1,
                 :key_pairs        => [@key_pair1],
                 :location         => 'host_10_10_10_1.com',
               )
@@ -72,7 +67,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(12).merge(
                 :flavor           => @flavor1,
-                :genealogy_parent => @image1,
                 :key_pairs        => [@key_pair1, @key_pair12],
                 :location         => 'host_10_10_10_12.com',
               )
@@ -81,7 +75,6 @@ describe InventoryRefresh::SaveInventory do
               :vm_cloud,
               vm_data(2).merge(
                 :flavor           => @flavor2,
-                :genealogy_parent => @image2,
                 :key_pairs        => [@key_pair2],
                 :location         => 'host_10_10_10_2.com',
               )
@@ -187,7 +180,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -230,7 +223,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -299,7 +292,6 @@ describe InventoryRefresh::SaveInventory do
               :device => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
             )
             @vm_data_3               = vm_data(3).merge(
-              :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
               :key_pairs             => [
                 @data[:key_pairs].lazy_find(key_pair_data(2)[:name]),
                 @data[:key_pairs].lazy_find(key_pair_data(3)[:name])
@@ -307,7 +299,6 @@ describe InventoryRefresh::SaveInventory do
               :ext_management_system => @ems
             )
             @vm_data_31              = vm_data(31).merge(
-              :genealogy_parent      => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref]),
               :key_pairs             => @data[:db_vms].lazy_find(vm_data(1)[:ems_ref], :key => :key_pairs, :default => []),
               :ext_management_system => @ems
             )
@@ -336,7 +327,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@vm4.ext_management_system).to eq @ems
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
 
             #### Assert saved data ####
             @vm3           = Vm.find_by(:ems_ref => vm_data(3)[:ems_ref])
@@ -356,10 +347,8 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port12.name).to eq "default_name"
             expect(@network_port3.device).to eq @vm1
             expect(@network_port3.name).to eq "vm_name_1"
-            expect(@vm3.genealogy_parent).to eq @image2
             expect(@vm3.key_pairs).to match_array [@key_pair2, @key_pair3]
             expect(@vm3.hardware.guest_os).to eq "linux_generic_2"
-            expect(@vm31.genealogy_parent).to eq @image2
             # We don't support :key pointing to a has_many, so it default to []
             expect(@vm31.key_pairs).to match_array []
             expect(@vm31.hardware).to be_nil

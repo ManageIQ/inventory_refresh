@@ -1,8 +1,8 @@
 module SpecMockedData
   def initialize_mocked_records
-    @flavor1 = FactoryGirl.create(:flavor, flavor_data(1).merge(:ext_management_system => @ems))
-    @flavor2 = FactoryGirl.create(:flavor, flavor_data(2).merge(:ext_management_system => @ems))
-    @flavor3 = FactoryGirl.create(:flavor, flavor_data(3).merge(:ext_management_system => @ems))
+    @flavor1 = FactoryGirl.create(:flavor_cloud, flavor_data(1).merge(:ext_management_system => @ems))
+    @flavor2 = FactoryGirl.create(:flavor_cloud, flavor_data(2).merge(:ext_management_system => @ems))
+    @flavor3 = FactoryGirl.create(:flavor_cloud, flavor_data(3).merge(:ext_management_system => @ems))
 
     @image1 = FactoryGirl.create(:miq_template, image_data(1).merge(:ext_management_system => @ems))
     @image2 = FactoryGirl.create(:miq_template, image_data(2).merge(:ext_management_system => @ems))
@@ -39,7 +39,6 @@ module SpecMockedData
       :vm_cloud,
       vm_data(1).merge(
         :flavor                => @flavor_1,
-        :genealogy_parent      => @image1,
         :key_pairs             => [@key_pair1],
         :location              => 'host_10_10_10_1.com',
         :ext_management_system => @ems,
@@ -49,7 +48,6 @@ module SpecMockedData
       :vm_cloud,
       vm_data(12).merge(
         :flavor                => @flavor1,
-        :genealogy_parent      => @image1,
         :key_pairs             => [@key_pair1, @key_pair12],
         :location              => 'host_10_10_10_1.com',
         :ext_management_system => @ems,
@@ -59,7 +57,6 @@ module SpecMockedData
       :vm_cloud,
       vm_data(2).merge(
         :flavor                => @flavor2,
-        :genealogy_parent      => @image2,
         :key_pairs             => [@key_pair2],
         :location              => 'host_10_10_10_2.com',
         :ext_management_system => @ems,
