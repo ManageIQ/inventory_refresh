@@ -758,7 +758,7 @@ describe InventoryRefresh::SaveInventory do
       :manager_ref => %i(hardware description)
     )
     @data[:flavors] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => Flavor,
+      :model_class => ManageIQ::Providers::CloudManager::Flavor,
       :parent      => @ems,
       :association => :flavors,
       :manager_ref => [:name]
