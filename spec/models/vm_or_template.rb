@@ -7,6 +7,8 @@ class VmOrTemplate < ActiveRecord::Base
   has_one :hardware, :dependent => :destroy
   has_many :disks, :through => :hardware
 
+  validates_presence_of :name, :location
+
   def disconnect_inv
     disconnect_ems
   end

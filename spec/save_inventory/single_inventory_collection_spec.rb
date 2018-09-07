@@ -643,14 +643,14 @@ describe InventoryRefresh::SaveInventory do
 
             # Assert that saved data have the new VM and miss the deleted VM
             assert_all_records_match_hashes(
-              [Vm.all],
+              [Vm.all, cloud_tenant.vms],
               {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
               {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
             )
 
             # Assert that ems relation exists only for the updated VM
             assert_all_records_match_hashes(
-              [@ems.vms, cloud_tenant.vms],
+              [@ems.vms],
               :id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"
             )
           end
@@ -682,7 +682,7 @@ describe InventoryRefresh::SaveInventory do
 
             # Assert that saved data have the new VM and miss the deleted VM
             assert_all_records_match_hashes(
-              [Vm.all],
+              [Vm.all, cloud_tenant.vms],
               {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
               {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_name_2", :location => "vm_location_2"},
               {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
@@ -690,7 +690,7 @@ describe InventoryRefresh::SaveInventory do
 
             # Assert that ems relation exists only for the updated VM
             assert_all_records_match_hashes(
-              [@ems.vms, cloud_tenant.vms],
+              [@ems.vms],
               {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
               {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_name_2", :location => "vm_location_2"},
             )
