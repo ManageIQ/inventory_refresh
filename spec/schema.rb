@@ -557,4 +557,188 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["type"], name: "index_vms_on_type", using: :btree
     t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
   end
+
+  create_table "container_groups", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.string   "name"
+    t.datetime "ems_created_on"
+    t.string   "resource_version_string"
+    t.string   "restart_policy"
+    t.string   "dns_policy"
+    t.bigint   "ems_id"
+    t.bigint   "container_node_id"
+    t.datetime "last_perf_capture_on"
+    t.bigint   "container_replicator_id"
+    t.string   "ipaddress"
+    t.string   "type"
+    t.bigint   "container_project_id"
+    t.string   "phase"
+    t.string   "message"
+    t.string   "reason"
+    t.bigint   "container_build_pod_id"
+    t.datetime "created_on"
+    t.datetime "deleted_on"
+    t.bigint   "old_ems_id"
+    t.bigint   "old_container_project_id"
+    t.datetime "updated_on"
+    t.index ["deleted_on"], name: "index_container_groups_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_container_groups_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["ems_id"], name: "index_container_groups_on_ems_id", using: :btree
+    t.index ["type"], name: "index_container_groups_on_type", using: :btree
+  end
+
+  create_table "containers", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.integer  "restart_count"
+    t.string   "state"
+    t.string   "name"
+    t.string   "backing_ref"
+    t.datetime "last_perf_capture_on"
+    t.string   "type"
+    t.bigint   "container_image_id"
+    t.string   "reason"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.integer  "exit_code"
+    t.integer  "signal"
+    t.string   "message"
+    t.string   "last_state"
+    t.string   "last_reason"
+    t.datetime "last_started_at"
+    t.datetime "last_finished_at"
+    t.integer  "last_exit_code"
+    t.integer  "last_signal"
+    t.string   "last_message"
+    t.datetime "deleted_on"
+    t.bigint   "ems_id"
+    t.bigint   "old_ems_id"
+    t.float    "request_cpu_cores"
+    t.bigint   "request_memory_bytes"
+    t.float    "limit_cpu_cores"
+    t.bigint   "limit_memory_bytes"
+    t.string   "image"
+    t.string   "image_pull_policy"
+    t.string   "memory"
+    t.float    "cpu_cores"
+    t.bigint   "container_group_id"
+    t.boolean  "privileged"
+    t.bigint   "run_as_user"
+    t.boolean  "run_as_non_root"
+    t.string   "capabilities_add"
+    t.string   "capabilities_drop"
+    t.text     "command"
+    t.index ["deleted_on"], name: "index_containers_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_containers_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["type"], name: "index_containers_on_type", using: :btree
+  end
+
+  create_table "container_image_registries", id: :bigserial, force: :cascade do |t|
+    t.string "name"
+    t.string "host"
+    t.string "port"
+    t.bigint "ems_id"
+    t.index ["ems_id", "host", "port"], name: "index_container_image_registries_on_ems_id_and_host_and_port", unique: true, using: :btree
+  end
+
+  create_table "container_images", id: :bigserial, force: :cascade do |t|
+    t.string   "tag"
+    t.string   "name"
+    t.string   "image_ref"
+    t.bigint   "container_image_registry_id"
+    t.bigint   "ems_id"
+    t.datetime "last_sync_on"
+    t.datetime "last_scan_attempt_on"
+    t.string   "digest"
+    t.datetime "registered_on"
+    t.string   "architecture"
+    t.string   "author"
+    t.string   "command",                     default: [], array: true
+    t.string   "entrypoint",                  default: [], array: true
+    t.string   "docker_version"
+    t.text     "exposed_ports"
+    t.text     "environment_variables"
+    t.bigint   "size"
+    t.datetime "created_on"
+    t.bigint   "old_ems_id"
+    t.datetime "deleted_on"
+    t.string   "type"
+    t.jsonb    "timestamps",                  default: {}
+    t.index ["deleted_on"], name: "index_container_images_on_deleted_on", using: :btree
+    t.index ["ems_id", "image_ref"], name: "index_container_images_unique_multi_column", unique: true, using: :btree
+    t.index ["ems_id"], name: "index_container_images_on_ems_id", using: :btree
+  end
+
+  create_table "container_projects", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.string   "name"
+    t.datetime "ems_created_on"
+    t.string   "resource_version_string"
+    t.string   "display_name"
+    t.bigint   "ems_id"
+    t.datetime "created_on"
+    t.datetime "deleted_on"
+    t.bigint   "old_ems_id"
+    t.index ["deleted_on"], name: "index_container_projects_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_container_projects_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["ems_id"], name: "index_container_projects_on_ems_id", using: :btree
+  end
+
+  create_table "container_replicators", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.string   "name"
+    t.datetime "ems_created_on"
+    t.bigint   "ems_id"
+    t.string   "resource_version_string"
+    t.integer  "replicas"
+    t.integer  "current_replicas"
+    t.bigint   "container_project_id"
+    t.datetime "created_on"
+    t.index ["ems_id", "ems_ref"], name: "index_container_replicators_on_ems_id_and_ems_ref", unique: true, using: :btree
+  end
+
+  create_table "container_nodes", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.string   "name"
+    t.datetime "ems_created_on"
+    t.string   "resource_version_string"
+    t.bigint   "ems_id"
+    t.string   "lives_on_type"
+    t.bigint   "lives_on_id"
+    t.datetime "last_perf_capture_on"
+    t.string   "identity_infra"
+    t.string   "identity_machine"
+    t.string   "identity_system"
+    t.string   "type"
+    t.string   "kubernetes_kubelet_version"
+    t.string   "kubernetes_proxy_version"
+    t.string   "container_runtime_version"
+    t.integer  "max_container_groups"
+    t.datetime "created_on"
+    t.bigint   "old_ems_id"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_container_nodes_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_container_nodes_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["ems_id"], name: "index_container_nodes_on_ems_id", using: :btree
+    t.index ["type"], name: "index_container_nodes_on_type", using: :btree
+  end
+
+  create_table "container_build_pods", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.string   "name"
+    t.datetime "ems_created_on"
+    t.string   "resource_version_string"
+    t.string   "namespace"
+    t.string   "message"
+    t.string   "phase"
+    t.string   "reason"
+    t.string   "output_docker_image_reference"
+    t.string   "completion_timestamp"
+    t.string   "start_timestamp"
+    t.bigint   "duration"
+    t.bigint   "container_build_id"
+    t.bigint   "ems_id"
+    t.datetime "created_on"
+    t.index ["ems_id", "ems_ref"], name: "index_container_build_pods_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["ems_id"], name: "index_container_build_pods_on_ems_id", using: :btree
+  end
 end
