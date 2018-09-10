@@ -1,10 +1,13 @@
 require "inventory_refresh/save_collection/saver/sql_helper_update"
 require "inventory_refresh/save_collection/saver/sql_helper_upsert"
+require "inventory_refresh/logging"
 require "active_support/concern"
 
 module InventoryRefresh::SaveCollection
   module Saver
     module SqlHelper
+      include InventoryRefresh::Logging
+
       # TODO(lsmola) all below methods should be rewritten to arel, but we need to first extend arel to be able to do
       # this
 
@@ -51,7 +54,7 @@ module InventoryRefresh::SaveCollection
           connection.quote(value)
         end
       rescue TypeError => e
-        #_log.error("Can't quote value: #{value}, of :#{name} and #{inventory_collection}")
+        log.error("Can't quote value: #{value}, of :#{name} and #{inventory_collection}")
         raise e
       end
 

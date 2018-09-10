@@ -1,10 +1,12 @@
 require "inventory_refresh/application_record_iterator"
+require "inventory_refresh/logging"
 require "inventory_refresh/save_collection/saver/sql_helper"
 require "active_support/core_ext/module/delegation"
 
 module InventoryRefresh::SaveCollection
   module Saver
     class Base
+      include InventoryRefresh::Logging
       include InventoryRefresh::SaveCollection::Saver::SqlHelper
 
       # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we will be saving
@@ -138,7 +140,7 @@ module InventoryRefresh::SaveCollection
           inventory_objects_index[index] = inventory_object
         end
 
-        #_log.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
+        log.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
         # Records that are in the DB, we will be updating or deleting them.
         ActiveRecord::Base.transaction do
           association.find_each do |record|
@@ -175,12 +177,12 @@ module InventoryRefresh::SaveCollection
             end
           end
         end
-        #_log.debug("Processing #{inventory_collection}, "\
-        #           "created=#{inventory_collection.created_records.count}, "\
-        #           "updated=#{inventory_collection.updated_records.count}, "\
-        #           "deleted=#{inventory_collection.deleted_records.count}...Complete")
+        log.debug("Processing #{inventory_collection}, "\
+                  "created=#{inventory_collection.created_records.count}, "\
+                  "updated=#{inventory_collection.updated_records.count}, "\
+                  "deleted=#{inventory_collection.deleted_records.count}...Complete")
       rescue => e
-        #_log.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
+        log.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
         raise e
       end
 
@@ -202,8 +204,8 @@ module InventoryRefresh::SaveCollection
 
         all_manager_uuids_size = inventory_collection.all_manager_uuids.size
 
-        #_log.debug("Processing :delete_complement of #{inventory_collection} of size "\
-        #           "#{all_manager_uuids_size}...")
+        log.debug("Processing :delete_complement of #{inventory_collection} of size "\
+                  "#{all_manager_uuids_size}...")
         deleted_counter = 0
 
         inventory_collection.db_collection_for_comparison_for_complement_of(
@@ -217,8 +219,8 @@ module InventoryRefresh::SaveCollection
           end
         end
 
-        #_log.debug("Processing :delete_complement of #{inventory_collection} of size "\
-        #           "#{all_manager_uuids_size}, deleted=#{deleted_counter}...Complete")
+        log.debug("Processing :delete_complement of #{inventory_collection} of size "\
+                  "#{all_manager_uuids_size}, deleted=#{deleted_counter}...Complete")
       end
 
       # Deletes/soft-deletes a given record
@@ -246,8 +248,8 @@ module InventoryRefresh::SaveCollection
           # relations can return the same record multiple times. We don't want to do SELECT DISTINCT by default, since
           # it can be very slow.
           if false # TODO: Rails.env.production?
-            #_log.warn("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. "\
-            #            " The duplicate value is being ignored.")
+            log.warn("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. "\
+                     " The duplicate value is being ignored.")
             return false
           else
             raise("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. ")
@@ -272,7 +274,7 @@ module InventoryRefresh::SaveCollection
                     "#{inventory_collection.parent.class.name}:"\
                     "#{inventory_collection.parent.try(:id)}"
           if false # TODO: Rails.env.production?
-            #_log.warn("Referential integrity check violated, ignoring #{subject}")
+            log.warn("Referential integrity check violated, ignoring #{subject}")
             return false
           else
             raise("Referential integrity check violated for #{subject}")

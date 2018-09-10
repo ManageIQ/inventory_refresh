@@ -4,17 +4,19 @@ require "inventory_refresh/save_collection/topological_sort"
 module InventoryRefresh
   class SaveInventory
     class << self
+      include Logging
+
       # Saves the passed InventoryCollection objects
       #
       # @param ems [ExtManagementSystem] manager owning the inventory_collections
       # @param inventory_collections [Array<InventoryRefresh::InventoryCollection>] array of InventoryCollection objects
       #        for saving
       def save_inventory(ems, inventory_collections, strategy = nil)
-        #_log.debug("#{log_header(ems)} Scanning Inventory Collections...Start")
+        log.debug("#{log_header(ems)} Scanning Inventory Collections...Start")
         InventoryRefresh::InventoryCollection::Scanner.scan!(inventory_collections)
-        #_log.debug("#{log_header(ems)} Scanning Inventory Collections...Complete")
+        log.debug("#{log_header(ems)} Scanning Inventory Collections...Complete")
 
-        #_log.info("#{log_header(ems)} Saving EMS Inventory...")
+        log.info("#{log_header(ems)} Saving EMS Inventory...")
 
         if strategy.try(:to_sym) == :recursive
           InventoryRefresh::SaveCollection::Recursive.save_collections(ems, inventory_collections)
@@ -22,7 +24,7 @@ module InventoryRefresh
           InventoryRefresh::SaveCollection::TopologicalSort.save_collections(ems, inventory_collections)
         end
 
-        #_log.info("#{log_header(ems)} Saving EMS Inventory...Complete")
+        log.info("#{log_header(ems)} Saving EMS Inventory...Complete")
         ems
       end
 
