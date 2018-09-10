@@ -77,8 +77,7 @@ module InventoryRefresh::SaveCollection
       def save_inventory_collection!
         # If we have a targeted InventoryCollection that wouldn't do anything, quickly skip it
         return if inventory_collection.noop?
-        # If we want to use delete_complement strategy using :all_manager_uuids attribute, we are skipping any other
-        # job. We want to do 1 :delete_complement job at 1 time, to keep to memory down.
+        # Delete_complement strategy using :all_manager_uuids attribute
         return delete_complement if inventory_collection.all_manager_uuids.present?
 
         save!(association)
@@ -206,21 +205,22 @@ module InventoryRefresh::SaveCollection
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
                      "#{all_manager_uuids_size}...")
-        deleted_counter = 0
 
-        inventory_collection.db_collection_for_comparison_for_complement_of(
-          inventory_collection.all_manager_uuids
-        ).find_in_batches do |batch|
-          ActiveRecord::Base.transaction do
-            batch.each do |record|
-              record.public_send(inventory_collection.delete_method)
-              deleted_counter += 1
-            end
-          end
+        query = complement_of!(inventory_collection.all_manager_uuids)
+
+        ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
+        # TODO(lsmola) we should allow only archiving, which is done via update, then the batch can be bigger. Without
+        #              batch archiving, this is a big bottleneck.
+        ids_of_non_active_entities.each_slice(1000) do |batch|
+          destroy_records!(batch, :id_extractor => :hash_primary_key_value)
         end
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
-                     "#{all_manager_uuids_size}, deleted=#{deleted_counter}...Complete")
+                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records.size}...Complete")
+      end
+
+      def hash_primary_key_value(hash)
+        hash[primary_key]
       end
 
       # Deletes/soft-deletes a given record
@@ -229,6 +229,39 @@ module InventoryRefresh::SaveCollection
       def delete_record!(record)
         record.public_send(inventory_collection.delete_method)
         inventory_collection.store_deleted_records(record)
+      end
+
+      # Deletes or sof-deletes records. If the model_class supports a custom class delete method, we will use it for
+      # batch soft-delete.
+      #
+      # @param records [Array<ApplicationRecord, Hash>] Records we want to delete. If we have only hashes, we need to
+      #        to fetch ApplicationRecord objects from the DB
+      def destroy_records!(records, id_extractor: :record_primary_key_value)
+        return false unless inventory_collection.delete_allowed?
+        return if records.blank?
+
+        # Is the delete_method rails standard deleting method?
+        rails_delete = %i(destroy delete).include?(inventory_collection.delete_method)
+        if !rails_delete && inventory_collection.model_class.respond_to?(inventory_collection.delete_method)
+          # We have custom delete method defined on a class, that means it supports batch destroy
+          inventory_collection.store_deleted_records(records.map { |x| {:id => send(id_extractor, x) } })
+          inventory_collection.model_class.public_send(inventory_collection.delete_method, records.map { |x| send(id_extractor, x) })
+        else
+          # We have either standard :destroy and :delete rails method, or custom instance level delete method
+          # Note: The standard :destroy and :delete rails method can't be batched because of the hooks and cascade destroy
+          ActiveRecord::Base.transaction do
+            if pure_sql_records_fetching || id_extractor != :record_primary_key_value
+              # For pure SQL fetching, we need to get the AR objects again, so we can call destroy
+              inventory_collection.model_class.where(:id => records.map { |x| send(id_extractor, x) }).find_each do |record|
+                delete_record!(record)
+              end
+            else
+              records.each do |record|
+                delete_record!(record)
+              end
+            end
+          end
+        end
       end
 
       # @return [TrueClass] always return true, this method is redefined in default saver

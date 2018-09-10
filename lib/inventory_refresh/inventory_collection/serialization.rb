@@ -4,6 +4,7 @@ module InventoryRefresh
   class InventoryCollection
     class Serialization
       delegate :all_manager_uuids,
+               :all_manager_uuids=,
                :build,
                :targeted_scope,
                :data,
@@ -37,8 +38,7 @@ module InventoryRefresh
           skeletal_primary_index.build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
         end
 
-        # TODO(lsmola) add support for all_manager_uuids serialization
-        # self.all_manager_uuids = inventory_objects_data['all_manager_uuids']
+        self.all_manager_uuids = inventory_objects_data['all_manager_uuids']
       end
 
       # Serializes InventoryCollection's data storage into Array of Hashes
