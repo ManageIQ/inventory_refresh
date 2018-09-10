@@ -76,7 +76,7 @@ module ManageIQ::Providers
             raise MissingModelClassError, "Missing model_class for :#{@name} (\"#{@name.to_s.classify}\" or subclass expected)."
           end
 
-          ::ManagerRefresh::InventoryCollection.new(to_hash)
+          ::InventoryRefresh::InventoryCollection.new(to_hash)
         end
 
         #
