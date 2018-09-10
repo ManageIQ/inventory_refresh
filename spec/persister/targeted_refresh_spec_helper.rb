@@ -68,9 +68,9 @@ module TargetedRefreshSpecHelper
   end
 
   def assert_counts(expected_table_counts, expected_ems_table_counts = nil)
-    expected_counts           = base_inventory_counts.merge(expected_table_counts)
+    expected_counts = base_inventory_counts.merge(expected_table_counts)
     expected_ems_table_counts ||= expected_counts
-    expected_ems_counts       = base_inventory_counts.merge(expected_ems_table_counts)
+    expected_ems_counts = base_inventory_counts.merge(expected_ems_table_counts)
 
     assert_table_counts(expected_counts)
     assert_ems(expected_ems_counts)
@@ -127,9 +127,9 @@ module TargetedRefreshSpecHelper
 
   def assert_ems(expected_table_counts)
     expect(@ems).to have_attributes(
-                      :api_version => nil, # TODO: Should be 3.0
-                      :uid_ems => nil
-                    )
+      :api_version => nil, # TODO: Should be 3.0
+      :uid_ems     => nil
+    )
     expect(@ems.flavors.size).to eql(expected_table_counts[:flavor])
     expect(@ems.availability_zones.size).to eql(expected_table_counts[:availability_zone])
     expect(@ems.vms_and_templates.size).to eql(expected_table_counts[:vm_or_template])

@@ -152,7 +152,7 @@ describe ManageIQ::Providers::Inventory::Persister do
         # lead to nullifying of all attributes of the existing record, that skeletal record points to.
         expect(ContainerProject.find_by(:ems_ref => "container_project_ems_ref_1")).to(
           have_attributes(
-            :name => "container_project_name_1", # This has to be "container_project_name_1",
+            :name    => "container_project_name_1", # This has to be "container_project_name_1",
             :ems_id  => @ems.id,
             :ems_ref => "container_project_ems_ref_1",
           )
@@ -215,7 +215,8 @@ describe ManageIQ::Providers::Inventory::Persister do
         persister.container_groups.build(
           container_group_data(
             1,
-            :type => "ContainerGroup")
+            :type => "ContainerGroup"
+          )
         )
 
         persister.persist!
@@ -293,9 +294,9 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       it "we prec-create object that was already disconnected and the relation is filled but not reconnected" do
         FactoryGirl.create(:container_project, container_project_data(1).merge(
-          :ems_id     => @ems.id,
-          :deleted_on => Time.now.utc)
-        )
+                                                 :ems_id     => @ems.id,
+                                                 :deleted_on => Time.now.utc
+        ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
 
@@ -374,9 +375,9 @@ describe ManageIQ::Providers::Inventory::Persister do
         container_project = FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
         FactoryGirl.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id))
         FactoryGirl.create(:container_replicator, container_replicator_data(1).merge(
-          :ems_id            => @ems.id,
-          :container_project => container_project)
-        )
+                                                    :ems_id            => @ems.id,
+                                                    :container_project => container_project
+        ))
         # TODO(lsmola) we miss VCR data for this
         # FactoryGirl.create(:container_build_pod, container_build_pod_data(1).merge(:ems_id => @ems.id))
 
@@ -469,13 +470,13 @@ describe ManageIQ::Providers::Inventory::Persister do
         # do not want to solve this in general? If yes, we would have to allow this to be settable in parser. E.g.
         # for OpenShift pods watch targeted refresh, we can refresh already disconnected entity
         FactoryGirl.create(:container_group, container_group_data(1).merge(
-          :ems_id     => @ems.id,
-          :deleted_on => Time.now.utc)
-        )
+                                               :ems_id     => @ems.id,
+                                               :deleted_on => Time.now.utc
+        ))
         FactoryGirl.create(:container_project, container_project_data(1).merge(
-          :ems_id     => @ems.id,
-          :deleted_on => Time.now.utc)
-        )
+                                                 :ems_id     => @ems.id,
+                                                 :deleted_on => Time.now.utc
+        ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
 
@@ -521,7 +522,7 @@ describe ManageIQ::Providers::Inventory::Persister do
             1,
             :container_project => lazy_find_container_project,
             # This will go from skeletal precreate that fetches it from the DB
-            :name => persister.container_projects.lazy_find("container_project_ems_ref_1", :key => :name)
+            :name              => persister.container_projects.lazy_find("container_project_ems_ref_1", :key => :name)
           )
         )
 
