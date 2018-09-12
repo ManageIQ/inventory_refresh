@@ -44,7 +44,7 @@ module InventoryRefresh::SaveCollection
           end
         end
 
-        #_log.debug("Saving #{inventory_collection} of size #{inventory_collection.size}")
+        log.debug("Saving #{inventory_collection} of size #{inventory_collection.size}")
         save_inventory_object_inventory(ems, inventory_collection)
       end
     end

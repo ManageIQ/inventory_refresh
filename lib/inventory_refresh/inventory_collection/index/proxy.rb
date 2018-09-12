@@ -1,12 +1,15 @@
 require "inventory_refresh/inventory_collection/index/type/data"
 require "inventory_refresh/inventory_collection/index/type/local_db"
 require "inventory_refresh/inventory_collection/index/type/skeletal"
+require "inventory_refresh/logging"
 require "active_support/core_ext/module/delegation"
 
 module InventoryRefresh
   class InventoryCollection
     module Index
       class Proxy
+        include InventoryRefresh::Logging
+
         attr_reader :skeletal_primary_index
 
         # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object owning the proxy

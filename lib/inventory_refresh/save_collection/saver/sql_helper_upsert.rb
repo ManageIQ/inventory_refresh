@@ -1,6 +1,10 @@
+require "inventory_refresh/logging"
+
 module InventoryRefresh::SaveCollection
   module Saver
     module SqlHelperUpsert
+      include InventoryRefresh::Logging
+
       # Builds ON CONFLICT UPDATE updating branch for one column identified by the passed key
       #
       # @param key [Symbol] key that is column name
@@ -16,7 +20,7 @@ module InventoryRefresh::SaveCollection
       # @param on_conflict [Symbol, NilClass] defines behavior on conflict with unique index constraint, allowed values
       #        are :do_update, :do_nothing, nil
       def build_insert_query(all_attribute_keys, hashes, on_conflict: nil, mode:, column_name: nil)
-        #_log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...")
+        log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...")
 
         # Cache the connection for the batch
         connection = get_connection
@@ -29,7 +33,7 @@ module InventoryRefresh::SaveCollection
         insert_query += insert_query_on_conflict_behavior(all_attribute_keys, on_conflict, mode, ignore_cols, column_name)
         insert_query += insert_query_returning
 
-        #_log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
+        log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
 
         insert_query
       end

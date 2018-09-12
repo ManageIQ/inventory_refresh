@@ -1,6 +1,10 @@
+require "inventory_refresh/logging"
+
 module InventoryRefresh::SaveCollection
   module Saver
     module SqlHelperUpdate
+      include InventoryRefresh::Logging
+
       # Builds update clause for one column identified by the passed key
       #
       # @param key [Symbol] key that is column name
@@ -14,7 +18,7 @@ module InventoryRefresh::SaveCollection
       # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
       # @param hashes [Array<Hash>] data used for building a batch update sql query
       def build_update_query(all_attribute_keys, hashes)
-        #_log.debug("Building update query for #{inventory_collection} of size #{inventory_collection.size}...")
+        log.debug("Building update query for #{inventory_collection} of size #{inventory_collection.size}...")
         # Cache the connection for the batch
         connection = get_connection
 
@@ -35,7 +39,7 @@ module InventoryRefresh::SaveCollection
         update_query += update_query_version_conditions(version_attribute)
         update_query += update_query_returning
 
-        #_log.debug("Building update query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
+        log.debug("Building update query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
 
         update_query
       end

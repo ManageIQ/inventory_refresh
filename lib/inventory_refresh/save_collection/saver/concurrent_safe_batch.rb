@@ -97,7 +97,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys << :updated_on if supports_updated_on?
         all_attribute_keys << :type if supports_sti?
 
-        #_log.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
+        log.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
         unless inventory_collection.create_only?
           update_or_destroy_records!(batch_iterator(association), inventory_objects_index, attributes_index, all_attribute_keys)
@@ -123,12 +123,12 @@ module InventoryRefresh::SaveCollection
             create_or_update_partial_records(all_attribute_keys)
           end
         end
-        #_log.debug("Processing #{inventory_collection}, "\
-        #           "created=#{inventory_collection.created_records.count}, "\
-        #           "updated=#{inventory_collection.updated_records.count}, "\
-        #           "deleted=#{inventory_collection.deleted_records.count}...Complete")
+        log.debug("Processing #{inventory_collection}, "\
+                  "created=#{inventory_collection.created_records.count}, "\
+                  "updated=#{inventory_collection.updated_records.count}, "\
+                  "deleted=#{inventory_collection.deleted_records.count}...Complete")
       rescue => e
-        #_log.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
+        log.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
         raise e
       end
 
