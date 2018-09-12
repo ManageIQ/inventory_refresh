@@ -428,7 +428,7 @@ module InventoryRefresh::SaveCollection
               batch.each { |x| x[:resource_counters_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
             end
 
-            result = create_partial!(inventory_collection.base_columns + [column_name],
+            result = create_partial!((inventory_collection.base_columns + [column_name]).to_set & all_attribute_keys,
                                      batch,
                                      :on_conflict => :do_update,
                                      :column_name => column_name)
