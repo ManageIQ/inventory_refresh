@@ -5,7 +5,7 @@ cache: bundler
 rvm:
   - 2.4.2
 addons:
-  postgresql: '9.4'
+  postgresql: '9.5'
 before_install:
 - gem install bundler -v 1.16.4
 - source ${TRAVIS_BUILD_DIR}/tools/ci/create_db_user.sh
