@@ -581,6 +581,12 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "old_ems_id"
     t.bigint   "old_container_project_id"
     t.datetime "updated_on"
+    t.datetime "resource_timestamp"
+    t.jsonb    "resource_timestamps", default: {}
+    t.datetime "resource_timestamps_max"
+    t.integer  "resource_counter"
+    t.jsonb    "resource_counters", default: {}
+    t.integer  "resource_counters_max"
     t.index ["deleted_on"], name: "index_container_groups_on_deleted_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_groups_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_groups_on_ems_id", using: :btree
