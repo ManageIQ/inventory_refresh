@@ -15,6 +15,6 @@ FactoryGirl.define do
   end
 
   factory(:vm,           :class => "Vm",               :parent => :vm_or_template)
-  factory(:vm_cloud,     :class => "ManageIQ::Providers::CloudManager::Vm", :parent => :vm)       { cloud true }
+  factory(:vm_cloud,     :class => "ManageIQ::Providers::CloudManager::Vm", :parent => :vm) { cloud true }
   factory(:miq_template, :parent => :template)
 end
