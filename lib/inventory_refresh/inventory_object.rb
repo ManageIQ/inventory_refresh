@@ -143,12 +143,12 @@ module InventoryRefresh
       attributes.each do |k, v|
         # We don't want timestamps or resource versions to be overwritten here, since those are driving the conditions
         next if %i(resource_timestamps resource_timestamps_max resource_timestamp).include?(k)
-        next if %i(resource_versions resource_versions_max resource_version).include?(k)
+        next if %i(resource_counters resource_counters_max resource_counter).include?(k)
 
         if data[:resource_timestamp] && attributes[:resource_timestamp]
           assign_only_newest(:resource_timestamp, :resource_timestamps, attributes, data, k, v)
-        elsif data[:resource_version] && attributes[:resource_version]
-          assign_only_newest(:resource_version, :resource_versions, attributes, data, k, v)
+        elsif data[:resource_counter] && attributes[:resource_counter]
+          assign_only_newest(:resource_counter, :resource_counters, attributes, data, k, v)
         else
           public_send("#{k}=", v)
         end
@@ -156,8 +156,8 @@ module InventoryRefresh
 
       if attributes[:resource_timestamp]
         assign_full_row_version_attr(:resource_timestamp, attributes, data)
-      elsif attributes[:resource_version]
-        assign_full_row_version_attr(:resource_version, attributes, data)
+      elsif attributes[:resource_counter]
+        assign_full_row_version_attr(:resource_counter, attributes, data)
       end
 
       self
@@ -206,9 +206,9 @@ module InventoryRefresh
     # newer than existing attribute.
     #
     # @param full_row_version_attr [Symbol] Attr name for full rows, allowed values are
-    #        [:resource_timestamp, :resource_version]
+    #        [:resource_timestamp, :resource_counter]
     # @param partial_row_version_attr [Symbol] Attr name for partial rows, allowed values are
-    #        [:resource_timestamps, :resource_versions]
+    #        [:resource_timestamps, :resource_counters]
     # @param attributes [Hash] New attributes we are assigning
     # @param data [Hash] Existing attributes of the InventoryObject
     # @param k [Symbol] Name of the attribute we are assigning
@@ -247,7 +247,7 @@ module InventoryRefresh
     # Assigns attribute representing version of the whole row
     #
     # @param full_row_version_attr [Symbol] Attr name for full rows, allowed values are
-    #        [:resource_timestamp, :resource_version]
+    #        [:resource_timestamp, :resource_counter]
     # @param attributes [Hash] New attributes we are assigning
     # @param data [Hash] Existing attributes of the InventoryObject
     def assign_full_row_version_attr(full_row_version_attr, attributes, data)

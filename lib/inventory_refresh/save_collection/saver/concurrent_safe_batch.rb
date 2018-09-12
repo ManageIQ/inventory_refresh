@@ -176,7 +176,7 @@ module InventoryRefresh::SaveCollection
                 version_attr, max_version_attr = if supports_remote_data_timestamp?(all_attribute_keys)
                                                    [:resource_timestamp, :resource_timestamps_max]
                                                  elsif supports_remote_data_version?(all_attribute_keys)
-                                                   [:resource_version, :resource_versions_max]
+                                                   [:resource_counter, :resource_counters_max]
                                                  end
 
                 next if skeletonize_or_skip_record(record.try(version_attr) || record.try(:[], version_attr),
@@ -364,8 +364,8 @@ module InventoryRefresh::SaveCollection
           all_attribute_keys << :resource_timestamps
           all_attribute_keys << :resource_timestamps_max
         elsif supports_remote_data_version?(all_attribute_keys)
-          all_attribute_keys << :resource_versions
-          all_attribute_keys << :resource_versions_max
+          all_attribute_keys << :resource_counters
+          all_attribute_keys << :resource_counters_max
         end
 
         indexed_inventory_objects = {}
@@ -381,10 +381,10 @@ module InventoryRefresh::SaveCollection
                                                                 :resource_timestamps_max,
                                                                 hash,
                                                                 all_attribute_keys)
-                       elsif supports_remote_data_version?(all_attribute_keys) && supports_resource_versions_max?
-                         assign_partial_row_version_attributes!(:resource_version,
-                                                                :resource_versions,
-                                                                :resource_versions_max,
+                       elsif supports_remote_data_version?(all_attribute_keys) && supports_resource_counters_max?
+                         assign_partial_row_version_attributes!(:resource_counter,
+                                                                :resource_counters,
+                                                                :resource_counters_max,
                                                                 hash,
                                                                 all_attribute_keys)
                        end
@@ -413,7 +413,7 @@ module InventoryRefresh::SaveCollection
 
         # We need only skeletal records with timestamp. We can't save the ones without timestamp, because e.g. skeletal
         # precreate would be updating records with default values, that are not correct.
-        pre_filtered = hashes.select { |x| x[:resource_timestamps_max] || x[:resource_versions_max] }
+        pre_filtered = hashes.select { |x| x[:resource_timestamps_max] || x[:resource_counters_max] }
 
         results = {}
         # TODO(lsmola) we don't need to process rows that were save by the create -> oncoflict do nothing
@@ -425,7 +425,7 @@ module InventoryRefresh::SaveCollection
             if supports_remote_data_timestamp?(all_attribute_keys)
               batch.each { |x| x[:resource_timestamps_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
             elsif supports_remote_data_version?(all_attribute_keys)
-              batch.each { |x| x[:resource_versions_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
+              batch.each { |x| x[:resource_counters_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
             end
 
             result = create_partial!(inventory_collection.base_columns + [column_name],

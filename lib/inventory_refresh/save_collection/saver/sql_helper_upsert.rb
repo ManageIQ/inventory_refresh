@@ -25,7 +25,7 @@ module InventoryRefresh::SaveCollection
         # Cache the connection for the batch
         connection = get_connection
         # Ignore versioning columns that are set separately
-        ignore_cols = mode == :partial ? [:resource_timestamp, :resource_version] : []
+        ignore_cols = mode == :partial ? [:resource_timestamp, :resource_counter] : []
         # Make sure we don't send a primary_key for INSERT in any form, it could break PG sequencer
         all_attribute_keys_array = all_attribute_keys.to_a - [primary_key.to_s, primary_key.to_sym] - ignore_cols
 
@@ -83,7 +83,7 @@ module InventoryRefresh::SaveCollection
 
       def insert_query_on_conflict_update(all_attribute_keys, mode, ignore_cols, column_name)
         if mode == :partial
-          ignore_cols += [:resource_timestamps, :resource_timestamps_max, :resource_versions, :resource_versions_max]
+          ignore_cols += [:resource_timestamps, :resource_timestamps_max, :resource_counters, :resource_counters_max]
         end
         ignore_cols += [:created_on, :created_at] # Lets not change created for the update clause
 
@@ -91,7 +91,7 @@ module InventoryRefresh::SaveCollection
         version_attribute = if supports_remote_data_timestamp?(all_attribute_keys)
                               :resource_timestamp
                             elsif supports_remote_data_version?(all_attribute_keys)
-                              :resource_version
+                              :resource_counter
                             end
 
         # TODO(lsmola) should we add :deleted => false to the update clause? That should handle a reconnect, without a
@@ -116,7 +116,7 @@ module InventoryRefresh::SaveCollection
       end
 
       def full_update_condition(attr_full)
-        attr_partial = attr_full.to_s.pluralize # Changes resource_version/timestamp to resource_versions/timestamps
+        attr_partial = attr_full.to_s.pluralize # Changes resource_counter/timestamp to resource_counters/timestamps
         attr_partial_max = "#{attr_partial}_max"
 
         # Quote the column names
@@ -135,11 +135,11 @@ module InventoryRefresh::SaveCollection
       end
 
       def partial_update_condition(attr_full, column_name)
-        attr_partial     = attr_full.to_s.pluralize # Changes resource_version/timestamp to resource_versions/timestamps
+        attr_partial     = attr_full.to_s.pluralize # Changes resource_counter/timestamp to resource_counters/timestamps
         attr_partial_max = "#{attr_partial}_max"
         cast             = if attr_full == :resource_timestamp
                              "timestamp"
-                           elsif attr_full == :resource_version
+                           elsif attr_full == :resource_counter
                              "integer"
                            end
 
