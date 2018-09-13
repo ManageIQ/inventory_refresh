@@ -12,6 +12,16 @@ module ManageIQ
       has_one :network_manager,
               :foreign_key => :parent_ems_id,
               :class_name  => "NetworkManager"
+
+
+      has_one :network_manager,
+              :foreign_key => :parent_ems_id,
+              :class_name  => "ManageIQ::Providers::NetworkManager",
+              :autosave    => true
+
+      delegate :network_ports,
+               :to        => :network_manager,
+               :allow_nil => true
     end
   end
 end
