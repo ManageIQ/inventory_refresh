@@ -2,8 +2,6 @@ require_relative '../models/manageiq/providers/inventory/persister.rb'
 
 class TestPersister < ManageIQ::Providers::Inventory::Persister
   def initialize_inventory_collections
-    ######### Cloud ##########
-    # Top level models with direct references for Cloud
     %i(vms
        miq_templates).each do |name|
 
@@ -17,75 +15,17 @@ class TestPersister < ManageIQ::Providers::Inventory::Persister
     add_key_pairs
     add_flavors
 
-    # Child models with references in the Parent InventoryCollections for Cloud
     %i(
       hardwares
       networks
       disks
-      orchestration_stacks
-    ).each do |name|
+      orchestration_stacks).each do |name|
 
       add_collection(cloud, name)
     end
 
-    # # Child models with references in the Parent InventoryCollections for Cloud
-    # %i(availability_zones
-    #    hardwares
-    #    networks
-    #    disks
-    #    vm_and_template_labels
-    #    orchestration_stacks
-    #    orchestration_templates
-    #    orchestration_stacks_outputs
-    #    orchestration_stacks_parameters).each do |name|
-    #
-    #   add_collection(cloud, name)
-    # end
-
     add_orchestration_stacks_resources
     add_network_ports
-
-    # ######### Network ################
-    # # Top level models with direct references for Network
-    # %i(cloud_networks
-    #    cloud_subnets
-    #    security_groups
-    #    load_balancers).each do |name|
-    #
-    #   add_collection(network, name) do |builder|
-    #     builder.add_properties(:parent => manager.network_manager)
-    #   end
-    # end
-    #
-    # add_network_ports
-    #
-    # add_floating_ips
-    #
-    # # Child models with references in the Parent InventoryCollections for Network
-    # %i(firewall_rules
-    #    cloud_subnet_network_ports
-    #    load_balancer_pools
-    #    load_balancer_pool_members
-    #    load_balancer_pool_member_pools
-    #    load_balancer_listeners
-    #    load_balancer_listener_pools
-    #    load_balancer_health_checks
-    #    load_balancer_health_check_members).each do |name|
-    #
-    #   add_collection(network, name) do |builder|
-    #     builder.add_properties(:parent => manager.network_manager)
-    #   end
-    # end
-    #
-    # # Model we take just from a DB, there is no flavors API
-    # add_flavors
-    #
-    # ######## Custom processing of Ancestry ##########
-    # %i(vm_and_miq_template_ancestry
-    #    orchestration_stack_ancestry).each do |name|
-    #
-    #   add_collection(cloud, name, {}, {:without_model_class => true})
-    # end
   end
 
   private
@@ -118,16 +58,6 @@ class TestPersister < ManageIQ::Providers::Inventory::Persister
         :manager_uuids  => references(:vms) + references(:network_ports) + references(:load_balancers),
         :parent         => manager.network_manager,
         :secondary_refs => {:by_device => [:device], :by_device_and_name => %i(device name)}
-      )
-    end
-  end
-
-  # Network InventoryCollection
-  def add_floating_ips
-    add_collection(network, :floating_ips) do |builder|
-      builder.add_properties(
-        :manager_uuids => references(:floating_ips) + references(:load_balancers),
-        :parent        => manager.network_manager
       )
     end
   end
