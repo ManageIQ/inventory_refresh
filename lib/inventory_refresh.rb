@@ -8,13 +8,3 @@ require "inventory_refresh/save_inventory"
 require "inventory_refresh/target"
 require "inventory_refresh/target_collection"
 require "inventory_refresh/version"
-
-module InventoryRefresh
-  class << self
-    attr_accessor :log
-  end
-
-  def self.log
-    @log ||= NullLogger.new
-  end
-end

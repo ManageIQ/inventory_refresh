@@ -1,8 +1,13 @@
-require "forwardable"
-
 module InventoryRefresh
+  attr_writer :logger
+
+  def self.logger
+    @logger ||= NullLogger.new
+  end
+
   module Logging
-    extend Forwardable
-    delegate :log => :InventoryRefresh
+    def logger
+      InventoryRefresh.logger
+    end
   end
 end

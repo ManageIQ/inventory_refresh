@@ -17,21 +17,21 @@ module InventoryRefresh::SaveCollection
 
         layers = InventoryRefresh::Graph::TopologicalSort.new(graph).topological_sort
 
-        log.debug("Saving manager #{ems.name}...")
+        logger.debug("Saving manager #{ems.name}...")
 
         sorted_graph_log = "Topological sorting of manager #{ems.name} resulted in these layers processable in parallel:\n"
         sorted_graph_log += graph.to_graphviz(:layers => layers)
-        log.debug(sorted_graph_log)
+        logger.debug(sorted_graph_log)
 
         layers.each_with_index do |layer, index|
-          log.debug("Saving manager #{ems.name} | Layer #{index}")
+          logger.debug("Saving manager #{ems.name} | Layer #{index}")
           layer.each do |inventory_collection|
             save_inventory_object_inventory(ems, inventory_collection) unless inventory_collection.saved?
           end
-          log.debug("Saved manager #{ems.name} | Layer #{index}")
+          logger.debug("Saved manager #{ems.name} | Layer #{index}")
         end
 
-        log.debug("Saving manager #{ems.name}...Complete")
+        logger.debug("Saving manager #{ems.name}...Complete")
       end
     end
   end

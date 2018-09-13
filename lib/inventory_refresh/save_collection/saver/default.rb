@@ -43,8 +43,8 @@ module InventoryRefresh::SaveCollection
         if unique_db_indexes.include?(index) # Include on Set is O(1)
           # We have a duplicate in the DB, destroy it. A find_each method does automatically .order(:id => :asc)
           # so we always keep the oldest record in the case of duplicates.
-          log.warn("A duplicate record was detected and destroyed, inventory_collection: "\
-                   "'#{inventory_collection}', record: '#{record}', duplicate_index: '#{index}'")
+          logger.warn("A duplicate record was detected and destroyed, inventory_collection: "\
+                      "'#{inventory_collection}', record: '#{record}', duplicate_index: '#{index}'")
           record.destroy
           return false
         else

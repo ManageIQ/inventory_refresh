@@ -20,7 +20,7 @@ module InventoryRefresh::SaveCollection
       # @param on_conflict [Symbol, NilClass] defines behavior on conflict with unique index constraint, allowed values
       #        are :do_update, :do_nothing, nil
       def build_insert_query(all_attribute_keys, hashes, on_conflict: nil, mode:, column_name: nil)
-        log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...")
+        logger.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...")
 
         # Cache the connection for the batch
         connection = get_connection
@@ -33,7 +33,7 @@ module InventoryRefresh::SaveCollection
         insert_query += insert_query_on_conflict_behavior(all_attribute_keys, on_conflict, mode, ignore_cols, column_name)
         insert_query += insert_query_returning
 
-        log.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
+        logger.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...Complete")
 
         insert_query
       end
