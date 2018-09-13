@@ -61,7 +61,7 @@ describe ManageIQ::Providers::Inventory::Persister do
 
   it "checks that we recognize first argument vs passed kwargs" do
     # This passes nicely
-    lazy_vm = persister.vms.lazy_find({:name => "name"}, :ref => :by_name)
+    lazy_vm = persister.vms.lazy_find({:name => "name"}, {:ref => :by_name})
     expect(lazy_vm.reference.full_reference).to eq(:name => "name")
 
     # TODO(lsmola) But this fails, since it takes the whole hash as 1st arg, it should correctly raise invalid format
@@ -146,7 +146,7 @@ describe ManageIQ::Providers::Inventory::Persister do
 
   it "raises exception unless only primary index is used in nested lazy_find when building" do
     name = vm_data(1)[:name]
-    vm_lazy = persister.vms.lazy_find({:name => name}, :ref => :by_name)
+    vm_lazy = persister.vms.lazy_find({:name => name}, {:ref => :by_name})
 
     persister.vms.build(vm_data(1))
 
@@ -159,7 +159,7 @@ describe ManageIQ::Providers::Inventory::Persister do
 
   it "raises exception unless only primary index is used in deep nested lazy_find when building" do
     name = vm_data(1)[:name]
-    vm_lazy = persister.vms.lazy_find({:name => name}, :ref => :by_name)
+    vm_lazy = persister.vms.lazy_find({:name => name}, {:ref => :by_name})
     hardware_lazy = persister.hardwares.lazy_find(:vm_or_template => vm_lazy)
 
     persister.vms.build(vm_data(1))

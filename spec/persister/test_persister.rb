@@ -19,11 +19,11 @@ class TestPersister < ManageIQ::Providers::Inventory::Persister
 
     # Child models with references in the Parent InventoryCollections for Cloud
     %i(
-       hardwares
-       networks
-       disks
-       orchestration_stacks
-       ).each do |name|
+      hardwares
+      networks
+      disks
+      orchestration_stacks
+    ).each do |name|
 
       add_collection(cloud, name)
     end

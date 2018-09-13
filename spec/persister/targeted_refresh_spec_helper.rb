@@ -16,18 +16,18 @@ module TargetedRefreshSpecHelper
 
   def base_inventory_counts
     {
-      :auth_key_pair                 => 0,
-      :disk                          => 0,
-      :ext_management_system         => expected_ext_management_systems_count,
-      :flavor                        => 0,
-      :hardware                      => 0,
-      :miq_template                  => 0,
-      :network                       => 0,
-      :network_port                  => 0,
-      :orchestration_stack           => 0,
-      :orchestration_stack_resource  => 0,
-      :vm                            => 0,
-      :vm_or_template                => 0
+      :auth_key_pair                => 0,
+      :disk                         => 0,
+      :ext_management_system        => expected_ext_management_systems_count,
+      :flavor                       => 0,
+      :hardware                     => 0,
+      :miq_template                 => 0,
+      :network                      => 0,
+      :network_port                 => 0,
+      :orchestration_stack          => 0,
+      :orchestration_stack_resource => 0,
+      :vm                           => 0,
+      :vm_or_template               => 0
     }
   end
 
@@ -60,18 +60,18 @@ module TargetedRefreshSpecHelper
 
   def assert_table_counts(expected_table_counts)
     actual = {
-      :auth_key_pair              => AuthKeyPair.count,
-      :ext_management_system         => ExtManagementSystem.count,
-      :flavor                        => Flavor.count,
-      :vm_or_template                => VmOrTemplate.count,
-      :vm                            => Vm.count,
-      :miq_template                  => MiqTemplate.count,
-      :disk                          => Disk.count,
-      :hardware                      => Hardware.count,
-      :network                       => Network.count,
-      :orchestration_stack           => OrchestrationStack.count,
-      :orchestration_stack_resource  => OrchestrationStackResource.count,
-      :network_port                  => NetworkPort.count,
+      :auth_key_pair                => AuthKeyPair.count,
+      :ext_management_system        => ExtManagementSystem.count,
+      :flavor                       => Flavor.count,
+      :vm_or_template               => VmOrTemplate.count,
+      :vm                           => Vm.count,
+      :miq_template                 => MiqTemplate.count,
+      :disk                         => Disk.count,
+      :hardware                     => Hardware.count,
+      :network                      => Network.count,
+      :orchestration_stack          => OrchestrationStack.count,
+      :orchestration_stack_resource => OrchestrationStackResource.count,
+      :network_port                 => NetworkPort.count,
     }
     expect(actual).to eq expected_table_counts
   end
