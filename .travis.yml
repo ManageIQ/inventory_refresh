@@ -8,5 +8,14 @@ addons:
   postgresql: '9.5'
 before_install:
 - gem install bundler -v 1.16.4
-- source ${TRAVIS_BUILD_DIR}/tools/ci/create_db_user.sh
-before_script: bundle exec rake spec:setup
+- psql -c "CREATE USER root SUPERUSER PASSWORD 'smartvm';" -U postgres
+before_script:
+# Code Climate
+- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+- chmod +x ./cc-test-reporter
+- "./cc-test-reporter before-build"
+# inventory_refresh
+- bundle exec rake spec:setup
+after_script:
+# Code Climate
+- "./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT"

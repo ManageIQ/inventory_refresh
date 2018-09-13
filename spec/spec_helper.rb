@@ -1,3 +1,8 @@
+if ENV['CI']
+  require 'simplecov'
+  SimpleCov.start
+end
+
 require "bundler/setup"
 require "inventory_refresh"
 require "active_record"
@@ -12,16 +17,15 @@ RSpec.configure do |config|
 end
 
 Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
-
 $LOAD_PATH << File.join(__dir__, "models")
-Dir.glob(File.join(__dir__, "models/**/*.rb")) do |f|
-  require f
-end
+Dir[File.expand_path("models/**/*.rb", __dir__)].each { |f| require f }
 
-ActiveRecord::Base.establish_connection :adapter => "postgresql",
+ActiveRecord::Base.establish_connection(
+  :adapter      => "postgresql",
   :encoding     => "utf8",
   :username     => "root",
   :pool         => 5,
   :wait_timeout => 5,
   :min_messages => "warning",
   :database     => "inventory_refresh_dummy_test"
+)

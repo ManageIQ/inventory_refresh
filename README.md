@@ -1,8 +1,14 @@
 # InventoryRefresh
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/inventory_refresh`. To experiment with that code, run `bin/console` for an interactive prompt.
+[![Gem Version](https://badge.fury.io/rb/inventory_refresh.svg)](http://badge.fury.io/rb/inventory_refresh)
+[![Build Status](https://travis-ci.org/ManageIQ/inventory_refresh.svg)](https://travis-ci.org/ManageIQ/inventory_refresh)
+[![Code Climate](https://codeclimate.com/github/ManageIQ/inventory_refresh.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh)
+[![Test Coverage](https://codeclimate.com/github/ManageIQ/inventory_refresh/badges/coverage.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh/coverage)
+[![Security](https://hakiri.io/github/ManageIQ/inventory_refresh/master.svg)](https://hakiri.io/github/ManageIQ/inventory_refresh/master)
 
-TODO: Delete this and the text above, and describe your gem
+[![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ManageIQ/manageiq/providers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+Topological Inventory Persister
 
 ## Installation
 
@@ -33,3 +39,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/inventory_refresh.
+
+## License
+
+The gem is available as open source under the terms of the [Apache License 2.0](LICENSE).
