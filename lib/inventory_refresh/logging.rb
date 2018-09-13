@@ -1,5 +1,7 @@
 module InventoryRefresh
-  attr_writer :logger
+  class << self
+    attr_writer :logger
+  end
 
   def self.logger
     @logger ||= NullLogger.new
