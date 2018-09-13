@@ -3,9 +3,12 @@ sudo: false
 language: ruby
 cache: bundler
 rvm:
-  - 2.4.2
+- 2.4.2
 addons:
   postgresql: '9.5'
+env:
+  global:
+  - CC_TEST_REPORTER_ID=1ef1a3a3d007395b11083d634a6fdac1e3d979b6428c39d2cd8d58556cdd68f7
 before_install:
 - gem install bundler -v 1.16.4
 - psql -c "CREATE USER root SUPERUSER PASSWORD 'smartvm';" -U postgres
