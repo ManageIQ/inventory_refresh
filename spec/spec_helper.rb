@@ -20,12 +20,6 @@ Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
 $LOAD_PATH << File.join(__dir__, "models")
 Dir[File.expand_path("models/**/*.rb", __dir__)].each { |f| require f }
 
-ActiveRecord::Base.establish_connection(
-  :adapter      => "postgresql",
-  :encoding     => "utf8",
-  :username     => "root",
-  :pool         => 5,
-  :wait_timeout => 5,
-  :min_messages => "warning",
-  :database     => "inventory_refresh_dummy_test"
-)
+require 'yaml'
+connection_spec = YAML.load_file(File.join(__dir__, %w(.. config database.yml)))
+ActiveRecord::Base.establish_connection(connection_spec["test"])
