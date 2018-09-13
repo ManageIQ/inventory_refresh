@@ -45,14 +45,14 @@ module InventoryRefresh
           max_depth -= 1
           if max_depth <= 0
             message = "Max depth reached while doing topological sort, your graph probably contains a cycle"
-            #$log.error("#{message}:\n#{graph.to_graphviz}")
+            #logger.error("#{message}:\n#{graph.to_graphviz}")
             raise "#{message} (see log)"
           end
 
           set, nodes = nodes.partition { |v| edges.select { |e| e.second == v }.all? { |e| sets.flatten.include?(e.first) } }
           if set.blank?
             message = "Blank dependency set while doing topological sort, your graph probably contains a cycle"
-            #$log.error("#{message}:\n#{graph.to_graphviz}")
+            #logger.error("#{message}:\n#{graph.to_graphviz}")
             raise "#{message} (see log)"
           end
 

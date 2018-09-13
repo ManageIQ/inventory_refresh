@@ -54,7 +54,7 @@ module InventoryRefresh::SaveCollection
           connection.quote(value)
         end
       rescue TypeError => e
-        log.error("Can't quote value: #{value}, of :#{name} and #{inventory_collection}")
+        logger.error("Can't quote value: #{value}, of :#{name} and #{inventory_collection}")
         raise e
       end
 

@@ -14,16 +14,16 @@ module InventoryRefresh::SaveCollection
       # @param ems [ExtManagementSystem] manger owning the InventoryCollection object
       # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we want to save
       def save_inventory_object_inventory(ems, inventory_collection)
-        log.debug("Saving collection #{inventory_collection} of size #{inventory_collection.size} to"\
-                  " the database, for the manager: '#{ems.name}'...")
+        logger.debug("Saving collection #{inventory_collection} of size #{inventory_collection.size} to"\
+                     " the database, for the manager: '#{ems.name}'...")
 
         if inventory_collection.custom_save_block.present?
-          log.debug("Saving collection #{inventory_collection} using a custom save block")
+          logger.debug("Saving collection #{inventory_collection} using a custom save block")
           inventory_collection.custom_save_block.call(ems, inventory_collection)
         else
           save_inventory(inventory_collection)
         end
-        log.debug("Saving collection #{inventory_collection}, for the manager: '#{ems.name}'...Complete")
+        logger.debug("Saving collection #{inventory_collection}, for the manager: '#{ems.name}'...Complete")
         inventory_collection.saved = true
       end
 
