@@ -18,24 +18,18 @@ namespace :spec do
   desc "Setup test database"
   task :setup => [:db_drop, :db_create, :db_load_schema]
 
-  def pg_opts
-    {
-      :adapter      => "postgresql",
-      :encoding     => "utf8",
-      :username     => "root",
-      :pool         => 5,
-      :wait_timeout => 5,
-      :min_messages => "warning",
-    }
+  def connection_spec
+    require 'yaml'
+    @connection_spec ||= YAML.load_file(File.join(__dir__, %w(config database.yml)))
   end
 
   def test_database_name
-    "inventory_refresh_dummy_test"
+    connection_spec["test"]["database"]
   end
 
   def with_connection(database_name)
     require "active_record"
-    pool = ActiveRecord::Base.establish_connection pg_opts.merge(:database => database_name)
+    pool = ActiveRecord::Base.establish_connection(connection_spec["test"].merge("database" => database_name))
     yield ActiveRecord::Base.connection
   ensure
     pool&.disconnect!
