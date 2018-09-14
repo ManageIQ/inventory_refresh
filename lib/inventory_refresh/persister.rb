@@ -25,7 +25,7 @@ module InventoryRefresh
     #         - @see make_builder_settings()
     #
     # @example
-    #   add_collection(ManageIQ::Providers::Inventory::Persister::Builder::CloudManager, :vms) do |builder|
+    #   add_collection(:vms, ManageIQ::Providers::Inventory::Persister::Builder::CloudManager) do |builder|
     #     builder.add_properties(
     #       :strategy => :local_db_cache_all,
     #     )
@@ -33,7 +33,7 @@ module InventoryRefresh
     #
     # @see documentation https://github.com/ManageIQ/guides/tree/master/providers/persister/inventory_collections.md
     #
-    def add_collection(builder_class, collection_name, extra_properties = {}, settings = {}, &block)
+    def add_collection(collection_name, builder_class = inventory_collection_builder, extra_properties = {}, settings = {}, &block)
       builder = builder_class.prepare_data(collection_name,
                                            self.class,
                                            builder_settings(settings),
@@ -41,7 +41,7 @@ module InventoryRefresh
 
       builder.add_properties(extra_properties) if extra_properties.present?
 
-      builder.add_properties({:manager_uuids => target.references(collection_name)}, :if_missing) if targeted? && target.present?
+      builder.add_properties({:manager_uuids => target&.references(collection_name) || []}, :if_missing) if targeted?
 
       builder.evaluate_lambdas!(self)
 
@@ -80,14 +80,14 @@ module InventoryRefresh
       end
     end
 
+    def inventory_collection_builder
+      ::InventoryRefresh::InventoryCollection::Builder
+    end
+
     protected
 
     def initialize_inventory_collections
       # can be implemented in a subclass
-    end
-
-    def base_builder
-      ::InventoryRefresh::InventoryCollection::Builder
     end
 
     # @param extra_settings [Hash]
@@ -99,7 +99,7 @@ module InventoryRefresh
     #     - doesn't try to derive model class automatically
     #     - @see method ManageIQ::Providers::Inventory::Persister::Builder.auto_model_class
     def builder_settings(extra_settings = {})
-      opts = base_builder.default_options
+      opts = inventory_collection_builder.default_options
 
       opts[:shared_properties] = shared_options
       opts[:auto_inventory_attributes] = true
