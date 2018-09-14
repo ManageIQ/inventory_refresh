@@ -1,3 +1,4 @@
+require "inventory_refresh/inventory_collection/builder"
 require "inventory_refresh/inventory_collection/data_storage"
 require "inventory_refresh/inventory_collection/index/proxy"
 require "inventory_refresh/inventory_collection/reference"
