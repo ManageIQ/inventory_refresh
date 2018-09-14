@@ -15,11 +15,10 @@ class TestPersister < ManageIQ::Providers::Inventory::Persister
     add_key_pairs
     add_flavors
 
-    %i(
-      hardwares
-      networks
-      disks
-      orchestration_stacks).each do |name|
+    %i(hardwares
+       networks
+       disks
+       orchestration_stacks).each do |name|
 
       add_collection(cloud, name)
     end

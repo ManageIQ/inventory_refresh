@@ -82,12 +82,7 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       # Assert all references are loaded at once
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(
-          [
-            "vm_ems_ref_1__public",
-            "vm_ems_ref_2__public"
-          ]
-        )
+        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
       )
 
       expect(lazy_find_network1.load).to eq "host_10_10_10_1.com"
@@ -108,29 +103,15 @@ describe ManageIQ::Providers::Inventory::Persister do
       network1 = persister.networks.lazy_find(:hardware => lazy_find_hardware1, :description => "public").load
       # Assert all references are one by one
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(
-          [
-            "vm_ems_ref_1__public",
-          ]
-        )
+        match_array(%w(vm_ems_ref_1__public))
       )
       network2 = persister.networks.find(:hardware => lazy_find_hardware2, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(
-          [
-            "vm_ems_ref_1__public",
-            "vm_ems_ref_2__public"
-          ]
-        )
+        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
       )
       network60 = persister.networks.find(:hardware => lazy_find_hardware60, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(
-          [
-            "vm_ems_ref_1__public",
-            "vm_ems_ref_2__public"
-          ]
-        )
+        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
       )
 
       # TODO(lsmola) known weakness, manager_uuid is wrong, but index is correct. So this doesn't affect a functionality
@@ -209,11 +190,11 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2",
-            "stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1",
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
+            stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
+          )
         )
       )
 
@@ -228,11 +209,11 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2",
-            "stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1"
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
+            stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
+          )
         )
       )
 
@@ -264,9 +245,9 @@ describe ManageIQ::Providers::Inventory::Persister do
       # Assert all references are one by one
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+          )
         )
       )
 
@@ -280,10 +261,10 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2"
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
+          )
         )
       )
 
@@ -297,10 +278,10 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2"
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
+          )
         )
       )
 
@@ -315,11 +296,11 @@ describe ManageIQ::Providers::Inventory::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          [
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1",
-            "stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2",
-            "stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1",
-          ]
+          %w(
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
+            stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
+            stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
+          )
         )
       )
 
@@ -338,22 +319,14 @@ describe ManageIQ::Providers::Inventory::Persister do
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_name].send(:index).keys).to(
-        match_array(
-          [
-            "vm_name_1",
-          ]
-        )
+        match_array(%w(vm_name_1))
       )
 
       vm1 = persister.vms.find({:name => vm_data(1)[:name]}, {:ref => :by_name})
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_name].send(:index).keys).to(
-        match_array(
-          [
-            "vm_name_1",
-          ]
-        )
+        match_array(%w(vm_name_1))
       )
     end
 
@@ -362,22 +335,14 @@ describe ManageIQ::Providers::Inventory::Persister do
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_uid_ems_and_name].send(:index).keys).to(
-        match_array(
-          [
-            "vm_uid_ems_1__vm_name_1",
-          ]
-        )
+        match_array(%w(vm_uid_ems_1__vm_name_1))
       )
 
       vm1 = persister.vms.find({:uid_ems => vm_data(1)[:uid_ems], :name => vm_data(1)[:name]}, {:ref => :by_uid_ems_and_name})
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_uid_ems_and_name].send(:index).keys).to(
-        match_array(
-          [
-            "vm_uid_ems_1__vm_name_1",
-          ]
-        )
+        match_array(%w(vm_uid_ems_1__vm_name_1))
       )
     end
   end

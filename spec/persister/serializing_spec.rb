@@ -58,8 +58,8 @@ describe ManageIQ::Providers::Inventory::Persister do
     FactoryGirl.create(:vm, vm_data(20))
     FactoryGirl.create(:vm, vm_data(21))
 
-    @image_data_1          = image_data(1)
-    @image_hardware_data_1 = image_hardware_data(1).merge(
+    @image_data1          = image_data(1)
+    @image_hardware_data1 = image_hardware_data(1).merge(
       :guest_os       => "linux_generic_1",
       :vm_or_template => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
       :model          => "test1",
@@ -92,7 +92,7 @@ describe ManageIQ::Providers::Inventory::Persister do
     lazy_find_vm         = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
     lazy_find_hardware   = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
 
-    @vm_data_1 = vm_data(1).merge(
+    @vm_data1 = vm_data(1).merge(
       :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
       :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
       :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
@@ -103,7 +103,7 @@ describe ManageIQ::Providers::Inventory::Persister do
       ),
     )
 
-    @hardware_data_1 = hardware_data(1).merge(
+    @hardware_data1 = hardware_data(1).merge(
       :guest_os           => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image}, {:key => :guest_os}),
       :model              => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image_sec},
                                                            {:key => :model, :transform_nested_lazy_finds => true}),
@@ -113,20 +113,20 @@ describe ManageIQ::Providers::Inventory::Persister do
       :vm_or_template     => persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
     )
 
-    @public_network_data_1 = public_network_data(1).merge(
+    @public_network_data1 = public_network_data(1).merge(
       :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm),
     )
 
-    @disk_data_1 = disk_data(1).merge(
+    @disk_data1 = disk_data(1).merge(
       :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm),
     )
 
-    persister.miq_templates.build(@image_data_1)
-    persister.hardwares.build(@image_hardware_data_1)
-    persister.vms.build(@vm_data_1)
-    persister.hardwares.build(@hardware_data_1)
-    persister.networks.build(@public_network_data_1)
-    persister.disks.build(@disk_data_1)
+    persister.miq_templates.build(@image_data1)
+    persister.hardwares.build(@image_hardware_data1)
+    persister.vms.build(@vm_data1)
+    persister.hardwares.build(@hardware_data1)
+    persister.networks.build(@public_network_data1)
+    persister.disks.build(@disk_data1)
 
     # Try also data with relations without lazy link
     vm       = persister.vms.build(vm_data(2))

@@ -13,7 +13,6 @@ module ManageIQ
               :foreign_key => :parent_ems_id,
               :class_name  => "NetworkManager"
 
-
       has_one :network_manager,
               :foreign_key => :parent_ems_id,
               :class_name  => "ManageIQ::Providers::NetworkManager",

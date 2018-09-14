@@ -77,59 +77,59 @@ describe ManageIQ::Providers::Inventory::Persister do
 
   it "checks passing more keys to index passes just fine" do
     # There is not need to force exact match as long as all keys of the index are passed
-    vm_lazy_1 = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, {:ref => :by_uid_ems_and_name})
+    vm_lazy1 = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, {:ref => :by_uid_ems_and_name})
 
-    expect(vm_lazy_1.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
-    expect(vm_lazy_1.ref).to eq(:by_uid_ems_and_name)
-    expect(vm_lazy_1.to_s).to eq("uid_ems__name")
+    expect(vm_lazy1.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy1.ref).to eq(:by_uid_ems_and_name)
+    expect(vm_lazy1.to_s).to eq("uid_ems__name")
 
-    vm_lazy_2 = persister.vms.lazy_find(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
-    expect(vm_lazy_2.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
-    expect(vm_lazy_2.ref).to eq(:manager_ref)
-    expect(vm_lazy_2.to_s).to eq("ems_ref")
+    vm_lazy2 = persister.vms.lazy_find(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy2.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy2.ref).to eq(:manager_ref)
+    expect(vm_lazy2.to_s).to eq("ems_ref")
   end
 
   it "checks passing composite index doesn't depend on order" do
     lazy_find_vm       = persister.vms.lazy_find(:ems_ref => "ems_ref_1")
     lazy_find_hardware = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
 
-    lazy_find_network_1 = persister.networks.lazy_find(:hardware => lazy_find_hardware, :description => "public")
-    lazy_find_network_2 = persister.networks.lazy_find(:description => "public", :hardware => lazy_find_hardware)
+    lazy_find_network1 = persister.networks.lazy_find(:hardware => lazy_find_hardware, :description => "public")
+    lazy_find_network2 = persister.networks.lazy_find(:description => "public", :hardware => lazy_find_hardware)
 
-    expect(lazy_find_network_1.to_s).to eq("ems_ref_1__public")
-    expect(lazy_find_network_1.to_s).to eq(lazy_find_network_2.to_s)
+    expect(lazy_find_network1.to_s).to eq("ems_ref_1__public")
+    expect(lazy_find_network1.to_s).to eq(lazy_find_network2.to_s)
   end
 
   it "checks non composite index is allowed as non hash" do
-    ems_ref   = "vm_ems_ref_1"
-    vm_lazy_1 = persister.vms.lazy_find(:ems_ref => ems_ref)
-    vm_lazy_2 = persister.vms.lazy_find(ems_ref)
+    ems_ref = "vm_ems_ref_1"
+    vm_lazy1 = persister.vms.lazy_find(:ems_ref => ems_ref)
+    vm_lazy2 = persister.vms.lazy_find(ems_ref)
 
     # Check the stringified reference matches
-    expect(vm_lazy_1.to_s).to eq ems_ref
-    expect(vm_lazy_1.stringified_reference).to eq ems_ref
-    expect(vm_lazy_1.reference.stringified_reference).to eq ems_ref
-    expect(vm_lazy_1.to_s).to eq vm_lazy_2.to_s
+    expect(vm_lazy1.to_s).to eq ems_ref
+    expect(vm_lazy1.stringified_reference).to eq ems_ref
+    expect(vm_lazy1.reference.stringified_reference).to eq ems_ref
+    expect(vm_lazy1.to_s).to eq vm_lazy2.to_s
 
     # Check the full reference matches
-    expect(vm_lazy_1.reference.full_reference).to eq(:ems_ref => ems_ref)
-    expect(vm_lazy_1.reference.full_reference).to eq(vm_lazy_2.reference.full_reference)
+    expect(vm_lazy1.reference.full_reference).to eq(:ems_ref => ems_ref)
+    expect(vm_lazy1.reference.full_reference).to eq(vm_lazy2.reference.full_reference)
   end
 
   it "checks non composite relation index is allowed as non hash" do
     ems_ref = "vm_ems_ref_1"
     vm_lazy = persister.vms.lazy_find(:ems_ref => ems_ref)
 
-    hardware_lazy_1 = persister.hardwares.lazy_find(vm_lazy)
-    hardware_lazy_2 = persister.hardwares.lazy_find(:vm_or_template => vm_lazy)
+    hardware_lazy1 = persister.hardwares.lazy_find(vm_lazy)
+    hardware_lazy2 = persister.hardwares.lazy_find(:vm_or_template => vm_lazy)
 
     # Check the stringified reference matches
-    expect(hardware_lazy_1.to_s).to eq ems_ref
-    expect(hardware_lazy_1.to_s).to eq hardware_lazy_2.to_s
+    expect(hardware_lazy1.to_s).to eq ems_ref
+    expect(hardware_lazy1.to_s).to eq hardware_lazy2.to_s
 
     # Check the full reference matches
-    expect(hardware_lazy_1.reference.full_reference).to eq(:vm_or_template => vm_lazy)
-    expect(hardware_lazy_2.reference.full_reference).to eq hardware_lazy_2.reference.full_reference
+    expect(hardware_lazy1.reference.full_reference).to eq(:vm_or_template => vm_lazy)
+    expect(hardware_lazy2.reference.full_reference).to eq hardware_lazy2.reference.full_reference
   end
 
   it "checks build finds existing inventory object instead of duplicating" do
