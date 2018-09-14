@@ -9,19 +9,18 @@ describe ManageIQ::Providers::Inventory::Persister do
   end
 
   [{
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_counter",
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_counter",
-   }, {
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_timestamp",
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_timestamp",
-   },
-  ].each do |settings|
+    :upsert_only            => true,
+    :parallel_saving_column => "resource_counter",
+  }, {
+    :upsert_only            => false,
+    :parallel_saving_column => "resource_counter",
+  }, {
+    :upsert_only            => true,
+    :parallel_saving_column => "resource_timestamp",
+  }, {
+    :upsert_only            => false,
+    :parallel_saving_column => "resource_timestamp",
+  },].each do |settings|
     context "with settings #{settings}" do
       before(:each) do
         if settings[:upsert_only]
@@ -70,7 +69,7 @@ describe ManageIQ::Providers::Inventory::Persister do
         # Expect the second+ run with same version for each record doesn't change rails versions (the row should
         # not be updated)
         container_group_current_created_on = ContainerGroup.where(:dns_policy => "1").first.created_on
-        container_group_created_on         ||= container_group_current_created_on
+        container_group_created_on ||= container_group_current_created_on
         expect(container_group_created_on).to eq(container_group_current_created_on)
       end
 
@@ -150,7 +149,7 @@ describe ManageIQ::Providers::Inventory::Persister do
           # Expect the second+ run with same version for each record doesn't change rails versions (the row should
           # not be updated)
           container_group_current_created_on = ContainerGroup.where(:dns_policy => "1").first.created_on
-          container_group_created_on         ||= container_group_current_created_on
+          container_group_created_on ||= container_group_current_created_on
           expect(container_group_created_on).to eq(container_group_current_created_on)
 
           if i == 0
@@ -478,7 +477,7 @@ describe ManageIQ::Providers::Inventory::Persister do
               expect(container_group).to(
                 have_attributes(
                   :name                      => "container_group_#{expected_even_bigger_version}",
-                  :message                   => "#{expected_even_bigger_version}",
+                  :message                   => expected_even_bigger_version.to_s,
                   version_col(settings)      => expected_even_bigger_version,
                   versions_max_col(settings) => nil,
                   versions_col(settings)     => {},
@@ -491,7 +490,7 @@ describe ManageIQ::Providers::Inventory::Persister do
               expect(container_group).to(
                 have_attributes(
                   :name                      => "container_group_#{expected_version}",
-                  :message                   => "#{expected_version}",
+                  :message                   => expected_version.to_s,
                   version_col(settings)      => nil,
                   versions_max_col(settings) => expected_bigger_version,
                   :reason                    => expected_bigger_version.to_s,
@@ -585,7 +584,7 @@ describe ManageIQ::Providers::Inventory::Persister do
           end
 
           if i == 0
-            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => ["0", "1"]))
+            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
           else
             match_updated(persister)
           end
@@ -697,7 +696,7 @@ describe ManageIQ::Providers::Inventory::Persister do
         end
 
         match_created(persister)
-        match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => ["0", "1"]))
+        match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
         match_deleted(persister)
       end
 
