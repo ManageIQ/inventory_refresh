@@ -61,7 +61,7 @@ describe ManageIQ::Providers::Inventory::Persister do
       :location         => lazy_find_network2,
     )
 
-    vm_data60 = vm_data(60).merge(
+    vm_data60              = vm_data(60).merge(
       :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
       :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
       :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
@@ -80,8 +80,8 @@ describe ManageIQ::Providers::Inventory::Persister do
     persister.persist!
 
     # Delete the complement of what we've built
-    delete_complement_persister = create_persister
-    delete_complement_persister.vms.all_manager_uuids = all_vm_uuids
+    delete_complement_persister                                 = create_persister
+    delete_complement_persister.vms.all_manager_uuids           = all_vm_uuids
     delete_complement_persister.network_ports.all_manager_uuids = all_network_port_uuids
     delete_complement_persister.persist!
 
