@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
-require_relative '../persister/test_persister'
+require_relative '../persister/test_base_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
@@ -13,10 +13,10 @@ describe InventoryRefresh::SaveInventory do
   #
   # 1. Example, cycle is stack -> stack
   #
-  # edge Stack -> Stack is created by (:parent => @data[:orchestration_stacks].lazy_find(stack_ems_ref)) meaning Stack
+  # edge Stack -> Stack is created by (:parent => @persister.orchestration_stacks.lazy_find(stack_ems_ref)) meaning Stack
   #   depends on Stack through :parent attribute
   #
-  # edge Resource -> Stack is created by (:stack => @data[:orchestration_stacks].lazy_find(stack_ems_ref)) meaning
+  # edge Resource -> Stack is created by (:stack => @persister.orchestration_stacks.lazy_find(stack_ems_ref)) meaning
   #   Resource depends on Stack through :stack attribute
   #
   #              +-----------------------+                                  +-----------------------+
@@ -43,11 +43,11 @@ describe InventoryRefresh::SaveInventory do
   # 2. Example, cycle is stack -> resource -> stack
   #
   # edge Stack -> Resource is created by
-  #   (:parent => @data[:orchestration_stacks_resources].lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
+  #   (:parent => @persister.orchestration_stacks_resources.lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
   #   depends on Resource through :parent attribute. Due to the usage of :key => :stack, Stack actually depends on
   #   Resource that has :stack attribute saved.
   #
-  # edge Resource -> Stack is created by (:stack => @data[:orchestration_stacks].lazy_find(stack_ems_ref)) meaning
+  # edge Resource -> Stack is created by (:stack => @persister.orchestration_stacks.lazy_find(stack_ems_ref)) meaning
   #   Resource depends on Stack through :stack attribute
   #
   #  +-----------------------+                                  +-----------------------+
@@ -85,15 +85,15 @@ describe InventoryRefresh::SaveInventory do
   # 3. Example, cycle is network_port -> stack -> resource -> stack
   #
   # edge Stack -> Resource is created by
-  #   (:parent => @data[:orchestration_stacks_resources].lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
+  #   (:parent => @persister.orchestration_stacks_resources.lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
   #   depends on Resource through :parent attribute. Due to the usage of :key => :stack, Stack actually depends on
   #   Resource that has :stack attribute saved.
   #
-  # edge Resource -> Stack is created by (:stack => @data[:orchestration_stacks].lazy_find(stack_ems_ref)) meaning
+  # edge Resource -> Stack is created by (:stack => @persister.orchestration_stacks.lazy_find(stack_ems_ref)) meaning
   #   Resource depends on Stack through :stack attribute
   #
   # edge NetworkPort -> Stack is created by
-  #   (:device => @data[:orchestration_stacks].lazy_find(stack_ems_ref, :key => :parent)) meaning that NetworkPort
+  #   (:device => @persister.orchestration_stacks.lazy_find(stack_ems_ref, :key => :parent)) meaning that NetworkPort
   #   depends on Stack through :device polymorphic attribute. Due to the usage of :key => :parent, NetworkPort actually
   #   depends on Stack with :parent attribute saved.
   #
@@ -162,18 +162,18 @@ describe InventoryRefresh::SaveInventory do
   # 4. Example, cycle is network_port -> network_port -> stack -> resource -> stack
   #
   # edge Stack -> Resource is created by
-  #   (:parent => @data[:orchestration_stacks_resources].lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
+  #   (:parent => @persister.orchestration_stacks_resources.lazy_find(resource_ems_ref, :key => :stack)) meaning Stack
   #   depends on Resource through :parent attribute. Due to the usage of :key => :stack, Stack actually depends on
   #   Resource that has :stack attribute saved.
   #
-  # edge Resource -> Stack is created by (:stack => @data[:orchestration_stacks].lazy_find(stack_ems_ref)) meaning
+  # edge Resource -> Stack is created by (:stack => @persister.orchestration_stacks.lazy_find(stack_ems_ref)) meaning
   #   Resource depends on Stack through :stack attribute
   #
-  # edge NetworkPort -> NetworkPort is created by (:device => @data[:network_ports].lazy_find(network_port_ems_ref))
+  # edge NetworkPort -> NetworkPort is created by (:device => @persister.network_ports.lazy_find(network_port_ems_ref))
   #   meaning that NetworkPort depends on NetworkPort through :device polymorphic attribute
   #
   # edge NetworkPort -> Stack is created by
-  #   (:device => @data[:orchestration_stacks].lazy_find(stack_ems_ref, :key => :parent)) meaning that NetworkPort
+  #   (:device => @persister.orchestration_stacks.lazy_find(stack_ems_ref, :key => :parent)) meaning that NetworkPort
   #   depends on Stack through :device polymorphic attribute. Due to the usage of :key => :parent, NetworkPort actually
   #   depends on Stack with :parent attribute saved.
   #
@@ -242,9 +242,9 @@ describe InventoryRefresh::SaveInventory do
   # 5. Example, cycle is network_port -> network_port using key
   #
   # The edge NetworkPort -> NetworkPort is created by
-  #   :device => @data[:network_ports].lazy_find(network_port_ems_ref)
+  #   :device => @persister.network_ports.lazy_find(network_port_ems_ref)
   #   and
-  #   :device => @data[:network_ports].lazy_find(network_port_ems_ref, :key => :device)
+  #   :device => @persister.network_ports.lazy_find(network_port_ems_ref, :key => :device)
   #   which creates an unsolvable cycle, since NetworkPort depends on NetworkPort with :device attribute saved, through
   #   :device attribute
   #
@@ -276,7 +276,7 @@ describe InventoryRefresh::SaveInventory do
   #
   ######################################################################################################################
   #
-  let(:persister_class) { ::InventoryRefresh::Persister }
+  let(:persister_class) { ::TestBasePersister }
   # Test all settings for InventoryRefresh::SaveInventory
   [nil, :recursive].each do |strategy|
     context "with settings #{strategy}" do
@@ -370,7 +370,7 @@ describe InventoryRefresh::SaveInventory do
           @persister.network_ports.build(
             network_port_data(1).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_11")[:ems_ref],
-                                                                    :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
@@ -409,7 +409,7 @@ describe InventoryRefresh::SaveInventory do
             builder.add_properties(
               :model_class => NetworkPort,
               :parent      => @ems.network_manager,
-              )
+            )
           end
           initialize_inventory_collections(:reversed => true)
 
@@ -460,7 +460,7 @@ describe InventoryRefresh::SaveInventory do
             builder.add_properties(
               :model_class => NetworkPort,
               :parent      => @ems.network_manager,
-              )
+            )
           end
 
           @persister.network_ports.build(
@@ -490,13 +490,13 @@ describe InventoryRefresh::SaveInventory do
           #
           # It can happen, that one edge is transitive but other is not using the same relations:
           # So this is a transitive edge:
-          #  :device => @data[:orchestration_stacks].lazy_find(orchestration_stack_data("11_21")[:ems_ref],
-          #                                                   :key => :parent)
+          #  :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("11_21")[:ems_ref],
+          #                                                       :key => :parent)
           # And this is not:
-          #  :device => @data[:network_ports].lazy_find(network_port_data(4)[:ems_ref])
+          #  :device => @persister.network_ports.lazy_find(network_port_data(4)[:ems_ref])
           #
           # By correctly storing that :device is causing transitive edge only when pointing to
-          # @data[:orchestration_stacks] but not when pointing to @data[:network_ports], then we can transform the
+          # @persister.orchestration_stacks but not when pointing to @persister.network_ports, then we can transform the
           # edge correctly and this cycle is solvable.
           initialize_inventory_collections(:add_network_ports => true)
 
@@ -506,19 +506,19 @@ describe InventoryRefresh::SaveInventory do
           @persister.network_ports.build(
             network_port_data(1).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_11")[:ems_ref],
-                                                              :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
             network_port_data(2).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("11_21")[:ems_ref],
-                                                              :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
             network_port_data(3).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("12_22")[:ems_ref],
-                                                              :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
@@ -552,19 +552,19 @@ describe InventoryRefresh::SaveInventory do
           @persister.network_ports.build(
             network_port_data(1).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_11")[:ems_ref],
-                                                              :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
             network_port_data(2).merge(
               :device => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("11_21")[:ems_ref],
-                                                              :key => :parent)
+                                                                   :key => :parent)
             )
           )
           @persister.network_ports.build(
             network_port_data(3).merge(
               :device => @persister.orchestration_stacks_resources.lazy_find(orchestration_stack_data("12_22")[:ems_ref],
-                                                                        :key => :stack)
+                                                                             :key => :stack)
             )
           )
           @persister.network_ports.build(
@@ -826,7 +826,7 @@ describe InventoryRefresh::SaveInventory do
         builder.add_properties(
           :model_class => NetworkPort,
           :parent      => @ems.network_manager,
-          )
+        )
       end
     end
   end

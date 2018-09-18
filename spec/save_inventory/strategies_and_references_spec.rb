@@ -14,13 +14,15 @@ describe InventoryRefresh::SaveInventory do
   # Test all settings for InventoryRefresh::SaveInventory
   [nil, :recursive].each do |strategy|
     context "with settings #{strategy}" do
-      [:local_db_find_references, :local_db_cache_all].each do |db_strategy|
+      %i(local_db_find_references local_db_cache_all).each do |db_strategy|
         context "with db strategy #{db_strategy}" do
           before do
             @ems = FactoryGirl.create(:ems_cloud,
                                       :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
+
+            @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
           end
 
           before do
@@ -58,25 +60,25 @@ describe InventoryRefresh::SaveInventory do
             @vm1 = FactoryGirl.create(
               :vm_cloud,
               vm_data(1).merge(
-                :flavor           => @flavor_1,
-                :key_pairs        => [@key_pair1],
-                :location         => 'host_10_10_10_1.com',
+                :flavor    => @flavor_1,
+                :key_pairs => [@key_pair1],
+                :location  => 'host_10_10_10_1.com',
               )
             )
             @vm12 = FactoryGirl.create(
               :vm_cloud,
               vm_data(12).merge(
-                :flavor           => @flavor1,
-                :key_pairs        => [@key_pair1, @key_pair12],
-                :location         => 'host_10_10_10_12.com',
+                :flavor    => @flavor1,
+                :key_pairs => [@key_pair1, @key_pair12],
+                :location  => 'host_10_10_10_12.com',
               )
             )
             @vm2 = FactoryGirl.create(
               :vm_cloud,
               vm_data(2).merge(
-                :flavor           => @flavor2,
-                :key_pairs        => [@key_pair2],
-                :location         => 'host_10_10_10_2.com',
+                :flavor    => @flavor2,
+                :key_pairs => [@key_pair2],
+                :location  => 'host_10_10_10_2.com',
               )
             )
             @vm4 = FactoryGirl.create(
@@ -139,39 +141,34 @@ describe InventoryRefresh::SaveInventory do
           end
 
           it "tests that a key pointing to a relation is filled correctly when coming from db" do
-            vm_refs               = ["vm_ems_ref_3", "vm_ems_ref_4"]
-            network_port_refs     = ["network_port_ems_ref_1"]
+            vm_refs               = %w(vm_ems_ref_3 vm_ems_ref_4)
+            network_port_refs     = %w(network_port_ems_ref_1)
 
             # Setup InventoryCollections
-            @data                 = {}
-            @data[:network_ports] = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                :parent   => @ems.network_manager,
-                :arel     => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
-                :strategy => :local_db_find_missing_references
-              )
+
+            network_ports_init_data(
+              :parent   => @ems.network_manager,
+              :arel     => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
+              :strategy => :local_db_find_missing_references
             )
-            @data[:vms] = ::InventoryRefresh::InventoryCollection.new(
-              vms_init_data(
-                :arel     => @ems.vms.where(:ems_ref => vm_refs),
-                :strategy => :local_db_find_missing_references
-              )
+
+            vms_init_data(
+              :arel     => @ems.vms.where(:ems_ref => vm_refs),
+              :strategy => :local_db_find_missing_references
             )
-            @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-              hardwares_init_data(
-                :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-                :strategy => db_strategy
-              )
+            hardwares_init_data(
+              :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+              :strategy => db_strategy
             )
 
             # Parse data for InventoryCollections
             @network_port_data_1 = network_port_data(1).merge(
-              :device => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
+              :device => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
             )
 
             # Fill InventoryCollections with data
-            add_data_to_inventory_collection(@data[:network_ports],
-                                             @network_port_data_1)
+            add_data_to_persisters_collection(@persister, :network_ports,
+                                              @network_port_data_1)
 
             # Assert data before save
             @network_port1.device = nil
@@ -180,7 +177,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -189,32 +186,28 @@ describe InventoryRefresh::SaveInventory do
           end
 
           it "tests that a key pointing to a polymorphic relation is filled correctly when coming from db" do
-            network_port_refs        = ["network_port_ems_ref_1"]
+            network_port_refs = ["network_port_ems_ref_1"]
 
             # Setup InventoryCollections
-            @data                    = {}
-            @data[:network_ports]    = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                :parent   => @ems.network_manager,
-                :arel     => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
-                :strategy => :local_db_find_missing_references
-              )
+            network_ports_init_data(
+              :association => nil,
+              :parent      => @ems.network_manager,
+              :arel        => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
+              :strategy    => :local_db_find_missing_references
             )
-            @data[:db_network_ports] = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                :parent   => @ems.network_manager,
-                :strategy => db_strategy
-              )
+            db_network_ports_init_data(
+              :parent   => @ems.network_manager,
+              :strategy => db_strategy
             )
 
             # Parse data for InventoryCollections
             @network_port_data_1 = network_port_data(1).merge(
-              :device => @data[:db_network_ports].lazy_find(network_port_data(12)[:ems_ref], :key => :device)
+              :device => @persister.db_network_ports.lazy_find(network_port_data(12)[:ems_ref], :key => :device)
             )
 
             # Fill InventoryCollections with data
-            add_data_to_inventory_collection(@data[:network_ports],
-                                             @network_port_data_1)
+            add_data_to_persisters_collection(@persister, :network_ports,
+                                              @network_port_data_1)
 
             # Assert data before save
             @network_port1.device = nil
@@ -223,7 +216,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@network_port1.device).to eq nil
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
             # Assert saved data
             @network_port1.reload
@@ -232,91 +225,76 @@ describe InventoryRefresh::SaveInventory do
           end
 
           it "saves records correctly with complex interconnection" do
-            vm_refs                  = ["vm_ems_ref_3", "vm_ems_ref_4"]
-            network_port_refs        = ["network_port_ems_ref_1", "network_port_ems_ref_12"]
+            vm_refs                  = %w(vm_ems_ref_3 vm_ems_ref_4)
+            network_port_refs        = %w(network_port_ems_ref_1 network_port_ems_ref_12)
 
             # Setup InventoryCollections
-            @data                    = {}
-            @data[:miq_templates]    = ::InventoryRefresh::InventoryCollection.new(
-              miq_templates_init_data(
-                :strategy => db_strategy
-              )
+            miq_templates_init_data(
+              :strategy => db_strategy
             )
-            @data[:key_pairs] = ::InventoryRefresh::InventoryCollection.new(
-              key_pairs_init_data(
-                :strategy => db_strategy
-              )
+            key_pairs_init_data(
+              :strategy => db_strategy
             )
-            @data[:db_network_ports] = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                :parent   => @ems.network_manager,
-                :strategy => db_strategy
-              )
+            db_network_ports_init_data(
+              :parent   => @ems.network_manager,
+              :strategy => db_strategy
             )
-            @data[:db_vms] = ::InventoryRefresh::InventoryCollection.new(
-              vms_init_data(
-                :strategy => db_strategy
-              )
+            db_vms_init_data(
+              :strategy => db_strategy
             )
-            @data[:vms] = ::InventoryRefresh::InventoryCollection.new(
-              vms_init_data(
-                :arel     => @ems.vms.where(:ems_ref => vm_refs),
-                :strategy => :local_db_find_missing_references,
-              )
+            vms_init_data(
+              :arel     => @ems.vms.where(:ems_ref => vm_refs),
+              :strategy => :local_db_find_missing_references,
             )
-            @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-              hardwares_init_data(
-                :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-                :strategy => :local_db_find_missing_references
-              )
+            hardwares_init_data(
+              :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+              :strategy => :local_db_find_missing_references
             )
-            @data[:network_ports] = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                :parent   => @ems.network_manager,
-                :arel     => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
-                :strategy => :local_db_find_missing_references
-              )
+            network_ports_init_data(
+              :parent   => @ems.network_manager,
+              :arel     => @ems.network_manager.network_ports.where(:ems_ref => network_port_refs),
+              :strategy => :local_db_find_missing_references
             )
 
             # Parse data for InventoryCollections
             @network_port_data_1 = network_port_data(1).merge(
-              :name   => @data[:vms].lazy_find(vm_data(3)[:ems_ref], :key => :name),
-              :device => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+              :name   => @persister.vms.lazy_find(vm_data(3)[:ems_ref], :key => :name),
+              :device => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
             )
             @network_port_data_12 = network_port_data(12).merge(
-              :name   => @data[:vms].lazy_find(vm_data(4)[:ems_ref], :key => :name, :default => "default_name"),
-              :device => @data[:db_network_ports].lazy_find(network_port_data(2)[:ems_ref], :key => :device)
+              :name   => @persister.vms.lazy_find(vm_data(4)[:ems_ref], :key => :name, :default => "default_name"),
+              :device => @persister.db_network_ports.lazy_find(network_port_data(2)[:ems_ref], :key => :device)
             )
             @network_port_data_3 = network_port_data(3).merge(
-              :name   => @data[:vms].lazy_find(vm_data(1)[:ems_ref], :key => :name, :default => "default_name"),
-              :device => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
+              :name   => @persister.vms.lazy_find(vm_data(1)[:ems_ref], :key => :name, :default => "default_name"),
+              :device => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
             )
             @vm_data_3               = vm_data(3).merge(
               :key_pairs             => [
-                @data[:key_pairs].lazy_find(key_pair_data(2)[:name]),
-                @data[:key_pairs].lazy_find(key_pair_data(3)[:name])
+                @persister.key_pairs.lazy_find(key_pair_data(2)[:name]),
+                @persister.key_pairs.lazy_find(key_pair_data(3)[:name])
               ],
               :ext_management_system => @ems
             )
             @vm_data_31              = vm_data(31).merge(
-              :key_pairs             => @data[:db_vms].lazy_find(vm_data(1)[:ems_ref], :key => :key_pairs, :default => []),
+              :key_pairs             => @persister.db_vms.lazy_find(vm_data(1)[:ems_ref], :key => :key_pairs, :default => []),
               :ext_management_system => @ems
             )
             @hardware_data_3 = hardware_data(3).merge(
-              :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-              :vm_or_template => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+              :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+              :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
             )
 
             # Fill InventoryCollections with data
-            add_data_to_inventory_collection(@data[:network_ports],
-                                             @network_port_data_1,
-                                             @network_port_data_12,
-                                             @network_port_data_3)
-            add_data_to_inventory_collection(@data[:vms],
-                                             @vm_data_3,
-                                             @vm_data_31)
-            add_data_to_inventory_collection(@data[:hardwares],
-                                             @hardware_data_3)
+            add_data_to_persisters_collection(@persister, :network_ports,
+                                              @network_port_data_1,
+                                              @network_port_data_12,
+                                              @network_port_data_3)
+            add_data_to_persisters_collection(@persister, :vms,
+                                              @vm_data_3,
+                                              @vm_data_31)
+            add_data_to_persisters_collection(@persister, :hardwares,
+                                              @hardware_data_3)
             # Assert data before save
             expect(@network_port1.device).to eq @vm1
             expect(@network_port1.name).to eq "network_port_name_1"
@@ -327,7 +305,7 @@ describe InventoryRefresh::SaveInventory do
             expect(@vm4.ext_management_system).to eq @ems
 
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
             #### Assert saved data ####
             @vm3           = Vm.find_by(:ems_ref => vm_data(3)[:ems_ref])

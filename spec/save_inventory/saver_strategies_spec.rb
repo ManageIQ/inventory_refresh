@@ -25,6 +25,7 @@ describe InventoryRefresh::SaveInventory do
                                       :network_manager => FactoryGirl.create(:ems_network))
 
             allow(@ems.class).to receive(:ems_type).and_return(:mock)
+            @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
           end
 
           before do
@@ -59,38 +60,38 @@ describe InventoryRefresh::SaveInventory do
             @key_pair2  = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(2))
             @key_pair3  = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(3))
 
-            @vm1  = FactoryGirl.create(
+            @vm1 = FactoryGirl.create(
               :vm_cloud,
               vm_data(1).merge(
-                :flavor           => @flavor_1,
-                :key_pairs        => [@key_pair1],
-                :location         => 'host_10_10_10_1.com',
+                :flavor    => @flavor_1,
+                :key_pairs => [@key_pair1],
+                :location  => 'host_10_10_10_1.com',
               )
             )
             @vm12 = FactoryGirl.create(
               :vm_cloud,
               vm_data(12).merge(
-                :flavor           => @flavor1,
-                :key_pairs        => [@key_pair1, @key_pair12],
-                :location         => 'host_10_10_10_12.com',
+                :flavor    => @flavor1,
+                :key_pairs => [@key_pair1, @key_pair12],
+                :location  => 'host_10_10_10_12.com',
               )
             )
-            @vm2  = FactoryGirl.create(
+            @vm2 = FactoryGirl.create(
               :vm_cloud,
               vm_data(2).merge(
-                :flavor           => @flavor2,
-                :key_pairs        => [@key_pair2],
-                :location         => 'host_10_10_10_2.com',
+                :flavor    => @flavor2,
+                :key_pairs => [@key_pair2],
+                :location  => 'host_10_10_10_2.com',
               )
             )
-            @vm4  = FactoryGirl.create(
+            @vm4 = FactoryGirl.create(
               :vm_cloud,
               vm_data(4).merge(
                 :location => 'default_value_unknown',
               )
             )
 
-            @hardware1  = FactoryGirl.create(
+            @hardware1 = FactoryGirl.create(
               :hardware,
               hardware_data(1).merge(
                 :guest_os       => @image1.hardware.guest_os,
@@ -104,7 +105,7 @@ describe InventoryRefresh::SaveInventory do
                 :vm_or_template => @vm12
               )
             )
-            @hardware2  = FactoryGirl.create(
+            @hardware2 = FactoryGirl.create(
               :hardware,
               hardware_data(2).merge(
                 :guest_os       => @image2.hardware.guest_os,
@@ -143,83 +144,77 @@ describe InventoryRefresh::SaveInventory do
 
           it "saves records correctly with complex interconnection" do
             # Setup InventoryCollections
-            @data                 = {}
-            @data[:miq_templates] = ::InventoryRefresh::InventoryCollection.new(
-              miq_templates_init_data(inventory_collection_options(options))
-            )
-            @data[:key_pairs]     = ::InventoryRefresh::InventoryCollection.new(
-              key_pairs_init_data(inventory_collection_options(options))
-            )
-            @data[:vms]           = ::InventoryRefresh::InventoryCollection.new(
-              vms_init_data(inventory_collection_options(options))
-            )
-            @data[:hardwares]     = ::InventoryRefresh::InventoryCollection.new(
-              hardwares_init_data(inventory_collection_options(options))
-            )
-            @data[:network_ports] = ::InventoryRefresh::InventoryCollection.new(
-              network_ports_init_data(
-                inventory_collection_options(
-                  options.merge(
-                    :parent => @ems.network_manager)
+            miq_templates_init_data(inventory_collection_options(options))
+
+            key_pairs_init_data(inventory_collection_options(options))
+
+            vms_init_data(inventory_collection_options(options))
+
+            hardwares_init_data(inventory_collection_options(options))
+
+            network_ports_init_data(
+              inventory_collection_options(
+                options.merge(
+                  :parent => @ems.network_manager
                 )
               )
             )
 
             # Parse data for InventoryCollections
-            @network_port_data_1  = network_port_data(1).merge(
-              :name   => @data[:vms].lazy_find(vm_data(1)[:ems_ref], :key => :name, :default => "default_name"),
-              :device => @data[:vms].lazy_find(vm_data(1)[:ems_ref])
+            @network_port_data_1 = network_port_data(1).merge(
+              :name   => @persister.vms.lazy_find(vm_data(1)[:ems_ref], :key => :name, :default => "default_name"),
+              :device => @persister.vms.lazy_find(vm_data(1)[:ems_ref])
             )
             @network_port_data_12 = network_port_data(12).merge(
-              :name   => @data[:vms].lazy_find(vm_data(31)[:ems_ref], :key => :name, :default => "default_name"),
-              :device => @data[:vms].lazy_find(vm_data(31)[:ems_ref])
+              :name   => @persister.vms.lazy_find(vm_data(31)[:ems_ref], :key => :name, :default => "default_name"),
+              :device => @persister.vms.lazy_find(vm_data(31)[:ems_ref])
             )
-            @network_port_data_3  = network_port_data(3).merge(
-              :name   => @data[:vms].lazy_find(vm_data(3)[:ems_ref], :key => :name, :default => "default_name"),
-              :device => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+            @network_port_data_3 = network_port_data(3).merge(
+              :name   => @persister.vms.lazy_find(vm_data(3)[:ems_ref], :key => :name, :default => "default_name"),
+              :device => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
             )
             @vm_data_1            = vm_data(1)
             @vm_data_2            = vm_data(2).merge(
               :name => "vm_2_changed_name",
             )
-            @vm_data_3            = vm_data(3).merge(
+            @vm_data_3 = vm_data(3).merge(
               :name => "vm_3_changed_name",
             )
-            @vm_data_31           = vm_data(31).merge(
+            @vm_data_31 = vm_data(31).merge(
               :name => "vm_31_changed_name",
             )
-            @hardware_data_2      = hardware_data(2).merge(
-              :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(1)[:ems_ref]), :key => :guest_os), # changed
-              :vm_or_template => @data[:vms].lazy_find(vm_data(2)[:ems_ref])
+            @hardware_data_2 = hardware_data(2).merge(
+              :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(1)[:ems_ref]), :key => :guest_os), # changed
+              :vm_or_template => @persister.vms.lazy_find(vm_data(2)[:ems_ref])
             )
-            @hardware_data_3      = hardware_data(3).merge(
-              :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-              :vm_or_template => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+            @hardware_data_3 = hardware_data(3).merge(
+              :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+              :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
             )
-            @hardware_data_31     = hardware_data(31).merge(
-              :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-              :vm_or_template => @data[:vms].lazy_find(vm_data(31)[:ems_ref])
+            @hardware_data_31 = hardware_data(31).merge(
+              :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+              :vm_or_template => @persister.vms.lazy_find(vm_data(31)[:ems_ref])
             )
 
             @image_data_2 = image_data(2).merge(:name => "image_changed_name_2")
             @image_data_3 = image_data(3).merge(:name => "image_changed_name_3")
 
             # Fill InventoryCollections with data
-            add_data_to_inventory_collection(@data[:network_ports],
-                                             @network_port_data_1,
-                                             @network_port_data_12,
-                                             @network_port_data_3)
-            add_data_to_inventory_collection(@data[:vms],
-                                             @vm_data_2,
-                                             @vm_data_3,
-                                             @vm_data_31)
-            add_data_to_inventory_collection(@data[:hardwares],
-                                             @hardware_data_2,
-                                             @hardware_data_3,
-                                             @hardware_data_31)
-            add_data_to_inventory_collection(@data[:miq_templates],
-                                             @image_data_2,
-                                             @image_data_3)
+            add_data_to_persisters_collection(@persister, :network_ports,
+                                              @network_port_data_1,
+                                              @network_port_data_12,
+                                              @network_port_data_3)
+            add_data_to_persisters_collection(@persister, :vms,
+                                              @vm_data_2,
+                                              @vm_data_3,
+                                              @vm_data_31)
+            add_data_to_persisters_collection(@persister, :hardwares,
+                                              @hardware_data_2,
+                                              @hardware_data_3,
+                                              @hardware_data_31)
+            add_data_to_persisters_collection(@persister, :miq_templates,
+                                              @image_data_2,
+                                              @image_data_3)
             # Assert data before save
             expect(@network_port1.device).to eq @vm1
             expect(@network_port1.name).to eq "network_port_name_1"
@@ -231,7 +226,7 @@ describe InventoryRefresh::SaveInventory do
             time_before_refresh = Time.now.utc
             sleep(1)
             # Invoke the InventoryCollections saving
-            InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+            InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
             #### Assert saved data ####
             @vm1           = Vm.find_by(:ems_ref => vm_data(1)[:ems_ref])
@@ -247,26 +242,26 @@ describe InventoryRefresh::SaveInventory do
             @image2 = MiqTemplate.find(@image2.id)
 
             # Check ICs stats
-            expect(@data[:vms].created_records).to match_array(record_stats([@vm3, @vm31]))
-            expect(@data[:vms].deleted_records).to match_array(record_stats([@vm1, @vm12, @vm4]))
-            expect(@data[:vms].updated_records).to match_array(record_stats([@vm2]))
+            expect(@persister.vms.created_records).to match_array(record_stats([@vm3, @vm31]))
+            expect(@persister.vms.deleted_records).to match_array(record_stats([@vm1, @vm12, @vm4]))
+            expect(@persister.vms.updated_records).to match_array(record_stats([@vm2]))
 
-            expect(@data[:network_ports].created_records).to match_array(record_stats([@network_port3]))
-            expect(@data[:network_ports].deleted_records).to match_array(record_stats([@network_port2, @network_port4]))
-            expect(@data[:network_ports].updated_records).to match_array(record_stats([@network_port1, @network_port12]))
+            expect(@persister.network_ports.created_records).to match_array(record_stats([@network_port3]))
+            expect(@persister.network_ports.deleted_records).to match_array(record_stats([@network_port2, @network_port4]))
+            expect(@persister.network_ports.updated_records).to match_array(record_stats([@network_port1, @network_port12]))
 
-            expect(@data[:hardwares].created_records).to match_array(record_stats([@vm3.hardware, @vm31.hardware]))
+            expect(@persister.hardwares.created_records).to match_array(record_stats([@vm3.hardware, @vm31.hardware]))
             # We don't see hardwares that were disconnected as a part of Vm or Template
-            expect(@data[:hardwares].deleted_records).to match_array(record_stats([@image_hardware2, @image_hardware3]))
-            expect(@data[:hardwares].updated_records).to match_array(record_stats([@hardware2]))
+            expect(@persister.hardwares.deleted_records).to match_array(record_stats([@image_hardware2, @image_hardware3]))
+            expect(@persister.hardwares.updated_records).to match_array(record_stats([@hardware2]))
 
-            expect(@data[:miq_templates].created_records).to match_array(record_stats([]))
-            expect(@data[:miq_templates].deleted_records).to match_array(record_stats([@image1]))
-            expect(@data[:miq_templates].updated_records).to match_array(record_stats([@image2, @image3]))
+            expect(@persister.miq_templates.created_records).to match_array(record_stats([]))
+            expect(@persister.miq_templates.deleted_records).to match_array(record_stats([@image1]))
+            expect(@persister.miq_templates.updated_records).to match_array(record_stats([@image2, @image3]))
 
-            expect(@data[:key_pairs].created_records).to match_array(record_stats([]))
-            expect(@data[:key_pairs].deleted_records).to match_array(record_stats([@key_pair1, @key_pair12, @key_pair2, @key_pair3]))
-            expect(@data[:key_pairs].updated_records).to match_array(record_stats([]))
+            expect(@persister.key_pairs.created_records).to match_array(record_stats([]))
+            expect(@persister.key_pairs.deleted_records).to match_array(record_stats([@key_pair1, @key_pair12, @key_pair2, @key_pair3]))
+            expect(@persister.key_pairs.updated_records).to match_array(record_stats([]))
 
             # Check the changed timestamps
             expect(@vm3.created_on).to be > time_before_refresh

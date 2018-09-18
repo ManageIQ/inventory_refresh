@@ -1,5 +1,6 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
+require_relative '../persister/test_base_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
@@ -14,7 +15,7 @@ describe InventoryRefresh::SaveInventory do
   #
   ######################################################################################################################
 
-  let(:persister_class) { ::InventoryRefresh::Persister }
+  let(:persister_class) { ::TestBasePersister }
 
   # Test all settings for InventoryRefresh::SaveInventory
   [nil, :recursive].each do |strategy|

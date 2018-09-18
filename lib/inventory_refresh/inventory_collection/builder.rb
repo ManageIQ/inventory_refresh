@@ -52,7 +52,7 @@ module InventoryRefresh
       # Calls method @name (if exists) with specific properties
       # Yields for overwriting provider-specific properties
       def construct_data
-        add_properties(:association => @name)
+        add_properties({:association => @name}, :if_missing)
 
         add_properties(@shared_properties, :if_missing)
 

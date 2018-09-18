@@ -1,90 +1,93 @@
+require_relative "../persister/test_base_persister"
+require_relative "../persister/test_builder/cloud_manager"
+require_relative "../persister/test_builder/network_manager"
+
 module InitDataHelper
   def initialize_all_inventory_collections
     # Initialize the InventoryCollections
-    @data = {}
     all_collections.each do |collection|
-      @data[collection] = ::InventoryRefresh::InventoryCollection.new(send("#{collection}_init_data"))
+      send("#{collection}_init_data")
     end
   end
 
   def initialize_inventory_collections(only_collections)
     # Initialize the InventoryCollections
-    @data = {}
     only_collections.each do |collection|
-      @data[collection] = ::InventoryRefresh::InventoryCollection.new(send("#{collection}_init_data",
-                                                                         :complete => false))
+      send("#{collection}_init_data",
+           :complete => false)
     end
 
     (all_collections - only_collections).each do |collection|
-      @data[collection] = ::InventoryRefresh::InventoryCollection.new(send("#{collection}_init_data",
-                                                                         :complete => false,
-                                                                         :strategy => :local_db_cache_all))
+      send("#{collection}_init_data",
+           :complete => false,
+           :strategy => :local_db_cache_all)
     end
   end
 
   def orchestration_stacks_init_data(extra_attributes = {})
     # Shadowing the default blacklist so we have an automatically solved graph cycle
-    data = cloud.prepare_data(:orchestration_stacks, persister_class) do |builder|
+    @persister.add_collection(:orchestration_stacks, cloud, extra_attributes.merge(:attributes_blacklist => [])) do |builder|
       builder.add_properties(:model_class => ::ManageIQ::Providers::CloudManager::OrchestrationStack)
-    end.to_hash
-
-    init_data(data.merge(extra_attributes.merge(:attributes_blacklist => [])))
+    end
   end
 
   def orchestration_stacks_resources_init_data(extra_attributes = {})
     # Shadowing the default blacklist so we have an automatically solved graph cycle
-    data = cloud.prepare_data(:orchestration_stacks_resources, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:orchestration_stacks_resources, cloud, extra_attributes)
+  end
+
+  def db_vms_init_data(extra_attributes = {})
+    @persister.add_collection(:db_vms, cloud, extra_attributes.merge(:attributes_blacklist => [])) do |builder|
+      builder.add_properties(
+        :association => :vms,
+        :model_class => ::Vm
+      )
+    end
   end
 
   def vms_init_data(extra_attributes = {})
-    data = cloud.prepare_data(:vms, persister_class).to_hash
-    init_data(data.merge(extra_attributes.merge(:attributes_blacklist => [])))
+    @persister.add_collection(:vms, cloud, extra_attributes.merge(:attributes_blacklist => []))
   end
 
   def miq_templates_init_data(extra_attributes = {})
-    data = cloud.prepare_data(:miq_templates, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:miq_templates, cloud, extra_attributes)
   end
 
   def key_pairs_init_data(extra_attributes = {})
-    data = cloud.prepare_data(:key_pairs, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:key_pairs, cloud, extra_attributes)
   end
 
   def hardwares_init_data(extra_attributes = {})
-    data = cloud.prepare_data(:hardwares, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:hardwares, cloud, extra_attributes)
   end
 
   def disks_init_data(extra_attributes = {})
-    data = cloud.prepare_data(:disks, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:disks, cloud, extra_attributes)
   end
 
   def network_ports_init_data(extra_attributes = {})
-    data = network.prepare_data(:network_ports, persister_class).to_hash
-    init_data(data.merge(extra_attributes))
+    @persister.add_collection(:network_ports, network, extra_attributes)
+  end
+
+  def db_network_ports_init_data(extra_attributes = {})
+    @persister.add_collection(:db_network_ports, network, extra_attributes) do |builder|
+      builder.add_properties(
+        :association => :network_ports,
+        :model_class => ::NetworkPort
+      )
+    end
   end
 
   def cloud
-    ManageIQ::Providers::Inventory::Persister::Builder::CloudManager
+    TestBuilder::CloudManager
   end
 
   def network
-    ManageIQ::Providers::Inventory::Persister::Builder::NetworkManager
+    TestBuilder::NetworkManager
   end
 
   def persister_class
-    ManageIQ::Providers::Inventory::Persister
-  end
-
-  def init_data(extra_attributes)
-    init_data = {
-      :parent => @ems,
-    }
-
-    init_data.merge!(extra_attributes)
+    TestBasePersister
   end
 
   def association_attributes(model_class)
@@ -94,6 +97,6 @@ module InitDataHelper
 
   def custom_association_attributes
     # These are associations that are not modeled in a standard rails way, e.g. the ancestry
-    [:parent, :genealogy_parent, :genealogy_parent_object]
+    %i(parent genealogy_parent genealogy_parent_object)
   end
 end

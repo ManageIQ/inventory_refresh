@@ -18,6 +18,7 @@ describe InventoryRefresh::SaveInventory do
         @ems = FactoryGirl.create(:ems_cloud)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
+        @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
       end
 
       it "refreshing all records and data collects everything" do
@@ -26,7 +27,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -39,7 +40,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -47,31 +48,31 @@ describe InventoryRefresh::SaveInventory do
 
         ### Second refresh ###
         # Initialize the InventoryCollections and data for a new VM hardware and disks
-        initialize_inventory_collections([:vms, :hardwares, :disks])
+        initialize_inventory_collections(%i(vms hardwares disks))
 
         @vm_data_3 = vm_data(3).merge(
-          :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
+          :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
         )
         @disk_data_3 = disk_data(3).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
         @disk_data_31 = disk_data(31).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
         # Fill InventoryCollections with data
-        add_data_to_inventory_collection(@data[:vms],
-                                         @vm_data_3)
-        add_data_to_inventory_collection(@data[:hardwares],
-                                         @hardware_data_3)
-        add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
+        add_data_to_persisters_collection(@persister, :vms,
+                                          @vm_data_3)
+        add_data_to_persisters_collection(@persister, :hardwares,
+                                          @hardware_data_3)
+        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         load_records
         @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
@@ -122,7 +123,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -130,24 +131,24 @@ describe InventoryRefresh::SaveInventory do
 
         ### Second refresh ###
         # Initialize the InventoryCollections and data for a new VM
-        initialize_inventory_collections([:vms, :hardwares])
+        initialize_inventory_collections(%i(vms hardwares))
 
         @vm_data_3 = vm_data(3).merge(
-          :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])]
+          :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
         )
         @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
         )
 
         # Fill InventoryCollections with data
-        add_data_to_inventory_collection(@data[:vms],
-                                         @vm_data_3)
-        add_data_to_inventory_collection(@data[:hardwares],
-                                         @hardware_data_3)
+        add_data_to_persisters_collection(@persister, :vms,
+                                          @vm_data_3)
+        add_data_to_persisters_collection(@persister, :hardwares,
+                                          @hardware_data_3)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         ### Third refresh ###
         # Initialize the InventoryCollections and data for the disks with new disk under a vm
@@ -155,24 +156,23 @@ describe InventoryRefresh::SaveInventory do
         @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
 
         initialize_inventory_collections([:disks])
-        @data[:disks] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class => Disk,
-          :association => :disks,
-          :parent      => @vm3,
-          :manager_ref => [:hardware, :device_name]
-        )
+
+        @persister.add_collection(:disks) do |builder|
+          builder.add_properties(:parent      => @vm3,
+                                 :manager_ref => %i(hardware device_name))
+        end
 
         @disk_data_3 = disk_data(3).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
         @disk_data_31 = disk_data(31).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
-        add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
+        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -223,23 +223,21 @@ describe InventoryRefresh::SaveInventory do
         @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
 
         initialize_inventory_collections([:disks])
-        @data[:disks] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class => Disk,
-          :association => :disks,
-          :parent      => @vm3,
-          :manager_ref => [:hardware, :device_name]
-        )
+        @persister.add_collection(:disks) do |builder|
+          builder.add_properties(:parent      => @vm3,
+                                 :manager_ref => %i(hardware device_name))
+        end
         @disk_data_3 = disk_data(3).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
         @disk_data_32 = disk_data(32).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
-        add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_32)
+        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_32)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -291,7 +289,7 @@ describe InventoryRefresh::SaveInventory do
         initialize_inventory_collection_data
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -299,53 +297,49 @@ describe InventoryRefresh::SaveInventory do
 
         ### Second refresh ###
         # Do a targeted refresh for couple of VMs, hardwares and disks using arel comparison
-        initialize_inventory_collections([:vms, :hardwares, :disks])
+        initialize_inventory_collections(%i(vms hardwares disks))
 
         vm_refs = ["vm_ems_ref_3", "vm_ems_ref_4"]
 
-        @data[:vms] = ::InventoryRefresh::InventoryCollection.new(
-          vms_init_data(
-            :arel => @ems.vms.where(:ems_ref => vm_refs)
-          )
+        vms_init_data(
+          :arel => @ems.vms.where(:ems_ref => vm_refs)
         )
-        @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-          hardwares_init_data(
-            :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-            :strategy    => :local_db_find_missing_references,
-            :manager_ref => [:vm_or_template]
-          )
+
+        hardwares_init_data(
+          :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+          :strategy    => :local_db_find_missing_references,
+          :manager_ref => %i(vm_or_template)
         )
-        @data[:disks] = ::InventoryRefresh::InventoryCollection.new(
-          disks_init_data(
-            :arel => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-          )
+
+        disks_init_data(
+          :arel => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
         )
 
         @vm_data_3 = vm_data(3).merge(
-          :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
+          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
         @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @data[:vms].lazy_find(vm_data(3)[:ems_ref])
+          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
         )
 
         @disk_data_3 = disk_data(3).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
         @disk_data_31 = disk_data(31).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(3)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
         # Fill InventoryCollections with data
-        add_data_to_inventory_collection(@data[:vms],
-                                         @vm_data_3)
-        add_data_to_inventory_collection(@data[:hardwares],
-                                         @hardware_data_3)
-        add_data_to_inventory_collection(@data[:disks], @disk_data_3, @disk_data_31)
+        add_data_to_persisters_collection(@persister, :vms,
+                                          @vm_data_3)
+        add_data_to_persisters_collection(@persister, :hardwares,
+                                          @hardware_data_3)
+        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -392,59 +386,71 @@ describe InventoryRefresh::SaveInventory do
 
         ### Third refresh ###
         # Do a targeted refresh again with some new data and some data missing
-        initialize_inventory_collections([:vms, :hardwares, :disks])
+        initialize_inventory_collections(%i(vms hardwares disks))
 
-        vm_refs = ["vm_ems_ref_3", "vm_ems_ref_5"]
+        vm_refs = %w(vm_ems_ref_3 vm_ems_ref_5)
 
-        @data[:vms] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class => ManageIQ::Providers::CloudManager::Vm,
-          :arel        => @ems.vms.where(:ems_ref => vm_refs),
-        )
-        @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class => Hardware,
-          :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :manager_ref => [:vm_or_template],
-        )
-        @data[:disks] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class => Disk,
-          :arel        => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-          :manager_ref => [:hardware, :device_name],
-        )
-        @data[:image_hardwares] = ::InventoryRefresh::InventoryCollection.new(
-          :model_class         => Hardware,
-          :arel                => @ems.hardwares,
-          :manager_ref         => [:vm_or_template],
-          :strategy            => :local_db_cache_all,
-          :name                => :image_hardwares,
-        )
+        @persister.add_collection(:vms) do |builder|
+          builder.add_properties(
+            :association => nil,
+            :arel        => @ems.vms.where(:ems_ref => vm_refs),
+            :model_class => ManageIQ::Providers::CloudManager::Vm,
+          )
+        end
+        @persister.add_collection(:hardwares) do |builder|
+          builder.add_properties(
+            :association => nil,
+            :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+            :manager_ref => %i(vm_or_template),
+            :model_class => Hardware,
+          )
+        end
+        @persister.add_collection(:disks) do |builder|
+          builder.add_properties(
+            :association => nil,
+            :model_class => Disk,
+            :arel        => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
+            :manager_ref => %i(hardware device_name),
+          )
+        end
+        @persister.add_collection(:image_hardwares) do |builder|
+          builder.add_properties(
+            :association => nil,
+            :arel        => @ems.hardwares,
+            :manager_ref => %i(vm_or_template),
+            :model_class => Hardware,
+            :name        => :image_hardwares,
+            :strategy    => :local_db_cache_all,
+          )
+        end
 
         @vm_data_3 = vm_data(3).merge(
-          :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
+          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
         @vm_data_5 = vm_data(5).merge(
-          :key_pairs             => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
+          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
           :ext_management_system => @ems
         )
         @hardware_data_5 = hardware_data(5).merge(
-          :guest_os       => @data[:image_hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @data[:vms].lazy_find(vm_data(5)[:ems_ref])
+          :guest_os       => @persister.image_hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+          :vm_or_template => @persister.vms.lazy_find(vm_data(5)[:ems_ref])
         )
         @disk_data_5 = disk_data(5).merge(
-          :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(5)[:ems_ref]))
+          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(5)[:ems_ref]))
         )
 
         # Fill InventoryCollections with data
-        add_data_to_inventory_collection(@data[:vms],
-                                         @vm_data_3,
-                                         @vm_data_5)
-        add_data_to_inventory_collection(@data[:hardwares],
-                                         @hardware_data_5)
-        add_data_to_inventory_collection(@data[:disks],
-                                         @disk_data_5)
+        add_data_to_persisters_collection(@persister, :vms,
+                                          @vm_data_3,
+                                          @vm_data_5)
+        add_data_to_persisters_collection(@persister, :hardwares,
+                                          @hardware_data_5)
+        add_data_to_persisters_collection(@persister, :disks,
+                                          @disk_data_5)
 
         # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
         # Assert all data were filled
         load_records
@@ -684,24 +690,24 @@ describe InventoryRefresh::SaveInventory do
     # Initialize the InventoryCollections data
     @orchestration_stack_data_0_1 = orchestration_stack_data("0_1").merge(
       # TODO(lsmola) not possible until we have an enhanced transitive edges check
-      # :parent => @data[:orchestration_stacks].lazy_find(orchestration_stack_data("0_0")[:ems_ref]))
+      # :parent => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_0")[:ems_ref]))
       :parent => nil
     )
     @orchestration_stack_data_1_11 = orchestration_stack_data("1_11").merge(
-      :parent => @data[:orchestration_stacks_resources].lazy_find(orchestration_stack_data("1_11")[:ems_ref],
-                                                                  :key => :stack)
+      :parent => @persister.orchestration_stacks_resources.lazy_find(orchestration_stack_data("1_11")[:ems_ref],
+                                                                     :key => :stack)
     )
     @orchestration_stack_data_1_12 = orchestration_stack_data("1_12").merge(
-      :parent => @data[:orchestration_stacks_resources].lazy_find(orchestration_stack_data("1_12")[:ems_ref],
-                                                                  :key => :stack)
+      :parent => @persister.orchestration_stacks_resources.lazy_find(orchestration_stack_data("1_12")[:ems_ref],
+                                                                     :key => :stack)
     )
     @orchestration_stack_resource_data_1_11 = orchestration_stack_resource_data("1_11").merge(
       :ems_ref => orchestration_stack_data("1_11")[:ems_ref],
-      :stack   => @data[:orchestration_stacks].lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
     )
     @orchestration_stack_resource_data_1_12 = orchestration_stack_resource_data("1_12").merge(
       :ems_ref => orchestration_stack_data("1_12")[:ems_ref],
-      :stack   => @data[:orchestration_stacks].lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
     )
 
     @key_pair_data_1  = key_pair_data(1)
@@ -712,62 +718,62 @@ describe InventoryRefresh::SaveInventory do
     @image_data_2 = image_data(2)
 
     @image_hardware_data_1 = image_hardware_data(1).merge(
-      :vm_or_template => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref])
+      :vm_or_template => @persister.miq_templates.lazy_find(image_data(1)[:ems_ref])
     )
     @image_hardware_data_2 = image_hardware_data(2).merge(
-      :vm_or_template => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref])
+      :vm_or_template => @persister.miq_templates.lazy_find(image_data(2)[:ems_ref])
     )
 
     @vm_data_1 = vm_data(1).merge(
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])]
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name])]
     )
     @vm_data_2 = vm_data(2).merge(
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name]),
-                            @data[:key_pairs].lazy_find(key_pair_data(21)[:name])]
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name]),
+                     @persister.key_pairs.lazy_find(key_pair_data(21)[:name])]
     )
 
     @hardware_data_1 = hardware_data(1).merge(
-      :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(1)[:ems_ref]), :key => :guest_os),
-      :vm_or_template => @data[:vms].lazy_find(vm_data(1)[:ems_ref])
+      :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(1)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(1)[:ems_ref])
     )
     @hardware_data_2 = hardware_data(2).merge(
-      :guest_os       => @data[:hardwares].lazy_find(@data[:miq_templates].lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-      :vm_or_template => @data[:vms].lazy_find(vm_data(2)[:ems_ref])
+      :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(2)[:ems_ref])
     )
 
     @disk_data_1 = disk_data(1).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]))
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]))
     )
     @disk_data_12 = disk_data(12).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]))
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]))
     )
     @disk_data_13 = disk_data(13).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref]))
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]))
     )
     @disk_data_2 = disk_data(2).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(2)[:ems_ref]))
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref]))
     )
 
     # Fill InventoryCollections with data
-    add_data_to_inventory_collection(@data[:orchestration_stacks],
-                                     @orchestration_stack_data_0_1,
-                                     @orchestration_stack_data_1_11,
-                                     @orchestration_stack_data_1_12)
-    add_data_to_inventory_collection(@data[:orchestration_stacks_resources],
-                                     @orchestration_stack_resource_data_1_11,
-                                     @orchestration_stack_resource_data_1_12)
-    add_data_to_inventory_collection(@data[:vms],
-                                     @vm_data_1,
-                                     @vm_data_2)
-    add_data_to_inventory_collection(@data[:miq_templates],
-                                     @image_data_1,
-                                     @image_data_2)
-    add_data_to_inventory_collection(@data[:hardwares],
-                                     @hardware_data_1,
-                                     @hardware_data_2,
-                                     @image_hardware_data_1,
-                                     @image_hardware_data_2)
-    add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_2, @key_pair_data_21)
-    add_data_to_inventory_collection(@data[:disks], @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
+    add_data_to_persisters_collection(@persister, :orchestration_stacks,
+                                      @orchestration_stack_data_0_1,
+                                      @orchestration_stack_data_1_11,
+                                      @orchestration_stack_data_1_12)
+    add_data_to_persisters_collection(@persister, :orchestration_stacks_resources,
+                                      @orchestration_stack_resource_data_1_11,
+                                      @orchestration_stack_resource_data_1_12)
+    add_data_to_persisters_collection(@persister, :vms,
+                                      @vm_data_1,
+                                      @vm_data_2)
+    add_data_to_persisters_collection(@persister, :miq_templates,
+                                      @image_data_1,
+                                      @image_data_2)
+    add_data_to_persisters_collection(@persister, :hardwares,
+                                      @hardware_data_1,
+                                      @hardware_data_2,
+                                      @image_hardware_data_1,
+                                      @image_hardware_data_2)
+    add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_2, @key_pair_data_21)
+    add_data_to_persisters_collection(@persister, :disks, @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
   end
 end
