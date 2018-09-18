@@ -9,6 +9,8 @@ class VmOrTemplate < ActiveRecord::Base
 
   validates_presence_of :name, :location
 
+  scope :active, -> { where.not(:ems_id => nil) }
+
   def disconnect_inv
     disconnect_ems
   end
