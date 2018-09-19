@@ -211,10 +211,8 @@ module InventoryRefresh::SaveCollection
         query = complement_of!(inventory_collection.all_manager_uuids)
 
         ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
-        # TODO(lsmola) we should allow only archiving, which is done via update, then the batch can be bigger. Without
-        #              batch archiving, this is a big bottleneck.
-        ids_of_non_active_entities.each_slice(1000) do |batch|
-          destroy_records!(batch, :id_extractor => :hash_primary_key_value)
+        ids_of_non_active_entities.each_slice(10000) do |batch|
+          archive_records!(batch)
         end
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
@@ -223,6 +221,14 @@ module InventoryRefresh::SaveCollection
 
       def hash_primary_key_value(hash)
         hash[primary_key]
+      end
+
+      # Archives records by settung :deleted_on timestamp on them
+      #
+      # @param [Array] records of Hashes containing primary keys of records we want to archive
+      def archive_records!(records)
+        inventory_collection.store_deleted_records(records.map { |x| {:id => x["id"] } })
+        inventory_collection.model_class.where(:id => records.map { |x| x["id"] }).update_all(:deleted_on => Time.now.utc)
       end
 
       # Deletes/soft-deletes a given record

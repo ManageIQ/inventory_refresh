@@ -130,6 +130,7 @@ module InventoryRefresh::SaveCollection
         )
         join_condition = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
         where_condition = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
+
         active_entities
           .project(all_entities[:id])
           .join(all_entities, Arel::Nodes::RightOuterJoin)
