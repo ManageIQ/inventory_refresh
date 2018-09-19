@@ -89,7 +89,7 @@ describe ManageIQ::Providers::Inventory::Persister do
       )
     )
 
-    expect(NetworkPort.pluck(:ems_ref)).to(
+    expect(NetworkPort.active.pluck(:ems_ref)).to(
       match_array(
         [network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]]
       )
