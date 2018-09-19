@@ -758,21 +758,32 @@ module InventoryRefresh
     # @return [Boolean] true if processing of this InventoryCollection object would lead to no operations.
     def noop?
       # If this InventoryCollection doesn't do anything. it can easily happen for targeted/batched strategies.
-      if targeted?
-        if parent_inventory_collections.nil? && targeted_scope.primary_references.blank? &&
-           all_manager_uuids.nil? && parent_inventory_collections.blank? && custom_save_block.nil? &&
-           skeletal_primary_index.blank?
-          # It's a noop Parent targeted InventoryCollection
-          true
-        elsif !parent_inventory_collections.nil? && parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? } &&
-              skeletal_primary_index.blank?
-          # It's a noop Child targeted InventoryCollection
-          true
-        else
-          false
-        end
-      elsif data.blank? && !delete_allowed? && skeletal_primary_index.blank?
+      saving_noop? && delete_complement_noop?
+    end
+
+    # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
+    def saving_noop?
+      if targeted? && parent_inventory_collections.nil? && targeted_scope.primary_references.blank? &&
+         parent_inventory_collections.blank? && custom_save_block.nil? &&
+         skeletal_primary_index.blank?
+        # It's a noop Parent targeted InventoryCollection
+        true
+      elsif targeted? && !parent_inventory_collections.nil? &&
+            parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? } &&
+            skeletal_primary_index.blank?
+        # It's a noop Child targeted InventoryCollection
+        true
+      elsif !targeted? && data.blank? && !delete_allowed? && skeletal_primary_index.blank?
         # If we have no data to save and delete is not allowed, we can just skip
+        true
+      else
+        false
+      end
+    end
+
+    # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
+    def delete_complement_noop?
+      if targeted? && all_manager_uuids.nil?
         true
       else
         false
