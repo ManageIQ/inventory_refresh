@@ -30,7 +30,7 @@ module InventoryRefresh::SaveCollection
         version_attribute = if inventory_collection.parallel_safe? && supports_remote_data_timestamp?(all_attribute_keys)
                               :resource_timestamp
                             elsif inventory_collection.parallel_safe? && supports_remote_data_version?(all_attribute_keys)
-                              :resource_version
+                              :resource_counter
                             end
 
         update_query = update_query_beginning(all_attribute_keys_array)
@@ -56,7 +56,7 @@ module InventoryRefresh::SaveCollection
 
       def update_query_reset_version_columns(version_attribute)
         if version_attribute
-          attr_partial     = version_attribute.to_s.pluralize # Changes resource_version/timestamp to resource_versions/timestamps
+          attr_partial     = version_attribute.to_s.pluralize # Changes resource_counter/timestamp to resource_counters/timestamps
           attr_partial_max = "#{attr_partial}_max"
 
           # Quote the column names
@@ -90,7 +90,7 @@ module InventoryRefresh::SaveCollection
         if version_attribute
           # This conditional will avoid rewriting new data by old data. But we want it only when version_attribute is
           # a part of the data, since for the fake records, we just want to update ems_ref.
-          attr_partial     = version_attribute.to_s.pluralize # Changes resource_version/timestamp to resource_versions/timestamps
+          attr_partial     = version_attribute.to_s.pluralize # Changes resource_counter/timestamp to resource_counters/timestamps
           attr_partial_max = "#{attr_partial}_max"
 
           # Quote the column names

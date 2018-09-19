@@ -373,9 +373,9 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys.include?(:resource_timestamp) # include? on Set is O(1)
       end
 
-      # @return [Boolean] true if the model_class has resource_version column
+      # @return [Boolean] true if the model_class has resource_counter column
       def supports_remote_data_version?(all_attribute_keys)
-        all_attribute_keys.include?(:resource_version) # include? on Set is O(1)
+        all_attribute_keys.include?(:resource_counter) # include? on Set is O(1)
       end
 
       # @return [Boolean] true if the model_class has resource_timestamps column
@@ -383,9 +383,9 @@ module InventoryRefresh::SaveCollection
         @supports_resource_timestamps_max_cache ||= inventory_collection.supports_resource_timestamps_max?
       end
 
-      # @return [Boolean] true if the model_class has resource_versions column
-      def supports_resource_versions_max?
-        @supports_resource_versions_max_cache ||= inventory_collection.supports_resource_versions_max?
+      # @return [Boolean] true if the model_class has resource_counters column
+      def supports_resource_counters_max?
+        @supports_resource_counters_max_cache ||= inventory_collection.supports_resource_counters_max?
       end
     end
   end

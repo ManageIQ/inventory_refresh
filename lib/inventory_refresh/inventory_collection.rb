@@ -633,19 +633,19 @@ module InventoryRefresh
       @supports_resource_timestamp_cache ||= model_class.column_names.include?("resource_timestamp")
     end
 
-    # @return [Boolean] true if the model_class has resource_versions_max column
-    def supports_resource_versions_max?
-      @supports_resource_versions_max_cache ||= model_class.column_names.include?("resource_versions_max")
+    # @return [Boolean] true if the model_class has resource_counters_max column
+    def supports_resource_counters_max?
+      @supports_resource_counters_max_cache ||= model_class.column_names.include?("resource_counters_max")
     end
 
-    # @return [Boolean] true if the model_class has resource_versions column
-    def supports_resource_versions?
-      @supports_resource_versions_cache ||= model_class.column_names.include?("resource_versions")
+    # @return [Boolean] true if the model_class has resource_counters column
+    def supports_resource_counters?
+      @supports_resource_counters_cache ||= model_class.column_names.include?("resource_counters")
     end
 
-    # @return [Boolean] true if the model_class has resource_version column
-    def supports_resource_version?
-      @supports_resource_version_cache ||= model_class.column_names.include?("resource_version")
+    # @return [Boolean] true if the model_class has resource_counter column
+    def supports_resource_counter?
+      @supports_resource_counter_cache ||= model_class.column_names.include?("resource_counter")
     end
 
     # @return [Array<Symbol>] all columns that are part of the best fit unique index
@@ -702,9 +702,9 @@ module InventoryRefresh
       @internal_columns << :resource_timestamps_max if supports_resource_timestamps_max?
       @internal_columns << :resource_timestamps if supports_resource_timestamps?
       @internal_columns << :resource_timestamp if supports_resource_timestamp?
-      @internal_columns << :resource_versions_max if supports_resource_versions_max?
-      @internal_columns << :resource_versions if supports_resource_versions?
-      @internal_columns << :resource_version if supports_resource_version?
+      @internal_columns << :resource_counters_max if supports_resource_counters_max?
+      @internal_columns << :resource_counters if supports_resource_counters?
+      @internal_columns << :resource_counter if supports_resource_counter?
       @internal_columns
     end
 

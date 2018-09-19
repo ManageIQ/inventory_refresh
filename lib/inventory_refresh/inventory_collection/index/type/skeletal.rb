@@ -89,17 +89,17 @@ module InventoryRefresh
           def fill_versions!(attributes)
             if inventory_collection.supports_resource_timestamps_max? && attributes[:resource_timestamp]
               fill_specific_version_attr(:resource_timestamps, :resource_timestamp, attributes)
-            elsif inventory_collection.supports_resource_versions_max? && attributes[:resource_version]
-              fill_specific_version_attr(:resource_versions, :resource_version, attributes)
+            elsif inventory_collection.supports_resource_counters_max? && attributes[:resource_counter]
+              fill_specific_version_attr(:resource_counters, :resource_counter, attributes)
             end
           end
 
           # Add specific versions columns into the passed attributes
           #
           # @param partial_row_version_attr [Symbol] Attr name for partial rows, allowed values are
-          #        [:resource_timestamps, :resource_versions]
+          #        [:resource_timestamps, :resource_counters]
           # @param full_row_version_attr [Symbol] Attr name for full rows, allowed values are
-          #        [:resource_timestamp, :resource_version]
+          #        [:resource_timestamp, :resource_counter]
           # @param attributes [Hash] Attributes we want to extend with version related attributes
           def fill_specific_version_attr(partial_row_version_attr, full_row_version_attr, attributes)
             # We have to symbolize, since serializing persistor makes these strings
