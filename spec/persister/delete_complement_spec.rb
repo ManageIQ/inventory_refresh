@@ -77,13 +77,11 @@ describe ManageIQ::Providers::Inventory::Persister do
     all_vm_uuids << persister.vms.build(vm_data2).uuid
     all_vm_uuids << persister.vms.build(vm_data60).uuid
 
-    persister.persist!
-
     # Delete the complement of what we've built
-    delete_complement_persister                                 = create_persister
-    delete_complement_persister.vms.all_manager_uuids           = all_vm_uuids
-    delete_complement_persister.network_ports.all_manager_uuids = all_network_port_uuids
-    delete_complement_persister.persist!
+    persister.vms.all_manager_uuids           = all_vm_uuids
+    persister.network_ports.all_manager_uuids = all_network_port_uuids
+
+    persister.persist!
 
     expect(Vm.active.pluck(:ems_ref)).to(
       match_array(
@@ -94,24 +92,6 @@ describe ManageIQ::Providers::Inventory::Persister do
     expect(NetworkPort.pluck(:ems_ref)).to(
       match_array(
         [network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]]
-      )
-    )
-  end
-
-  it "just deletes complement and doesn't save any data in persister" do
-    # TODO(lsmola) maybe we should get rid of this limitation?
-    all_network_port_uuids = []
-    all_network_port_uuids << persister.network_ports.build(network_port_data(1)).uuid
-    all_network_port_uuids << persister.network_ports.build(network_port_data(2)).uuid
-    all_network_port_uuids << persister.network_ports.build(network_port_data(60)).uuid
-
-    persister.network_ports.all_manager_uuids = all_network_port_uuids
-    persister.persist!
-
-    # network_port 60 is missing, since we are just deleting
-    expect(NetworkPort.pluck(:ems_ref)).to(
-      match_array(
-        [network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref]]
       )
     )
   end
