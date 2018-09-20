@@ -104,10 +104,36 @@ module InventoryRefresh::SaveCollection
       # @return [Arel::SelectManager] Arel for getting complement of uuids. This method modifies the passed
       #         manager_uuids to spare some memory
       def complement_of!(manager_uuids)
-        # manager_uuids = inventory_collection.full_collection_for_comparison.select(:id, :ems_ref, :uid_ems).limit(100000).to_a.map {|x| {"ems_ref" => x.ems_ref, "uid_ems" => x.uid_ems} }
-        connection = ActiveRecord::Base.connection
-        all_attribute_keys = inventory_collection.manager_ref
+        all_attribute_keys       = inventory_collection.manager_ref
         all_attribute_keys_array = inventory_collection.manager_ref.map(&:to_s)
+
+        active_entities     = Arel::Table.new(:active_entities)
+        active_entities_cte = Arel::Nodes::As.new(
+          active_entities,
+          Arel.sql("(#{active_entities_query(all_attribute_keys_array, manager_uuids)})")
+        )
+
+        all_entities     = Arel::Table.new(:all_entities)
+        all_entities_cte = Arel::Nodes::As.new(
+          all_entities,
+          Arel.sql("(#{inventory_collection.full_collection_for_comparison.select(:id, *all_attribute_keys_array).to_sql})")
+        )
+        join_condition   = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
+        where_condition  = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
+
+        active_entities
+          .project(all_entities[:id])
+          .join(all_entities, Arel::Nodes::RightOuterJoin)
+          .on(join_condition)
+          .with(active_entities_cte, all_entities_cte)
+          .where(where_condition)
+      end
+
+      private
+
+      def active_entities_query(all_attribute_keys_array, manager_uuids)
+        connection = ActiveRecord::Base.connection
+
         all_attribute_keys_array_q = all_attribute_keys_array.map { |x| quote_column_name(x) }
         # For Postgre, only first set of values should contain the type casts
         first_value = manager_uuids.shift.to_h
@@ -117,26 +143,10 @@ module InventoryRefresh::SaveCollection
           "(#{all_attribute_keys_array.map { |x| quote(connection, hash[x], x, false) }.join(",")})"
         end.join(",")
         values = [first_value, values].join(",")
-        active_entities_query = <<-SQL
-          SELECT  *
-          FROM    (VALUES #{values}) AS active_entities_table(#{all_attribute_keys_array_q.join(",")})
+        <<-SQL
+          SELECT *
+          FROM   (VALUES #{values}) AS active_entities_table(#{all_attribute_keys_array_q.join(",")})
         SQL
-        active_entities     = Arel::Table.new(:active_entities)
-        active_entities_cte = Arel::Nodes::As.new(active_entities, Arel.sql("(#{active_entities_query})"))
-        all_entities     = Arel::Table.new(:all_entities)
-        all_entities_cte = Arel::Nodes::As.new(
-          all_entities,
-          Arel.sql("(#{inventory_collection.full_collection_for_comparison.select(:id, *all_attribute_keys_array).to_sql})")
-        )
-        join_condition = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
-        where_condition = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
-
-        active_entities
-          .project(all_entities[:id])
-          .join(all_entities, Arel::Nodes::RightOuterJoin)
-          .on(join_condition)
-          .with(active_entities_cte, all_entities_cte)
-          .where(where_condition)
       end
     end
   end
