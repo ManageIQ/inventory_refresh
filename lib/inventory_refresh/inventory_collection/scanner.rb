@@ -12,8 +12,10 @@ module InventoryRefresh
         def scan!(inventory_collections)
           indexed_inventory_collections = inventory_collections.index_by(&:name)
 
+          # TODO(lsmola) build parent inventory collections automatically here
+
           inventory_collections.each do |inventory_collection|
-            new(inventory_collection, indexed_inventory_collections).scan!
+            new(inventory_collection, indexed_inventory_collections, build_association_hash(inventory_collections)).scan!
           end
 
           inventory_collections.each do |inventory_collection|
@@ -22,9 +24,21 @@ module InventoryRefresh
             end
           end
         end
+
+        def build_association_hash(inventory_collections)
+          associations_hash = {}
+          parents = inventory_collections.map(&:parent).compact.uniq
+          parents.each do |parent|
+            parent.class.reflect_on_all_associations(:has_many).each do |association|
+              through_assoc = association.options.try(:[], :through)
+              associations_hash[association.name] = through_assoc if association.options.try(:[], :through)
+            end
+          end
+          associations_hash
+        end
       end
 
-      attr_reader :inventory_collection, :indexed_inventory_collections
+      attr_reader :associations_hash, :inventory_collection, :indexed_inventory_collections
 
       # Boolean helpers the scanner uses from the :inventory_collection
       delegate :inventory_object_lazy?,
@@ -40,19 +54,22 @@ module InventoryRefresh
                :to => :inventory_collection
 
       # The data scanner modifies inside of the :inventory_collection
-      delegate :attribute_references,
+      delegate :association,
+               :attribute_references,
                :data_collection_finalized=,
                :dependency_attributes,
                :targeted_scope,
+               :parent,
                :parent_inventory_collections,
                :parent_inventory_collections=,
                :references,
                :transitive_dependency_attributes,
                :to => :inventory_collection
 
-      def initialize(inventory_collection, indexed_inventory_collections)
+      def initialize(inventory_collection, indexed_inventory_collections, associations_hash)
         @inventory_collection          = inventory_collection
         @indexed_inventory_collections = indexed_inventory_collections
+        @associations_hash             = associations_hash
       end
 
       def scan!
@@ -66,25 +83,53 @@ module InventoryRefresh
           end
         end
 
-        # Transform :parent_inventory_collections symbols to InventoryCollection objects
-        if parent_inventory_collections.present?
-          self.parent_inventory_collections = parent_inventory_collections.map do |inventory_collection_index|
-            ic = indexed_inventory_collections[inventory_collection_index]
-            if ic.nil?
-              raise "Can't find InventoryCollection #{inventory_collection_index} from #{inventory_collection}" if targeted?
-            else
-              # Add parent_inventory_collection as a dependency, so e.g. disconnect is done in a right order
-              (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
-              ic
-            end
-          end.compact
-        end
+        build_parent_inventory_collections!
 
         # Mark InventoryCollection as finalized aka. scanned
         self.data_collection_finalized = true
       end
 
       private
+
+      def build_parent_inventory_collections!
+        if parent_inventory_collections.blank?
+          if association.present? && parent.present? && associations_hash[association].present?
+            # We want to add immediate parent (parent in a through relation) as a dependency too
+            add_as_parent_inventory_collection_dependency(load_inventory_collection_by_name(associations_hash[association]))
+
+            parent_inventory_collection = find_parent_inventory_collection(associations_hash, inventory_collection.association)
+            (self.parent_inventory_collections ||= []) << load_inventory_collection_by_name(parent_inventory_collection)
+          end
+        else
+          self.parent_inventory_collections = parent_inventory_collections.map { |x| load_inventory_collection_by_name(x) }
+        end
+
+        return if parent_inventory_collections.blank?
+
+        parent_inventory_collections.each do |ic|
+          add_as_parent_inventory_collection_dependency(ic)
+        end
+      end
+
+      def add_as_parent_inventory_collection_dependency(ic)
+        (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
+      end
+
+      def find_parent_inventory_collection(hash, name)
+        if hash[name]
+          find_parent_inventory_collection(hash, hash[name])
+        else
+          name
+        end
+      end
+
+      def load_inventory_collection_by_name(name)
+        ic = indexed_inventory_collections[name]
+        if ic.nil?
+          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}"
+        end
+        ic
+      end
 
       def scan_inventory_object!(inventory_object)
         inventory_object.data.each do |key, value|
