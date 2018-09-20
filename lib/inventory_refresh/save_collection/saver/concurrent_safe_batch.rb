@@ -261,14 +261,15 @@ module InventoryRefresh::SaveCollection
         end
       end
 
-      # Deletes or sof-deletes records. If the model_class supports a custom class delete method, we will use it for	      def record_primary_key_value(record)
-      # batch soft-delete.	        record_key(record, primary_key)
+      # Deletes or sof-deletes records. If the model_class supports a custom class delete method, we will use it for
+      # batch soft-delete.
       #
       # @param records [Array<ApplicationRecord, Hash>] Records we want to delete. If we have only hashes, we need to
       #        to fetch ApplicationRecord objects from the DB
       def destroy_records!(records)
         return false unless inventory_collection.delete_allowed?
         return if records.blank?
+
         # Is the delete_method rails standard deleting method?
         rails_delete = %i(destroy delete).include?(inventory_collection.delete_method)
         if !rails_delete && inventory_collection.model_class.respond_to?(inventory_collection.delete_method)
