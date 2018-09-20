@@ -23,4 +23,8 @@ module ArchivedMixin
   def unarchive!
     update_attributes!(:deleted_on => nil)
   end
+
+  def self.archive!(ids)
+    where(:id => ids).update_all(:deleted_on => Time.now.utc)
+  end
 end

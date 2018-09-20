@@ -12,4 +12,15 @@ class VmOrTemplate < ActiveRecord::Base
   has_many :disks, :through => :hardware
 
   validates_presence_of :name, :location
+
+  def disconnect_inv
+    disconnect_ems
+  end
+
+  def disconnect_ems(e = nil)
+    if e.nil? || ext_management_system == e
+      self.ext_management_system = nil
+      save
+    end
+  end
 end
