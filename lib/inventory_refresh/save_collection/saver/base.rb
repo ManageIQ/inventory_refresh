@@ -211,7 +211,7 @@ module InventoryRefresh::SaveCollection
         query = complement_of!(inventory_collection.all_manager_uuids)
 
         ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
-        ids_of_non_active_entities.each_slice(10000) do |batch|
+        ids_of_non_active_entities.each_slice(10_000) do |batch|
           archive_records!(batch)
         end
 
