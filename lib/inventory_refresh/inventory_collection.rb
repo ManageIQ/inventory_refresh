@@ -783,11 +783,7 @@ module InventoryRefresh
 
     # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
     def delete_complement_noop?
-      if targeted? && all_manager_uuids.nil?
-        true
-      else
-        false
-      end
+      all_manager_uuids.nil?
     end
 
     # @return [Boolean] true is processing of this InventoryCollection will be in targeted mode
