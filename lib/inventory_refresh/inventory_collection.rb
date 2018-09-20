@@ -763,22 +763,7 @@ module InventoryRefresh
 
     # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
     def saving_noop?
-      if targeted? && parent_inventory_collections.nil? && targeted_scope.primary_references.blank? &&
-         parent_inventory_collections.blank? && custom_save_block.nil? &&
-         skeletal_primary_index.blank?
-        # It's a noop Parent targeted InventoryCollection
-        true
-      elsif targeted? && !parent_inventory_collections.nil? &&
-            parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? } &&
-            skeletal_primary_index.blank?
-        # It's a noop Child targeted InventoryCollection
-        true
-      elsif !targeted? && data.blank? && !delete_allowed? && skeletal_primary_index.blank?
-        # If we have no data to save and delete is not allowed, we can just skip
-        true
-      else
-        false
-      end
+      saving_targeted_parent_collection_noop? || saving_targeted_child_collection_noop? || saving_full_collection_noop?
     end
 
     # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
@@ -1127,6 +1112,26 @@ module InventoryRefresh
     attr_writer :attributes_blacklist, :attributes_whitelist
 
     private
+
+    # @return true if it's a noop parent targeted InventoryCollection
+    def saving_targeted_parent_collection_noop?
+      targeted_noop_condition && parent_inventory_collections.nil? && targeted_scope.primary_references.blank?
+    end
+
+    # @return true if it's a noop child targeted InventoryCollection
+    def saving_targeted_child_collection_noop?
+      targeted_noop_condition && !parent_inventory_collections.nil? &&
+        parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? }
+    end
+
+    # @return true if it's a noop full InventoryCollection refresh
+    def saving_full_collection_noop?
+      !targeted? && data.blank? && !delete_allowed? && skeletal_primary_index.blank?
+    end
+
+    def targeted_noop_condition
+      targeted? && custom_save_block.nil? && skeletal_primary_index.blank?
+    end
 
     # Creates dynamically a subclass of InventoryRefresh::InventoryObject, that will be used per InventoryCollection
     # object. This approach is needed because we want different InventoryObject's getters&setters for each
