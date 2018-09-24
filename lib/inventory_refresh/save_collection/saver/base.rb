@@ -77,11 +77,12 @@ module InventoryRefresh::SaveCollection
       def save_inventory_collection!
         # If we have a targeted InventoryCollection that wouldn't do anything, quickly skip it
         return if inventory_collection.noop?
-        # If we want to use delete_complement strategy using :all_manager_uuids attribute, we are skipping any other
-        # job. We want to do 1 :delete_complement job at 1 time, to keep to memory down.
-        return delete_complement if inventory_collection.all_manager_uuids.present?
 
-        save!(association)
+        # Delete_complement strategy using :all_manager_uuids attribute
+        delete_complement unless inventory_collection.delete_complement_noop?
+
+        # Create/Update/Archive/Delete records based on InventoryCollection data and scope
+        save!(association) unless inventory_collection.saving_noop?
       end
 
       protected
@@ -206,21 +207,24 @@ module InventoryRefresh::SaveCollection
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
                      "#{all_manager_uuids_size}...")
-        deleted_counter = 0
 
-        inventory_collection.db_collection_for_comparison_for_complement_of(
-          inventory_collection.all_manager_uuids
-        ).find_in_batches do |batch|
-          ActiveRecord::Base.transaction do
-            batch.each do |record|
-              record.public_send(inventory_collection.delete_method)
-              deleted_counter += 1
-            end
-          end
+        query = complement_of!(inventory_collection.all_manager_uuids)
+
+        ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
+        ids_of_non_active_entities.each_slice(10_000) do |batch|
+          archive_records!(batch)
         end
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
-                     "#{all_manager_uuids_size}, deleted=#{deleted_counter}...Complete")
+                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records.size}...Complete")
+      end
+
+      # Archives records by settung :deleted_on timestamp on them
+      #
+      # @param [Array] records of Hashes containing primary keys of records we want to archive
+      def archive_records!(records)
+        inventory_collection.store_deleted_records(records.map { |x| {:id => x["id"] } })
+        inventory_collection.model_class.where(:id => records.map { |x| x["id"] }).update_all(:deleted_on => Time.now.utc)
       end
 
       # Deletes/soft-deletes a given record

@@ -1,4 +1,8 @@
+require_relative 'archived_mixin'
+
 class VmOrTemplate < ActiveRecord::Base
+  include ArchivedMixin
+
   self.table_name = "vms"
 
   belongs_to :ext_management_system, :foreign_key => :ems_id

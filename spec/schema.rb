@@ -362,10 +362,12 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string  "binding_virtual_interface_type"
     t.text    "extra_attributes"
     t.string  "source"
+    t.datetime "deleted_on"
     t.index ["cloud_tenant_id"], name: "index_network_ports_on_cloud_tenant_id", using: :btree
     t.index ["device_id", "device_type"], name: "index_network_ports_on_device_id_and_device_type", using: :btree
     t.index ["ems_id"], name: "index_network_ports_on_ems_id", using: :btree
     t.index ["type"], name: "index_network_ports_on_type", using: :btree
+    t.index ["deleted_on"], name: "index_network_ports_on_deleted_on", using: :btree
   end
 
   create_table "orchestration_stack_resources", id: :bigserial, force: :cascade do |t|
@@ -544,6 +546,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "memory_hot_add_limit"
     t.integer  "memory_hot_add_increment"
     t.string   "hostname"
+    t.datetime "deleted_on"
     t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
     t.index ["ems_id"], name: "index_vms_on_ems_id", using: :btree
     t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
@@ -556,6 +559,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["storage_id"], name: "index_vms_on_storage_id", using: :btree
     t.index ["type"], name: "index_vms_on_type", using: :btree
     t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
+    t.index ["deleted_on"], name: "index_vms_on_deleted_on", using: :btree
   end
 
   create_table "container_groups", id: :bigserial, force: :cascade do |t|

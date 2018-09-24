@@ -758,25 +758,17 @@ module InventoryRefresh
     # @return [Boolean] true if processing of this InventoryCollection object would lead to no operations.
     def noop?
       # If this InventoryCollection doesn't do anything. it can easily happen for targeted/batched strategies.
-      if targeted?
-        if parent_inventory_collections.nil? && targeted_scope.primary_references.blank? &&
-           all_manager_uuids.nil? && parent_inventory_collections.blank? && custom_save_block.nil? &&
-           skeletal_primary_index.blank?
-          # It's a noop Parent targeted InventoryCollection
-          true
-        elsif !parent_inventory_collections.nil? && parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? } &&
-              skeletal_primary_index.blank?
-          # It's a noop Child targeted InventoryCollection
-          true
-        else
-          false
-        end
-      elsif data.blank? && !delete_allowed? && skeletal_primary_index.blank?
-        # If we have no data to save and delete is not allowed, we can just skip
-        true
-      else
-        false
-      end
+      saving_noop? && delete_complement_noop?
+    end
+
+    # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
+    def saving_noop?
+      saving_targeted_parent_collection_noop? || saving_targeted_child_collection_noop? || saving_full_collection_noop?
+    end
+
+    # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
+    def delete_complement_noop?
+      all_manager_uuids.nil?
     end
 
     # @return [Boolean] true is processing of this InventoryCollection will be in targeted mode
@@ -1098,18 +1090,6 @@ module InventoryRefresh
       full_collection_for_comparison.where(targeted_selection_for(references))
     end
 
-    # Builds an ActiveRecord::Relation that can fetch complement of all the references from the DB
-    #
-    # @param manager_uuids_set [Array<String>] passed references
-    # @return [ActiveRecord::Relation] relation that can fetch complement of all the references from the DB
-    def db_collection_for_comparison_for_complement_of(manager_uuids_set)
-      # TODO(lsmola) this should have the build_multi_selection_condition, like in the method above
-      # TODO(lsmola) this query will be highly ineffective, we will try approach with updating a timestamp of all
-      # records, then we can get list of all records that were not update. That would be equivalent to result of this
-      # more effective query and without need of all manager_uuids
-      full_collection_for_comparison.where.not(manager_ref.first => manager_uuids_set)
-    end
-
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def full_collection_for_comparison
       return arel unless arel.nil?
@@ -1132,6 +1112,26 @@ module InventoryRefresh
     attr_writer :attributes_blacklist, :attributes_whitelist
 
     private
+
+    # @return true if it's a noop parent targeted InventoryCollection
+    def saving_targeted_parent_collection_noop?
+      targeted_noop_condition && parent_inventory_collections.nil? && targeted_scope.primary_references.blank?
+    end
+
+    # @return true if it's a noop child targeted InventoryCollection
+    def saving_targeted_child_collection_noop?
+      targeted_noop_condition && !parent_inventory_collections.nil? &&
+        parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? }
+    end
+
+    # @return true if it's a noop full InventoryCollection refresh
+    def saving_full_collection_noop?
+      !targeted? && data.blank? && !delete_allowed? && skeletal_primary_index.blank?
+    end
+
+    def targeted_noop_condition
+      targeted? && custom_save_block.nil? && skeletal_primary_index.blank?
+    end
 
     # Creates dynamically a subclass of InventoryRefresh::InventoryObject, that will be used per InventoryCollection
     # object. This approach is needed because we want different InventoryObject's getters&setters for each
