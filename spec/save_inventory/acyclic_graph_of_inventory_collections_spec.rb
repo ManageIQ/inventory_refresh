@@ -83,15 +83,21 @@ describe InventoryRefresh::SaveInventory do
 
         it 'creates a graph of InventoryCollections' do
           # Fill the InventoryCollections with data
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4)
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks, @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3]
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
+
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -123,15 +129,20 @@ describe InventoryRefresh::SaveInventory do
 
         it 'creates and updates a graph of InventoryCollections' do
           # Fill the InventoryCollections with data
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4)
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks, @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -169,20 +180,25 @@ describe InventoryRefresh::SaveInventory do
           # Second saving with the updated data
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_persisters_collection(@persister, :vms,
-                                            @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                            @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                            @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                            @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                            vm_data(5))
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks, @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -254,24 +270,28 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_persisters_collection(@persister, :vms,
-                                            @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                            @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                            @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                            @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                            vm_data(5))
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks,
-                                            @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                            @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                            @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                            @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -408,24 +428,28 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_persisters_collection(@persister, :vms,
-                                            @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                            @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                            @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                            @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                            vm_data(5))
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks,
-                                            @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                            @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                            @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                            @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -520,24 +544,28 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_persisters_collection(@persister, :vms,
-                                            @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                            @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                            @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                            @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                            vm_data(5))
-          add_data_to_persisters_collection(@persister, :miq_templates, @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                            @key_pair_data_3)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_persisters_collection(@persister, :disks,
-                                            @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                            @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                            @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                            @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_persisters_collection(@persister, :networks, @public_network_data_1, @public_network_data_12,
-                                            @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_persisters_collection(@persister, :flavors, @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -594,9 +622,14 @@ describe InventoryRefresh::SaveInventory do
           @hardware_data_1 = hardware_data(1).merge(
             :vm_or_template => @persister.vms.find(vm_data(1)[:ems_ref])
           )
-
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -610,12 +643,12 @@ describe InventoryRefresh::SaveInventory do
           # Load data into InventoryCollections in a right order, we are accessing @data[:vms] using find when the data
           # are present
           @vm_data_1 = vm_data(1)
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1)
+          @persister.vms.build(@vm_data_1)
 
           @hardware_data_1 = hardware_data(1).merge(
             :vm_or_template => @persister.vms.find(vm_data(1)[:ems_ref])
           )
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1)
+          @persister.hardwares.build(@hardware_data_1)
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -633,9 +666,14 @@ describe InventoryRefresh::SaveInventory do
           @hardware_data_1 = hardware_data(1).merge(
             :vm_or_template => @persister.vms.lazy_find(vm_data(1)[:ems_ref])
           )
-
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
           InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -660,8 +698,14 @@ describe InventoryRefresh::SaveInventory do
           @vm_data_1       = vm_data(1)
           @hardware_data_1 = hardware_data(1).merge(:vm_or_template => nil)
 
-          add_data_to_persisters_collection(@persister, :vms, @vm_data_1)
-          add_data_to_persisters_collection(@persister, :hardwares, @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
         end
 
         it "raises in test if field used in manager_ref nil" do

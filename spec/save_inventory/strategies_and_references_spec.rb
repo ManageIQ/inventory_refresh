@@ -167,8 +167,7 @@ describe InventoryRefresh::SaveInventory do
             )
 
             # Fill InventoryCollections with data
-            add_data_to_persisters_collection(@persister, :network_ports,
-                                              @network_port_data_1)
+            @persister.network_ports.build(@network_port_data_1)
 
             # Assert data before save
             @network_port1.device = nil
@@ -206,8 +205,7 @@ describe InventoryRefresh::SaveInventory do
             )
 
             # Fill InventoryCollections with data
-            add_data_to_persisters_collection(@persister, :network_ports,
-                                              @network_port_data_1)
+            @persister.network_ports.build(@network_port_data_1)
 
             # Assert data before save
             @network_port1.device = nil
@@ -286,15 +284,19 @@ describe InventoryRefresh::SaveInventory do
             )
 
             # Fill InventoryCollections with data
-            add_data_to_persisters_collection(@persister, :network_ports,
-                                              @network_port_data_1,
-                                              @network_port_data_12,
-                                              @network_port_data_3)
-            add_data_to_persisters_collection(@persister, :vms,
-                                              @vm_data_3,
-                                              @vm_data_31)
-            add_data_to_persisters_collection(@persister, :hardwares,
-                                              @hardware_data_3)
+            {
+              :network_ports => [@network_port_data_1,
+                                 @network_port_data_12,
+                                 @network_port_data_3],
+              :vms           => [@vm_data_3,
+                                 @vm_data_31],
+              :hardwares     => [@hardware_data_3],
+            }.each_pair do |inventory_collection_name, data_arr|
+              data_arr.each do |data|
+                @persister.send(inventory_collection_name).build(data)
+              end
+            end
+
             # Assert data before save
             expect(@network_port1.device).to eq @vm1
             expect(@network_port1.name).to eq "network_port_name_1"

@@ -200,21 +200,24 @@ describe InventoryRefresh::SaveInventory do
             @image_data_3 = image_data(3).merge(:name => "image_changed_name_3")
 
             # Fill InventoryCollections with data
-            add_data_to_persisters_collection(@persister, :network_ports,
-                                              @network_port_data_1,
-                                              @network_port_data_12,
-                                              @network_port_data_3)
-            add_data_to_persisters_collection(@persister, :vms,
-                                              @vm_data_2,
-                                              @vm_data_3,
-                                              @vm_data_31)
-            add_data_to_persisters_collection(@persister, :hardwares,
-                                              @hardware_data_2,
-                                              @hardware_data_3,
-                                              @hardware_data_31)
-            add_data_to_persisters_collection(@persister, :miq_templates,
-                                              @image_data_2,
-                                              @image_data_3)
+            {
+              :network_ports => [@network_port_data_1,
+                                 @network_port_data_12,
+                                 @network_port_data_3],
+              :vms           => [@vm_data_2,
+                                 @vm_data_3,
+                                 @vm_data_31],
+              :miq_templates => [@image_data_2,
+                                 @image_data_3],
+              :hardwares     => [@hardware_data_2,
+                                 @hardware_data_3,
+                                 @hardware_data_31],
+            }.each_pair do |inventory_collection_name, data_arr|
+              data_arr.each do |data|
+                @persister.send(inventory_collection_name).build(data)
+              end
+            end
+
             # Assert data before save
             expect(@network_port1.device).to eq @vm1
             expect(@network_port1.name).to eq "network_port_name_1"

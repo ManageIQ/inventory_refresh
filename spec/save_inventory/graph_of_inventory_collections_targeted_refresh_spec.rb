@@ -65,11 +65,15 @@ describe InventoryRefresh::SaveInventory do
         )
 
         # Fill InventoryCollections with data
-        add_data_to_persisters_collection(@persister, :vms,
-                                          @vm_data_3)
-        add_data_to_persisters_collection(@persister, :hardwares,
-                                          @hardware_data_3)
-        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
+        {
+          :vms       => [@vm_data_3],
+          :hardwares => [@hardware_data_3],
+          :disks     => [@disk_data_3, @disk_data_31],
+        }.each_pair do |inventory_collection_name, data_arr|
+          data_arr.each do |data|
+            @persister.send(inventory_collection_name).build(data)
+          end
+        end
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -142,10 +146,14 @@ describe InventoryRefresh::SaveInventory do
         )
 
         # Fill InventoryCollections with data
-        add_data_to_persisters_collection(@persister, :vms,
-                                          @vm_data_3)
-        add_data_to_persisters_collection(@persister, :hardwares,
-                                          @hardware_data_3)
+        {
+          :vms       => [@vm_data_3],
+          :hardwares => [@hardware_data_3],
+        }.each_pair do |inventory_collection_name, data_arr|
+          data_arr.each do |data|
+            @persister.send(inventory_collection_name).build(data)
+          end
+        end
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -169,7 +177,8 @@ describe InventoryRefresh::SaveInventory do
           :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
-        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
+        @persister.disks.build(@disk_data_3)
+        @persister.disks.build(@disk_data_31)
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -234,7 +243,8 @@ describe InventoryRefresh::SaveInventory do
           :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
         )
 
-        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_32)
+        @persister.disks.build(@disk_data_3)
+        @persister.disks.build(@disk_data_32)
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -332,11 +342,15 @@ describe InventoryRefresh::SaveInventory do
         )
 
         # Fill InventoryCollections with data
-        add_data_to_persisters_collection(@persister, :vms,
-                                          @vm_data_3)
-        add_data_to_persisters_collection(@persister, :hardwares,
-                                          @hardware_data_3)
-        add_data_to_persisters_collection(@persister, :disks, @disk_data_3, @disk_data_31)
+        {
+          :vms       => [@vm_data_3],
+          :hardwares => [@hardware_data_3],
+          :disks     => [@disk_data_3, @disk_data_31],
+        }.each_pair do |inventory_collection_name, data_arr|
+          data_arr.each do |data|
+            @persister.send(inventory_collection_name).build(data)
+          end
+        end
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -441,13 +455,15 @@ describe InventoryRefresh::SaveInventory do
         )
 
         # Fill InventoryCollections with data
-        add_data_to_persisters_collection(@persister, :vms,
-                                          @vm_data_3,
-                                          @vm_data_5)
-        add_data_to_persisters_collection(@persister, :hardwares,
-                                          @hardware_data_5)
-        add_data_to_persisters_collection(@persister, :disks,
-                                          @disk_data_5)
+        {
+          :vms       => [@vm_data_3, @vm_data_5],
+          :hardwares => [@hardware_data_5],
+          :disks     => [@disk_data_5],
+        }.each_pair do |inventory_collection_name, data_arr|
+          data_arr.each do |data|
+            @persister.send(inventory_collection_name).build(data)
+          end
+        end
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
@@ -755,25 +771,26 @@ describe InventoryRefresh::SaveInventory do
     )
 
     # Fill InventoryCollections with data
-    add_data_to_persisters_collection(@persister, :orchestration_stacks,
-                                      @orchestration_stack_data_0_1,
-                                      @orchestration_stack_data_1_11,
-                                      @orchestration_stack_data_1_12)
-    add_data_to_persisters_collection(@persister, :orchestration_stacks_resources,
-                                      @orchestration_stack_resource_data_1_11,
-                                      @orchestration_stack_resource_data_1_12)
-    add_data_to_persisters_collection(@persister, :vms,
-                                      @vm_data_1,
-                                      @vm_data_2)
-    add_data_to_persisters_collection(@persister, :miq_templates,
-                                      @image_data_1,
-                                      @image_data_2)
-    add_data_to_persisters_collection(@persister, :hardwares,
-                                      @hardware_data_1,
-                                      @hardware_data_2,
-                                      @image_hardware_data_1,
-                                      @image_hardware_data_2)
-    add_data_to_persisters_collection(@persister, :key_pairs, @key_pair_data_1, @key_pair_data_2, @key_pair_data_21)
-    add_data_to_persisters_collection(@persister, :disks, @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
+    {
+      :orchestration_stacks           => [@orchestration_stack_data_0_1,
+                                          @orchestration_stack_data_1_11,
+                                          @orchestration_stack_data_1_12],
+      :orchestration_stacks_resources => [@orchestration_stack_resource_data_1_11,
+                                          @orchestration_stack_resource_data_1_12],
+      :vms                            => [@vm_data_1,
+                                          @vm_data_2],
+      :miq_templates                  => [@image_data_1,
+                                          @image_data_2],
+      :hardwares                      => [@hardware_data_1,
+                                          @hardware_data_2,
+                                          @image_hardware_data_1,
+                                          @image_hardware_data_2],
+      :key_pairs                      => [@key_pair_data_1, @key_pair_data_2, @key_pair_data_21],
+      :disks                          => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+    }.each_pair do |inventory_collection_name, data_arr|
+      data_arr.each do |data|
+        @persister.send(inventory_collection_name).build(data)
+      end
+    end
   end
 end

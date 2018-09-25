@@ -14,8 +14,4 @@ module SpecHelper
     # Creates InventoryObject object from each arg and adds it into the InventoryCollection
     args.each { |data| inventory_collection << inventory_collection.new_inventory_object(data) }
   end
-
-  def add_data_to_persisters_collection(persister, collection_name, *args)
-    args.each { |data| persister.send(collection_name).build(data) }
-  end
 end
