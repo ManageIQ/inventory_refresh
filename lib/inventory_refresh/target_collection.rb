@@ -76,5 +76,17 @@ module InventoryRefresh
     def manager_refs_by_association_reset
       @manager_refs_by_association = nil
     end
+
+    # Returns list of ems_refs
+    # @return [Array<String>]
+    def references(collection)
+      manager_refs_by_association.try(:[], collection).try(:[], :ems_ref)&.to_a || []
+    end
+
+    # Returns list of names
+    # @return [Array<String>]
+    def name_references(collection)
+      manager_refs_by_association.try(:[], collection).try(:[], :name)&.to_a || []
+    end
   end
 end
