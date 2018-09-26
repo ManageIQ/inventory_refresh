@@ -1,6 +1,7 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
 require_relative '../helpers/spec_mocked_data'
+require_relative '../persister/test_base_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
@@ -48,22 +49,23 @@ describe InventoryRefresh::SaveInventory do
   # Example of the dependency:
   #   the data of the InventoryCollection for Hardware contains
   #
-  #   @data[:vms].lazy_find(instance.id) or @data[:vms].find(instance.id)
+  #   @persister.vms.lazy_find(instance.id) or @persister.vms.find(instance.id)
   #
   #   This code results in LazyInventoryObject or InventoryObject object, which we need to translate into Vm record,
   #   when we save Hardware record. Therefore, this depends on Vm being already saved in the DB,
   #
   # Example of the dependency using :key:
   #
-  #   Using @data[:hardwares].lazy_find(instance.image_id, :key => :guest_os) we do not create a dependency, this code
+  #   Using @persister.hardwares.lazy_find(instance.image_id, :key => :guest_os) we do not create a dependency, this code
   #   fetches an attribute :guest_os of the Hardware InventoryObject, we do not create a dependency. The attribute is
   #   available before we save the Hardware InventoryCollection.
   #
-  #   But using @data[:hardwares].lazy_find(instance.image_id, :key => :vm_or_template), the attribute we are fetching
+  #   But using @persister.hardwares.lazy_find(instance.image_id, :key => :vm_or_template), the attribute we are fetching
   #   is a record itself, that means we depend on the Hardware InventoryCollection being saved.
   #
   ######################################################################################################################
   #
+  let(:persister_class) { ::TestBasePersister }
   # Test all settings for InventoryRefresh::SaveInventory
   [nil, :recursive].each do |strategy|
     context "with settings #{strategy}" do
@@ -71,6 +73,7 @@ describe InventoryRefresh::SaveInventory do
         @ems = FactoryGirl.create(:ems_cloud)
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
+        @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
       end
 
       context 'with empty DB' do
@@ -80,18 +83,24 @@ describe InventoryRefresh::SaveInventory do
 
         it 'creates a graph of InventoryCollections' do
           # Fill the InventoryCollections with data
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4)
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks], @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3]
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
+
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -120,18 +129,23 @@ describe InventoryRefresh::SaveInventory do
 
         it 'creates and updates a graph of InventoryCollections' do
           # Fill the InventoryCollections with data
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4)
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks], @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert that saved data have the updated values, checking id to make sure the original records are updated
           assert_full_inventory_collections_graph
@@ -166,23 +180,28 @@ describe InventoryRefresh::SaveInventory do
           # Second saving with the updated data
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_inventory_collection(@data[:vms],
-                                           @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                           @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                           @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                           @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                           vm_data(5))
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks], @disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2)
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -251,27 +270,31 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_inventory_collection(@data[:vms],
-                                           @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                           @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                           @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                           @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                           vm_data(5))
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks],
-                                           @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                           @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                           @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                           @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           assert_full_inventory_collections_graph
@@ -405,27 +428,31 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_inventory_collection(@data[:vms],
-                                           @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                           @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                           @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                           @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                           vm_data(5))
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks],
-                                           @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                           @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                           @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                           @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert that saved data have the updated values and the duplicate vm_ems_ref_1 are gone
           assert_all_records_match_hashes(
@@ -517,27 +544,31 @@ describe InventoryRefresh::SaveInventory do
           # Now save the records using InventoryCollections
           # Fill the InventoryCollections with data, that have a modified name
           initialize_data_and_inventory_collections
-          add_data_to_inventory_collection(@data[:vms],
-                                           @vm_data_1.merge(:name => "vm_name_1_changed"),
-                                           @vm_data_12.merge(:name => "vm_name_12_changed"),
-                                           @vm_data_2.merge(:name => "vm_name_2_changed"),
-                                           @vm_data_4.merge(:name => "vm_name_4_changed"),
-                                           vm_data(5))
-          add_data_to_inventory_collection(@data[:miq_templates], @image_data_1, @image_data_2, @image_data_3)
-          add_data_to_inventory_collection(@data[:key_pairs], @key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                                           @key_pair_data_3)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1, @hardware_data_2, @hardware_data_12)
-          add_data_to_inventory_collection(@data[:disks],
-                                           @disk_data_1.merge(:device_type => "nvme_ssd_1"),
-                                           @disk_data_12.merge(:device_type => "nvme_ssd_12"),
-                                           @disk_data_13.merge(:device_type => "nvme_ssd_13"),
-                                           @disk_data_2.merge(:device_type => "nvme_ssd_2"))
-          add_data_to_inventory_collection(@data[:networks], @public_network_data_1, @public_network_data_12,
-                                           @public_network_data_13, @public_network_data_14, @public_network_data_2)
-          add_data_to_inventory_collection(@data[:flavors], @flavor_data_1, @flavor_data_2, @flavor_data_3)
+          {
+            :vms           => [@vm_data_1.merge(:name => "vm_name_1_changed"),
+                               @vm_data_12.merge(:name => "vm_name_12_changed"),
+                               @vm_data_2.merge(:name => "vm_name_2_changed"),
+                               @vm_data_4.merge(:name => "vm_name_4_changed"),
+                               vm_data(5)],
+            :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
+            :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
+                               @key_pair_data_3],
+            :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
+            :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
+                               @disk_data_12.merge(:device_type => "nvme_ssd_12"),
+                               @disk_data_13.merge(:device_type => "nvme_ssd_13"),
+                               @disk_data_2.merge(:device_type => "nvme_ssd_2")],
+            :networks      => [@public_network_data_1, @public_network_data_12,
+                               @public_network_data_13, @public_network_data_14, @public_network_data_2],
+            :flavors       => [@flavor_data_1, @flavor_data_2, @flavor_data_3],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert that saved data have the updated values and we kept the Vm with service association while deleting
           # others
@@ -576,18 +607,12 @@ describe InventoryRefresh::SaveInventory do
       context "lazy_find vs find" do
         before do
           # Initialize the InventoryCollections
-          @data             = {}
-          @data[:vms]       = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => ManageIQ::Providers::CloudManager::Vm,
-            :parent      => @ems,
-            :association => :vms
-          )
-          @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => Hardware,
-            :parent      => @ems,
-            :association => :hardwares,
-            :manager_ref => [:virtualization_type]
-          )
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
+          end
+          @persister.add_collection(:hardwares) do |builder|
+            builder.add_properties(:manager_ref => %i(virtualization_type))
+          end
         end
 
         it "misses relation using find and loading data in a wrong order" do
@@ -595,14 +620,19 @@ describe InventoryRefresh::SaveInventory do
           # it with data
           @vm_data_1       = vm_data(1)
           @hardware_data_1 = hardware_data(1).merge(
-            :vm_or_template => @data[:vms].find(vm_data(1)[:ems_ref])
+            :vm_or_template => @persister.vms.find(vm_data(1)[:ems_ref])
           )
-
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           hardware1 = Hardware.find_by!(:virtualization_type => "virtualization_type_1")
@@ -613,15 +643,15 @@ describe InventoryRefresh::SaveInventory do
           # Load data into InventoryCollections in a right order, we are accessing @data[:vms] using find when the data
           # are present
           @vm_data_1 = vm_data(1)
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1)
+          @persister.vms.build(@vm_data_1)
 
           @hardware_data_1 = hardware_data(1).merge(
-            :vm_or_template => @data[:vms].find(vm_data(1)[:ems_ref])
+            :vm_or_template => @persister.vms.find(vm_data(1)[:ems_ref])
           )
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
+          @persister.hardwares.build(@hardware_data_1)
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -634,14 +664,19 @@ describe InventoryRefresh::SaveInventory do
           # is evaluated before saving, all InventoryCollections have data loaded at that time.
           @vm_data_1       = vm_data(1)
           @hardware_data_1 = hardware_data(1).merge(
-            :vm_or_template => @data[:vms].lazy_find(vm_data(1)[:ems_ref])
+            :vm_or_template => @persister.vms.lazy_find(vm_data(1)[:ems_ref])
           )
-
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
 
           # Invoke the InventoryCollections saving
-          InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy)
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
 
           # Assert saved data
           vm1 = Vm.find_by!(:ems_ref => "vm_ems_ref_1")
@@ -653,32 +688,32 @@ describe InventoryRefresh::SaveInventory do
       context "assert_referential_integrity" do
         before do
           # Initialize the InventoryCollections
-          @data             = {}
-          @data[:vms]       = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => ManageIQ::Providers::CloudManager::Vm,
-            :parent      => @ems,
-            :association => :vms
-          )
-          @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => Hardware,
-            :parent      => @ems,
-            :association => :hardwares,
-            :manager_ref => %i(vm_or_template virtualization_type)
-          )
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
+          end
+          @persister.add_collection(:hardwares) do |builder|
+            builder.add_properties(:manager_ref => %i(vm_or_template virtualization_type))
+          end
 
           @vm_data_1       = vm_data(1)
           @hardware_data_1 = hardware_data(1).merge(:vm_or_template => nil)
 
-          add_data_to_inventory_collection(@data[:vms], @vm_data_1)
-          add_data_to_inventory_collection(@data[:hardwares], @hardware_data_1)
+          {
+            :vms       => [@vm_data_1],
+            :hardwares => [@hardware_data_1],
+          }.each_pair do |inventory_collection_name, data_arr|
+            data_arr.each do |data|
+              @persister.send(inventory_collection_name).build(data)
+            end
+          end
         end
 
         it "raises in test if field used in manager_ref nil" do
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy) }.to raise_error(/referential integrity/i)
         end
 
         it "raises in developement if field used in manager_ref nil" do
-          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @data.values, strategy) }.to raise_error(/referential integrity/i)
+          expect { InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy) }.to raise_error(/referential integrity/i)
         end
       end
     end
@@ -722,47 +757,33 @@ describe InventoryRefresh::SaveInventory do
 
   def initialize_data_and_inventory_collections
     # Initialize the InventoryCollections
-    @data                 = {}
-    @data[:vms]           = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => ManageIQ::Providers::CloudManager::Vm,
-      :parent      => @ems,
-      :association => :vms
-    )
-    @data[:key_pairs] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => ManageIQ::Providers::CloudManager::AuthKeyPair,
-      :parent      => @ems,
-      :association => :key_pairs,
-      :manager_ref => [:name]
-    )
-    @data[:miq_templates] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => ManageIQ::Providers::CloudManager::Template,
-      :parent      => @ems,
-      :association => :miq_templates
-    )
-    @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => Hardware,
-      :parent      => @ems,
-      :association => :hardwares,
-      :manager_ref => [:vm_or_template]
-    )
-    @data[:disks] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => Disk,
-      :parent      => @ems,
-      :association => :disks,
-      :manager_ref => %i(hardware device_name)
-    )
-    @data[:networks] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => Network,
-      :parent      => @ems,
-      :association => :networks,
-      :manager_ref => %i(hardware description)
-    )
-    @data[:flavors] = ::InventoryRefresh::InventoryCollection.new(
-      :model_class => ManageIQ::Providers::CloudManager::Flavor,
-      :parent      => @ems,
-      :association => :flavors,
-      :manager_ref => [:name]
-    )
+    @persister.add_collection(:vms) do |builder|
+      builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
+    end
+    @persister.add_collection(:key_pairs) do |builder|
+      builder.add_properties(
+        :model_class => ManageIQ::Providers::CloudManager::AuthKeyPair,
+        :manager_ref => %i(name)
+      )
+    end
+    @persister.add_collection(:miq_templates) do |builder|
+      builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Template)
+    end
+    @persister.add_collection(:hardwares) do |builder|
+      builder.add_properties(:manager_ref => %i(vm_or_template))
+    end
+    @persister.add_collection(:disks) do |builder|
+      builder.add_properties(:manager_ref => %i(hardware device_name))
+    end
+    @persister.add_collection(:networks) do |builder|
+      builder.add_properties(:manager_ref => %i(hardware description))
+    end
+    @persister.add_collection(:flavors) do |builder|
+      builder.add_properties(
+        :model_class => ManageIQ::Providers::CloudManager::Flavor,
+        :manager_ref => %i(name)
+      )
+    end
 
     # Get parsed data with the lazy_relations
     @flavor_data_1        = flavor_data(1)
@@ -778,98 +799,98 @@ describe InventoryRefresh::SaveInventory do
     @key_pair_data_2  = key_pair_data(2)
     @key_pair_data_3  = key_pair_data(3)
 
-    lazy_find_vm_1       = @data[:vms].lazy_find(:ems_ref => vm_data(1)[:ems_ref])
-    lazy_find_hardware_1 = @data[:hardwares].lazy_find(:vm_or_template => lazy_find_vm_1)
-    lazy_find_vm_2       = @data[:vms].lazy_find(:ems_ref => vm_data(2)[:ems_ref])
-    lazy_find_hardware_2 = @data[:hardwares].lazy_find(:vm_or_template => lazy_find_vm_2)
-    lazy_find_vm_4       = @data[:vms].lazy_find(:ems_ref => vm_data(4)[:ems_ref])
-    lazy_find_hardware_4 = @data[:hardwares].lazy_find(:vm_or_template => lazy_find_vm_4)
+    lazy_find_vm_1       = @persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
+    lazy_find_hardware_1 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_1)
+    lazy_find_vm_2       = @persister.vms.lazy_find(:ems_ref => vm_data(2)[:ems_ref])
+    lazy_find_hardware_2 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_2)
+    lazy_find_vm_4       = @persister.vms.lazy_find(:ems_ref => vm_data(4)[:ems_ref])
+    lazy_find_hardware_4 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_4)
 
     @vm_data_1 = vm_data(1).merge(
-      :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name])],
-      :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
-                                                      {:key     => :hostname,
-                                                       :default => 'default_value_unknown'}),
+      :flavor    => @persister.flavors.lazy_find(flavor_data(1)[:name]),
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name])],
+      :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
+                                                  {:key     => :hostname,
+                                                   :default => 'default_value_unknown'}),
     )
 
     @vm_data_12 = vm_data(12).merge(
-      :flavor           => @data[:flavors].lazy_find(flavor_data(1)[:name]),
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
-                            @data[:key_pairs].lazy_find(key_pair_data(1)[:name]),
-                            @data[:key_pairs].lazy_find(key_pair_data(12)[:name])],
-      :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
-                                                      {:key     => :hostname,
-                                                       :default => 'default_value_unknown'}),
+      :flavor    => @persister.flavors.lazy_find(flavor_data(1)[:name]),
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name]),
+                     @persister.key_pairs.lazy_find(key_pair_data(1)[:name]),
+                     @persister.key_pairs.lazy_find(key_pair_data(12)[:name])],
+      :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
+                                                  {:key     => :hostname,
+                                                   :default => 'default_value_unknown'}),
     )
 
     @vm_data_2 = vm_data(2).merge(
-      :flavor           => @data[:flavors].lazy_find(flavor_data(2)[:name]),
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(2)[:name])],
-      :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
-                                                      {:key     => :hostname,
-                                                       :default => 'default_value_unknown'}),
+      :flavor    => @persister.flavors.lazy_find(flavor_data(2)[:name]),
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
+      :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
+                                                  {:key     => :hostname,
+                                                   :default => 'default_value_unknown'}),
     )
 
     @vm_data_4 = vm_data(4).merge(
-      :flavor           => @data[:flavors].lazy_find(flavor_data(4)[:name]),
-      :key_pairs        => [@data[:key_pairs].lazy_find(key_pair_data(4)[:name])].compact,
-      :location         => @data[:networks].lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
-                                                      {:key     => :hostname,
-                                                       :default => 'default_value_unknown'}),
+      :flavor    => @persister.flavors.lazy_find(flavor_data(4)[:name]),
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(4)[:name])].compact,
+      :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
+                                                  {:key     => :hostname,
+                                                   :default => 'default_value_unknown'}),
     )
 
     @hardware_data_1 = hardware_data(1).merge(
-      :guest_os       => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref], :key => :guest_os),
-      :vm_or_template => @data[:vms].lazy_find(vm_data(1)[:ems_ref])
+      :guest_os       => @persister.miq_templates.lazy_find(image_data(1)[:ems_ref], :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(1)[:ems_ref])
     )
 
     @hardware_data_12 = hardware_data(12).merge(
-      :guest_os       => @data[:miq_templates].lazy_find(image_data(1)[:ems_ref], :key => :guest_os),
-      :vm_or_template => @data[:vms].lazy_find(vm_data(12)[:ems_ref])
+      :guest_os       => @persister.miq_templates.lazy_find(image_data(1)[:ems_ref], :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(12)[:ems_ref])
     )
 
     @hardware_data_2 = hardware_data(2).merge(
-      :guest_os       => @data[:miq_templates].lazy_find(image_data(2)[:ems_ref], :key => :guest_os),
-      :vm_or_template => @data[:vms].lazy_find(vm_data(2)[:ems_ref])
+      :guest_os       => @persister.miq_templates.lazy_find(image_data(2)[:ems_ref], :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(2)[:ems_ref])
     )
 
     @disk_data_1 = disk_data(1).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref])),
     )
 
     @disk_data_12 = disk_data(12).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
     )
 
     @disk_data_13 = disk_data(13).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
     )
 
     @disk_data_2 = disk_data(2).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(2)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref])),
     )
 
     @public_network_data_1 = public_network_data(1).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(1)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref])),
     )
 
     @public_network_data_12 = public_network_data(12).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
     )
 
     @public_network_data_13 = public_network_data(13).merge(
-      :hardware    => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(12)[:ems_ref])),
+      :hardware    => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
       :description => "public_2"
     )
 
     @public_network_data_14 = public_network_data(14).merge(
-      :hardware    => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(12)[:ems_ref])),
+      :hardware    => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
       :description => "public_2" # duplicate key, network will be ignored
     )
 
     @public_network_data_2 = public_network_data(2).merge(
-      :hardware => @data[:hardwares].lazy_find(@data[:vms].lazy_find(vm_data(2)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref])),
     )
   end
 end
