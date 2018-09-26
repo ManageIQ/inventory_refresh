@@ -10,513 +10,508 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
   # Spec scenarios showing saving of the inventory with Targeted refresh strategy
   ######################################################################################################################
-  #
-  # Test all settings for InventoryRefresh::SaveInventory
-  [nil, :recursive].each do |strategy|
-    context "with settings #{strategy}" do
-      before do
-        @ems = FactoryGirl.create(:ems_cloud)
 
-        allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
-      end
-
-      it "refreshing all records and data collects everything" do
-        # Get the relations
-        initialize_all_inventory_collections
-        initialize_inventory_collection_data
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        assert_everything_is_collected
-      end
-
-      it "do a targeted refresh that will only create and update a new vm, hardware and disks" do
-        # Get the relations
-        initialize_all_inventory_collections
-        initialize_inventory_collection_data
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        assert_everything_is_collected
-
-        ### Second refresh ###
-        # Initialize the InventoryCollections and data for a new VM hardware and disks
-        initialize_inventory_collections(%i(vms hardwares disks))
-
-        @vm_data_3 = vm_data(3).merge(
-          :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
-        )
-        @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
-        )
-        @disk_data_3 = disk_data(3).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-        @disk_data_31 = disk_data(31).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-
-        # Fill InventoryCollections with data
-        {
-          :vms       => [@vm_data_3],
-          :hardwares => [@hardware_data_3],
-          :disks     => [@disk_data_3, @disk_data_31],
-        }.each_pair do |inventory_collection_name, data_arr|
-          data_arr.each do |data|
-            @persister.send(inventory_collection_name).build(data)
-          end
-        end
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        load_records
-        @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-        @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
-        @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
-        @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
-
-        expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
-        expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
-        expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        assert_everything_is_collected(
-          :extra_vms      => [
-            {
-              :ems_ref         => "vm_ems_ref_3",
-              :name            => "vm_name_3",
-              :location        => "vm_location_3",
-              :uid_ems         => "vm_uid_ems_3",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }
-          ],
-          :extra_hardware => [
-            {
-              :vm_or_template_id   => @vm3.id,
-              :bitness             => 64,
-              :virtualization_type => "virtualization_type_3",
-              :guest_os            => nil,
-            }
-          ],
-          :extra_disks    => [
-            {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_3",
-              :device_type => "disk",
-            }, {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_31",
-              :device_type => "disk",
-            }
-          ]
-        )
-      end
-
-      it "do a targeted refresh that will create/update vm, then create/update/delete Vm's hardware and disks" do
-        # Get the relations
-        initialize_all_inventory_collections
-        initialize_inventory_collection_data
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        assert_everything_is_collected
-
-        ### Second refresh ###
-        # Initialize the InventoryCollections and data for a new VM
-        initialize_inventory_collections(%i(vms hardwares))
-
-        @vm_data_3 = vm_data(3).merge(
-          :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
-        )
-        @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
-        )
-
-        # Fill InventoryCollections with data
-        {
-          :vms       => [@vm_data_3],
-          :hardwares => [@hardware_data_3],
-        }.each_pair do |inventory_collection_name, data_arr|
-          data_arr.each do |data|
-            @persister.send(inventory_collection_name).build(data)
-          end
-        end
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        ### Third refresh ###
-        # Initialize the InventoryCollections and data for the disks with new disk under a vm
-
-        @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-
-        initialize_inventory_collections([:disks])
-
-        @persister.add_collection(:disks) do |builder|
-          builder.add_properties(:parent      => @vm3,
-                                 :manager_ref => %i(hardware device_name))
-        end
-
-        @disk_data_3 = disk_data(3).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-        @disk_data_31 = disk_data(31).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-
-        @persister.disks.build(@disk_data_3)
-        @persister.disks.build(@disk_data_31)
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-        @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
-        @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
-        @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
-
-        expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
-        expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
-        expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        assert_everything_is_collected(
-          :extra_vms      => [
-            {
-              :ems_ref         => "vm_ems_ref_3",
-              :name            => "vm_name_3",
-              :location        => "vm_location_3",
-              :uid_ems         => "vm_uid_ems_3",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }
-          ],
-          :extra_hardware => [
-            {
-              :vm_or_template_id   => @vm3.id,
-              :bitness             => 64,
-              :virtualization_type => "virtualization_type_3",
-              :guest_os            => nil,
-            }
-          ],
-          :extra_disks    => [
-            {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_3",
-              :device_type => "disk",
-            }, {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_31",
-              :device_type => "disk",
-            }
-          ]
-        )
-
-        ### Fourth refresh ###
-        # Add new disk and remove a disk under a vm
-
-        @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-
-        initialize_inventory_collections([:disks])
-        @persister.add_collection(:disks) do |builder|
-          builder.add_properties(:parent      => @vm3,
-                                 :manager_ref => %i(hardware device_name))
-        end
-        @disk_data_3 = disk_data(3).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-        @disk_data_32 = disk_data(32).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-
-        @persister.disks.build(@disk_data_3)
-        @persister.disks.build(@disk_data_32)
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-        @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
-        @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
-        @disk32       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_32")
-
-        expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
-        expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk32.id])
-        expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        assert_everything_is_collected(
-          :extra_vms      => [
-            {
-              :ems_ref         => "vm_ems_ref_3",
-              :name            => "vm_name_3",
-              :location        => "vm_location_3",
-              :uid_ems         => "vm_uid_ems_3",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }
-          ],
-          :extra_hardware => [
-            {
-              :vm_or_template_id   => @vm3.id,
-              :bitness             => 64,
-              :virtualization_type => "virtualization_type_3",
-              :guest_os            => nil,
-            }
-          ],
-          :extra_disks    => [
-            {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_3",
-              :device_type => "disk",
-            }, {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_32",
-              :device_type => "disk",
-            }
-          ]
-        )
-      end
-
-      it "do a targeted refresh that will create/update vm, then create/update/delete Vm's hardware and disks using arel" do
-        # Get the relations
-        initialize_all_inventory_collections
-        initialize_inventory_collection_data
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        assert_everything_is_collected
-
-        ### Second refresh ###
-        # Do a targeted refresh for couple of VMs, hardwares and disks using arel comparison
-        initialize_inventory_collections(%i(vms hardwares disks))
-
-        vm_refs = ["vm_ems_ref_3", "vm_ems_ref_4"]
-
-        vms_init_data(
-          :arel => @ems.vms.where(:ems_ref => vm_refs)
-        )
-
-        hardwares_init_data(
-          :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :strategy    => :local_db_find_missing_references,
-          :manager_ref => %i(vm_or_template)
-        )
-
-        disks_init_data(
-          :arel => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-        )
-
-        @vm_data_3 = vm_data(3).merge(
-          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
-          :ext_management_system => @ems
-        )
-        @hardware_data_3 = hardware_data(3).merge(
-          :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
-        )
-
-        @disk_data_3 = disk_data(3).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-        @disk_data_31 = disk_data(31).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
-        )
-
-        # Fill InventoryCollections with data
-        {
-          :vms       => [@vm_data_3],
-          :hardwares => [@hardware_data_3],
-          :disks     => [@disk_data_3, @disk_data_31],
-        }.each_pair do |inventory_collection_name, data_arr|
-          data_arr.each do |data|
-            @persister.send(inventory_collection_name).build(data)
-          end
-        end
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-        @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
-        @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
-        @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
-
-        expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
-        expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
-        expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        assert_everything_is_collected(
-          :extra_vms      => [
-            {
-              :ems_ref         => "vm_ems_ref_3",
-              :name            => "vm_name_3",
-              :location        => "vm_location_3",
-              :uid_ems         => "vm_uid_ems_3",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }
-          ],
-          :extra_hardware => [
-            {
-              :vm_or_template_id   => @vm3.id,
-              :bitness             => 64,
-              :virtualization_type => "virtualization_type_3",
-              :guest_os            => "linux_generic_2",
-            }
-          ],
-          :extra_disks    => [
-            {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_3",
-              :device_type => "disk",
-            }, {
-              :hardware_id => @vm3.hardware.id,
-              :device_name => "disk_name_31",
-              :device_type => "disk",
-            }
-          ]
-        )
-
-        ### Third refresh ###
-        # Do a targeted refresh again with some new data and some data missing
-        initialize_inventory_collections(%i(vms hardwares disks))
-
-        vm_refs = %w(vm_ems_ref_3 vm_ems_ref_5)
-
-        @persister.add_collection(:vms) do |builder|
-          builder.add_properties(
-            :association => nil,
-            :arel        => @ems.vms.where(:ems_ref => vm_refs),
-            :model_class => ManageIQ::Providers::CloudManager::Vm,
-          )
-        end
-        @persister.add_collection(:hardwares) do |builder|
-          builder.add_properties(
-            :association => nil,
-            :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-            :manager_ref => %i(vm_or_template),
-            :model_class => Hardware,
-          )
-        end
-        @persister.add_collection(:disks) do |builder|
-          builder.add_properties(
-            :association => nil,
-            :model_class => Disk,
-            :arel        => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-            :manager_ref => %i(hardware device_name),
-          )
-        end
-        @persister.add_collection(:image_hardwares) do |builder|
-          builder.add_properties(
-            :association => nil,
-            :arel        => @ems.hardwares,
-            :manager_ref => %i(vm_or_template),
-            :model_class => Hardware,
-            :name        => :image_hardwares,
-            :strategy    => :local_db_cache_all,
-          )
-        end
-
-        @vm_data_3 = vm_data(3).merge(
-          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
-          :ext_management_system => @ems
-        )
-        @vm_data_5 = vm_data(5).merge(
-          :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
-          :ext_management_system => @ems
-        )
-        @hardware_data_5 = hardware_data(5).merge(
-          :guest_os       => @persister.image_hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
-          :vm_or_template => @persister.vms.lazy_find(vm_data(5)[:ems_ref])
-        )
-        @disk_data_5 = disk_data(5).merge(
-          :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(5)[:ems_ref]))
-        )
-
-        # Fill InventoryCollections with data
-        {
-          :vms       => [@vm_data_3, @vm_data_5],
-          :hardwares => [@hardware_data_5],
-          :disks     => [@disk_data_5],
-        }.each_pair do |inventory_collection_name, data_arr|
-          data_arr.each do |data|
-            @persister.send(inventory_collection_name).build(data)
-          end
-        end
-
-        # Invoke the InventoryCollections saving
-        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections, strategy)
-
-        # Assert all data were filled
-        load_records
-        @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
-        @vm5          = Vm.find_by(:ems_ref => "vm_ems_ref_5")
-        @vm_hardware5 = Hardware.find_by(:vm_or_template => @vm5)
-        @disk5        = Disk.find_by(:hardware => @vm_hardware5, :device_name => "disk_name_5")
-
-        expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        expect(@vm5.hardware.id).to eq(@vm_hardware5.id)
-        expect(@vm5.hardware.disks.pluck(:id)).to match_array([@disk5.id])
-        expect(@vm5.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
-
-        assert_everything_is_collected(
-          :extra_vms      => [
-            {
-              :ems_ref         => "vm_ems_ref_3",
-              :name            => "vm_name_3",
-              :location        => "vm_location_3",
-              :uid_ems         => "vm_uid_ems_3",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }, {
-              :ems_ref         => "vm_ems_ref_5",
-              :name            => "vm_name_5",
-              :location        => "vm_location_5",
-              :uid_ems         => "vm_uid_ems_5",
-              :vendor          => "amazon",
-              :raw_power_state => "unknown",
-            }
-          ],
-          :extra_hardware => [
-            {
-              :vm_or_template_id   => @vm5.id,
-              :bitness             => 64,
-              :virtualization_type => "virtualization_type_5",
-              :guest_os            => "linux_generic_2",
-            }
-          ],
-          :extra_disks    => [
-            {
-              :hardware_id => @vm5.hardware.id,
-              :device_name => "disk_name_5",
-              :device_type => "disk",
-            }
-          ]
-        )
+  before do
+    @ems = FactoryGirl.create(:ems_cloud)
+
+    allow(@ems.class).to receive(:ems_type).and_return(:mock)
+    @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
+  end
+
+  it "refreshing all records and data collects everything" do
+    # Get the relations
+    initialize_all_inventory_collections
+    initialize_inventory_collection_data
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    assert_everything_is_collected
+  end
+
+  it "do a targeted refresh that will only create and update a new vm, hardware and disks" do
+    # Get the relations
+    initialize_all_inventory_collections
+    initialize_inventory_collection_data
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    assert_everything_is_collected
+
+    ### Second refresh ###
+    # Initialize the InventoryCollections and data for a new VM hardware and disks
+    initialize_inventory_collections(%i(vms hardwares disks))
+
+    @vm_data_3 = vm_data(3).merge(
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
+    )
+    @hardware_data_3 = hardware_data(3).merge(
+      :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
+    )
+    @disk_data_3 = disk_data(3).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+    @disk_data_31 = disk_data(31).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+
+    # Fill InventoryCollections with data
+    {
+      :vms       => [@vm_data_3],
+      :hardwares => [@hardware_data_3],
+      :disks     => [@disk_data_3, @disk_data_31],
+    }.each_pair do |inventory_collection_name, data_arr|
+      data_arr.each do |data|
+        @persister.send(inventory_collection_name).build(data)
       end
     end
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    load_records
+    @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+    @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
+    @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
+    @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
+
+    expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
+    expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
+    expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    assert_everything_is_collected(
+      :extra_vms      => [
+        {
+          :ems_ref         => "vm_ems_ref_3",
+          :name            => "vm_name_3",
+          :location        => "vm_location_3",
+          :uid_ems         => "vm_uid_ems_3",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }
+      ],
+      :extra_hardware => [
+        {
+          :vm_or_template_id   => @vm3.id,
+          :bitness             => 64,
+          :virtualization_type => "virtualization_type_3",
+          :guest_os            => nil,
+        }
+      ],
+      :extra_disks    => [
+        {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_3",
+          :device_type => "disk",
+        }, {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_31",
+          :device_type => "disk",
+        }
+      ]
+    )
+  end
+
+  it "do a targeted refresh that will create/update vm, then create/update/delete Vm's hardware and disks" do
+    # Get the relations
+    initialize_all_inventory_collections
+    initialize_inventory_collection_data
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    assert_everything_is_collected
+
+    ### Second refresh ###
+    # Initialize the InventoryCollections and data for a new VM
+    initialize_inventory_collections(%i(vms hardwares))
+
+    @vm_data_3 = vm_data(3).merge(
+      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
+    )
+    @hardware_data_3 = hardware_data(3).merge(
+      :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
+    )
+
+    # Fill InventoryCollections with data
+    {
+      :vms       => [@vm_data_3],
+      :hardwares => [@hardware_data_3],
+    }.each_pair do |inventory_collection_name, data_arr|
+      data_arr.each do |data|
+        @persister.send(inventory_collection_name).build(data)
+      end
+    end
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    ### Third refresh ###
+    # Initialize the InventoryCollections and data for the disks with new disk under a vm
+
+    @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+
+    initialize_inventory_collections(%i(disks))
+
+    @persister.add_collection(:disks) do |builder|
+      builder.add_properties(:parent      => @vm3,
+                             :manager_ref => %i(hardware device_name))
+    end
+
+    @disk_data_3 = disk_data(3).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+    @disk_data_31 = disk_data(31).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+
+    @persister.disks.build(@disk_data_3)
+    @persister.disks.build(@disk_data_31)
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+    @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
+    @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
+    @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
+
+    expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
+    expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
+    expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    assert_everything_is_collected(
+      :extra_vms      => [
+        {
+          :ems_ref         => "vm_ems_ref_3",
+          :name            => "vm_name_3",
+          :location        => "vm_location_3",
+          :uid_ems         => "vm_uid_ems_3",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }
+      ],
+      :extra_hardware => [
+        {
+          :vm_or_template_id   => @vm3.id,
+          :bitness             => 64,
+          :virtualization_type => "virtualization_type_3",
+          :guest_os            => nil,
+        }
+      ],
+      :extra_disks    => [
+        {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_3",
+          :device_type => "disk",
+        }, {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_31",
+          :device_type => "disk",
+        }
+      ]
+    )
+
+    ### Fourth refresh ###
+    # Add new disk and remove a disk under a vm
+
+    @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+
+    initialize_inventory_collections(%i(disks))
+    @persister.add_collection(:disks) do |builder|
+      builder.add_properties(:parent      => @vm3,
+                             :manager_ref => %i(hardware device_name))
+    end
+    @disk_data_3 = disk_data(3).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+    @disk_data_32 = disk_data(32).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+
+    @persister.disks.build(@disk_data_3)
+    @persister.disks.build(@disk_data_32)
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+    @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
+    @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
+    @disk32       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_32")
+
+    expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
+    expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk32.id])
+    expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    assert_everything_is_collected(
+      :extra_vms      => [
+        {
+          :ems_ref         => "vm_ems_ref_3",
+          :name            => "vm_name_3",
+          :location        => "vm_location_3",
+          :uid_ems         => "vm_uid_ems_3",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }
+      ],
+      :extra_hardware => [
+        {
+          :vm_or_template_id   => @vm3.id,
+          :bitness             => 64,
+          :virtualization_type => "virtualization_type_3",
+          :guest_os            => nil,
+        }
+      ],
+      :extra_disks    => [
+        {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_3",
+          :device_type => "disk",
+        }, {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_32",
+          :device_type => "disk",
+        }
+      ]
+    )
+  end
+
+  it "do a targeted refresh that will create/update vm, then create/update/delete Vm's hardware and disks using arel" do
+    # Get the relations
+    initialize_all_inventory_collections
+    initialize_inventory_collection_data
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    assert_everything_is_collected
+
+    ### Second refresh ###
+    # Do a targeted refresh for couple of VMs, hardwares and disks using arel comparison
+    initialize_inventory_collections(%i(vms hardwares disks))
+
+    vm_refs = %w(vm_ems_ref_3 vm_ems_ref_4)
+
+    vms_init_data(
+      :arel => @ems.vms.where(:ems_ref => vm_refs)
+    )
+
+    hardwares_init_data(
+      :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+      :strategy    => :local_db_find_missing_references,
+      :manager_ref => %i(vm_or_template)
+    )
+
+    disks_init_data(
+      :arel => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
+    )
+
+    @vm_data_3 = vm_data(3).merge(
+      :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
+      :ext_management_system => @ems
+    )
+    @hardware_data_3 = hardware_data(3).merge(
+      :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(3)[:ems_ref])
+    )
+
+    @disk_data_3 = disk_data(3).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+    @disk_data_31 = disk_data(31).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
+    )
+
+    # Fill InventoryCollections with data
+    {
+      :vms       => [@vm_data_3],
+      :hardwares => [@hardware_data_3],
+      :disks     => [@disk_data_3, @disk_data_31],
+    }.each_pair do |inventory_collection_name, data_arr|
+      data_arr.each do |data|
+        @persister.send(inventory_collection_name).build(data)
+      end
+    end
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+    @vm_hardware3 = Hardware.find_by(:vm_or_template => @vm3)
+    @disk3        = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_3")
+    @disk31       = Disk.find_by(:hardware => @vm_hardware3, :device_name => "disk_name_31")
+
+    expect(@vm3.hardware.id).to eq(@vm_hardware3.id)
+    expect(@vm3.hardware.disks.pluck(:id)).to match_array([@disk3.id, @disk31.id])
+    expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    assert_everything_is_collected(
+      :extra_vms      => [
+        {
+          :ems_ref         => "vm_ems_ref_3",
+          :name            => "vm_name_3",
+          :location        => "vm_location_3",
+          :uid_ems         => "vm_uid_ems_3",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }
+      ],
+      :extra_hardware => [
+        {
+          :vm_or_template_id   => @vm3.id,
+          :bitness             => 64,
+          :virtualization_type => "virtualization_type_3",
+          :guest_os            => "linux_generic_2",
+        }
+      ],
+      :extra_disks    => [
+        {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_3",
+          :device_type => "disk",
+        }, {
+          :hardware_id => @vm3.hardware.id,
+          :device_name => "disk_name_31",
+          :device_type => "disk",
+        }
+      ]
+    )
+
+    ### Third refresh ###
+    # Do a targeted refresh again with some new data and some data missing
+    initialize_inventory_collections(%i(vms hardwares disks))
+
+    vm_refs = %w(vm_ems_ref_3 vm_ems_ref_5)
+
+    @persister.add_collection(:vms) do |builder|
+      builder.add_properties(
+        :association => nil,
+        :arel        => @ems.vms.where(:ems_ref => vm_refs),
+        :model_class => ManageIQ::Providers::CloudManager::Vm,
+      )
+    end
+    @persister.add_collection(:hardwares) do |builder|
+      builder.add_properties(
+        :association => nil,
+        :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+        :manager_ref => %i(vm_or_template),
+        :model_class => Hardware,
+      )
+    end
+    @persister.add_collection(:disks) do |builder|
+      builder.add_properties(
+        :association => nil,
+        :model_class => Disk,
+        :arel        => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
+        :manager_ref => %i(hardware device_name),
+      )
+    end
+    @persister.add_collection(:image_hardwares) do |builder|
+      builder.add_properties(
+        :association => nil,
+        :arel        => @ems.hardwares,
+        :manager_ref => %i(vm_or_template),
+        :model_class => Hardware,
+        :name        => :image_hardwares,
+        :strategy    => :local_db_cache_all,
+      )
+    end
+
+    @vm_data_3 = vm_data(3).merge(
+      :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
+      :ext_management_system => @ems
+    )
+    @vm_data_5 = vm_data(5).merge(
+      :key_pairs             => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
+      :ext_management_system => @ems
+    )
+    @hardware_data_5 = hardware_data(5).merge(
+      :guest_os       => @persister.image_hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(2)[:ems_ref]), :key => :guest_os),
+      :vm_or_template => @persister.vms.lazy_find(vm_data(5)[:ems_ref])
+    )
+    @disk_data_5 = disk_data(5).merge(
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(5)[:ems_ref]))
+    )
+
+    # Fill InventoryCollections with data
+    {
+      :vms       => [@vm_data_3, @vm_data_5],
+      :hardwares => [@hardware_data_5],
+      :disks     => [@disk_data_5],
+    }.each_pair do |inventory_collection_name, data_arr|
+      data_arr.each do |data|
+        @persister.send(inventory_collection_name).build(data)
+      end
+    end
+
+    # Invoke the InventoryCollections saving
+    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+    # Assert all data were filled
+    load_records
+    @vm3          = Vm.find_by(:ems_ref => "vm_ems_ref_3")
+    @vm5          = Vm.find_by(:ems_ref => "vm_ems_ref_5")
+    @vm_hardware5 = Hardware.find_by(:vm_or_template => @vm5)
+    @disk5        = Disk.find_by(:hardware => @vm_hardware5, :device_name => "disk_name_5")
+
+    expect(@vm3.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    expect(@vm5.hardware.id).to eq(@vm_hardware5.id)
+    expect(@vm5.hardware.disks.pluck(:id)).to match_array([@disk5.id])
+    expect(@vm5.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
+
+    assert_everything_is_collected(
+      :extra_vms      => [
+        {
+          :ems_ref         => "vm_ems_ref_3",
+          :name            => "vm_name_3",
+          :location        => "vm_location_3",
+          :uid_ems         => "vm_uid_ems_3",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }, {
+          :ems_ref         => "vm_ems_ref_5",
+          :name            => "vm_name_5",
+          :location        => "vm_location_5",
+          :uid_ems         => "vm_uid_ems_5",
+          :vendor          => "amazon",
+          :raw_power_state => "unknown",
+        }
+      ],
+      :extra_hardware => [
+        {
+          :vm_or_template_id   => @vm5.id,
+          :bitness             => 64,
+          :virtualization_type => "virtualization_type_5",
+          :guest_os            => "linux_generic_2",
+        }
+      ],
+      :extra_disks    => [
+        {
+          :hardware_id => @vm5.hardware.id,
+          :device_name => "disk_name_5",
+          :device_type => "disk",
+        }
+      ]
+    )
   end
 
   def load_records
