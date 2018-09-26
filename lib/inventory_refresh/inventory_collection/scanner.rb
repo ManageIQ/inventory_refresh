@@ -12,8 +12,6 @@ module InventoryRefresh
         def scan!(inventory_collections)
           indexed_inventory_collections = inventory_collections.index_by(&:name)
 
-          # TODO(lsmola) build parent inventory collections automatically here
-
           inventory_collections.each do |inventory_collection|
             new(inventory_collection, indexed_inventory_collections, build_association_hash(inventory_collections)).scan!
           end
