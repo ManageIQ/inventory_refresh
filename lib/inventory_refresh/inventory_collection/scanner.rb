@@ -106,6 +106,7 @@ module InventoryRefresh
         self.parent_inventory_collections = parent_inventory_collections.map do |ic_name|
           ic = load_inventory_collection_by_name(ic_name)
 
+          # TODO(lsmola) the dependency should be the immediate parent, not the parent inventory collection?
           (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
           ic
         end
