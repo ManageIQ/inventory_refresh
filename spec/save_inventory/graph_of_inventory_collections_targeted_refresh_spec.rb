@@ -163,9 +163,10 @@ describe InventoryRefresh::SaveInventory do
     initialize_inventory_collections(%i(disks))
 
     @persister.add_collection(:disks) do |builder|
-      builder.add_properties(:parent                       => @vm3,
-                             :manager_ref                  => %i(hardware device_name),
-                             :parent_inventory_collections => []
+      builder.add_properties(
+        :parent                       => @vm3,
+        :manager_ref                  => %i(hardware device_name),
+        :parent_inventory_collections => []
       )
     end
 
