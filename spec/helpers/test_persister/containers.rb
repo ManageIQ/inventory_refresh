@@ -1,6 +1,7 @@
-require_relative '../models/manageiq/providers/inventory/persister.rb'
+require_relative '../test_persister'
+require_relative '../../models/manageiq/providers/inventory/persister.rb'
 
-class TestContainersPersister < ManageIQ::Providers::Inventory::Persister
+class TestPersister::Containers < ManageIQ::Providers::Inventory::Persister
   def initialize_inventory_collections
     %i(containers
        container_build_pods

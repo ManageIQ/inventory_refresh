@@ -1,6 +1,5 @@
 require_relative '../helpers/spec_mocked_data'
 require_relative '../helpers/spec_parsed_data'
-require_relative 'test_containers_persister'
 require_relative 'targeted_refresh_spec_helper'
 
 describe ManageIQ::Providers::Inventory::Persister do

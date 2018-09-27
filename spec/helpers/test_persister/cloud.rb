@@ -1,6 +1,7 @@
-require_relative '../models/manageiq/providers/inventory/persister.rb'
+require_relative '../test_persister'
+require_relative '../../models/manageiq/providers/inventory/persister.rb'
 
-class TestPersister < ManageIQ::Providers::Inventory::Persister
+class TestPersister::Cloud < ManageIQ::Providers::Inventory::Persister
   def initialize_inventory_collections
     %i(vms
        miq_templates).each do |name|
