@@ -1,7 +1,7 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
 require_relative '../helpers/spec_mocked_data'
-require_relative '../persister/test_base_persister'
+require_relative '../helpers/test_base_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
