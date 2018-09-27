@@ -10,5 +10,11 @@
 
 /Gemfile.lock
 
+# ignore included plugins in bundler.d
+bundler.d/*
+
 # rspec failure tracking
 .rspec_status
+
+# generated rubocop file
+.rubocop-https*
