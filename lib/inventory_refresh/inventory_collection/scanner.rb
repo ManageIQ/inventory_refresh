@@ -90,27 +90,25 @@ module InventoryRefresh
       private
 
       def build_parent_inventory_collections!
-        if parent_inventory_collections.blank?
+        if parent_inventory_collections.nil?
           if association.present? && parent.present? && associations_hash[association].present?
-            # We want to add immediate parent (parent in a through relation) as a dependency too
-            add_as_parent_inventory_collection_dependency(load_inventory_collection_by_name(associations_hash[association]))
-
-            parent_inventory_collection = find_parent_inventory_collection(associations_hash, inventory_collection.association)
-            (self.parent_inventory_collections ||= []) << load_inventory_collection_by_name(parent_inventory_collection)
+            # Add root IC
+            self.parent_inventory_collections = [find_parent_inventory_collection(associations_hash, inventory_collection.association)]
           end
-        else
-          self.parent_inventory_collections = parent_inventory_collections.map { |x| load_inventory_collection_by_name(x) }
         end
 
         return if parent_inventory_collections.blank?
 
-        parent_inventory_collections.each do |ic|
-          add_as_parent_inventory_collection_dependency(ic)
-        end
+        add_as_parent_inventory_collection_dependencies!
       end
 
-      def add_as_parent_inventory_collection_dependency(ic)
-        (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
+      def add_as_parent_inventory_collection_dependencies!
+        self.parent_inventory_collections = parent_inventory_collections.map do |ic_name|
+          ic = load_inventory_collection_by_name(ic_name)
+
+          (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
+          ic
+        end
       end
 
       def find_parent_inventory_collection(hash, name)
