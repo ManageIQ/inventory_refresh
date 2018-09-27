@@ -95,10 +95,10 @@ describe InventoryRefresh::SaveInventory do
       match_array([indexed_ics[:vms_and_templates]])
     )
     expect(indexed_ics[:disks].dependencies).to(
-      match_array([indexed_ics[:vms_and_templates]])
+      match_array([indexed_ics[:hardwares]])
     )
     expect(indexed_ics[:networks].dependencies).to(
-      match_array([indexed_ics[:vms_and_templates]])
+      match_array([indexed_ics[:hardwares]])
     )
   end
 
