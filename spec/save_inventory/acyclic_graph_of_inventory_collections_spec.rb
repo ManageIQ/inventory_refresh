@@ -608,7 +608,10 @@ describe InventoryRefresh::SaveInventory do
         builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
       end
       @persister.add_collection(:hardwares) do |builder|
-        builder.add_properties(:manager_ref => %i(virtualization_type))
+        builder.add_properties(
+          :manager_ref                  => %i(virtualization_type),
+          :parent_inventory_collections => %i(vms)
+        )
       end
     end
 
@@ -689,7 +692,10 @@ describe InventoryRefresh::SaveInventory do
         builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
       end
       @persister.add_collection(:hardwares) do |builder|
-        builder.add_properties(:manager_ref => %i(vm_or_template virtualization_type))
+        builder.add_properties(
+          :manager_ref                  => %i(vm_or_template virtualization_type),
+          :parent_inventory_collections => %i(vms)
+        )
       end
 
       @vm_data_1 = vm_data(1)
@@ -765,13 +771,22 @@ describe InventoryRefresh::SaveInventory do
       builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Template)
     end
     @persister.add_collection(:hardwares) do |builder|
-      builder.add_properties(:manager_ref => %i(vm_or_template))
+      builder.add_properties(
+        :manager_ref                  => %i(vm_or_template),
+        :parent_inventory_collections => %i(vms miq_templates)
+      )
     end
     @persister.add_collection(:disks) do |builder|
-      builder.add_properties(:manager_ref => %i(hardware device_name))
+      builder.add_properties(
+        :manager_ref                  => %i(hardware device_name),
+        :parent_inventory_collections => %i(vms miq_templates)
+      )
     end
     @persister.add_collection(:networks) do |builder|
-      builder.add_properties(:manager_ref => %i(hardware description))
+      builder.add_properties(
+        :manager_ref                  => %i(hardware description),
+        :parent_inventory_collections => %i(vms miq_templates)
+      )
     end
     @persister.add_collection(:flavors) do |builder|
       builder.add_properties(

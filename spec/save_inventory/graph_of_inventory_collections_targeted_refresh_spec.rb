@@ -163,8 +163,10 @@ describe InventoryRefresh::SaveInventory do
     initialize_inventory_collections(%i(disks))
 
     @persister.add_collection(:disks) do |builder|
-      builder.add_properties(:parent      => @vm3,
-                             :manager_ref => %i(hardware device_name))
+      builder.add_properties(:parent                       => @vm3,
+                             :manager_ref                  => %i(hardware device_name),
+                             :parent_inventory_collections => []
+      )
     end
 
     @disk_data_3 = disk_data(3).merge(
@@ -230,8 +232,9 @@ describe InventoryRefresh::SaveInventory do
 
     initialize_inventory_collections(%i(disks))
     @persister.add_collection(:disks) do |builder|
-      builder.add_properties(:parent      => @vm3,
-                             :manager_ref => %i(hardware device_name))
+      builder.add_properties(:parent                       => @vm3,
+                             :manager_ref                  => %i(hardware device_name),
+                             :parent_inventory_collections => [])
     end
     @disk_data_3 = disk_data(3).merge(
       :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(3)[:ems_ref]))
@@ -313,13 +316,15 @@ describe InventoryRefresh::SaveInventory do
     )
 
     hardwares_init_data(
-      :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-      :strategy    => :local_db_find_missing_references,
-      :manager_ref => %i(vm_or_template)
+      :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+      :strategy                     => :local_db_find_missing_references,
+      :manager_ref                  => %i(vm_or_template),
+      :parent_inventory_collections => %i(vms)
     )
 
     disks_init_data(
-      :arel => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
+      :arel                         => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
+      :parent_inventory_collections => %i(vms)
     )
 
     @vm_data_3 = vm_data(3).merge(
