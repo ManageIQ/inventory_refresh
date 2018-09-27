@@ -91,12 +91,7 @@ module InventoryRefresh
 
       def build_parent_inventory_collections!
         if parent_inventory_collections.nil?
-          if association.present? && parent.present? && associations_hash[association].present?
-            # Add immediate parent IC as dependency
-            add_parent_inventory_collection_dependency!(associations_hash[association])
-            # Add root IC in parent_inventory_collections
-            self.parent_inventory_collections = [find_parent_inventory_collection(associations_hash, inventory_collection.association)]
-          end
+          build_parent_inventory_collection!
         else
           # We can't figure out what immediate parent is, we'll add parent_inventory_collections as dependencies
           parent_inventory_collections.each { |ic_name| add_parent_inventory_collection_dependency!(ic_name) }
@@ -106,6 +101,15 @@ module InventoryRefresh
 
         # Transform InventoryCollection object names to actual objects
         self.parent_inventory_collections = parent_inventory_collections.map { |x| load_inventory_collection_by_name(x) }
+      end
+
+      def build_parent_inventory_collection!
+        if association.present? && parent.present? && associations_hash[association].present?
+          # Add immediate parent IC as dependency
+          add_parent_inventory_collection_dependency!(associations_hash[association])
+          # Add root IC in parent_inventory_collections
+          self.parent_inventory_collections = [find_parent_inventory_collection(associations_hash, inventory_collection.association)]
+        end
       end
 
       def add_parent_inventory_collection_dependency!(ic_name)
