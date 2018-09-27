@@ -130,4 +130,16 @@ describe InventoryRefresh::SaveInventory do
     expect(indexed_ics[:disks].parent_inventory_collections).to eq([])
     expect(indexed_ics[:networks].parent_inventory_collections).to eq([])
   end
+
+  it "checks error is thrown for non-existent inventory collection" do
+    persister.add_collection(:hardwares) do |x|
+      x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => %i(random_name))
+    end
+
+    expect { InventoryRefresh::InventoryCollection::Scanner.scan!(persister.inventory_collections) }.to(
+      raise_exception(
+        "Can't find InventoryCollection :random_name referenced from InventoryCollection:<Hardware>"
+      )
+    )
+  end
 end
