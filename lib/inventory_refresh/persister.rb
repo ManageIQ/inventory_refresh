@@ -106,6 +106,21 @@ module InventoryRefresh
       JSON.dump(to_hash)
     end
 
+    class << self
+      def from_hash(manager, hash, target = nil)
+        target ||= InventoryRefresh::TargetCollection.new(:manager => manager)
+        new(manager, target).tap do |persister|
+          Array(hash["collections"]).each do |collection_hash|
+            collection_name = collection_hash["name"]
+            inventory_collection = persister.collections[collection_name&.to_sym]
+            next if inventory_collection.nil?
+
+            inventory_collection.from_hash(collection_hash, persister.collections)
+          end
+        end
+      end
+    end
+
     protected
 
     def initialize_inventory_collections
