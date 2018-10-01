@@ -41,7 +41,7 @@ module InventoryRefresh
 
       builder.add_properties(extra_properties) if extra_properties.present?
 
-      builder.add_properties({:manager_uuids => target&.references(collection_name) || []}, :if_missing) if targeted?
+      builder.add_properties({:manager_uuids => target.try(:references, collection_name) || []}, :if_missing) if targeted?
 
       builder.evaluate_lambdas!(self)
 
