@@ -1,6 +1,6 @@
-require_relative "../persister/test_base_persister"
-require_relative "../persister/test_builder/cloud_manager"
-require_relative "../persister/test_builder/network_manager"
+require_relative "../helpers/test_base_persister"
+require_relative "../helpers/test_builder/cloud_manager"
+require_relative "../helpers/test_builder/network_manager"
 
 module InitDataHelper
   def initialize_all_inventory_collections
