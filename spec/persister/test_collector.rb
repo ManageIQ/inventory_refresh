@@ -1,4 +1,4 @@
-require_relative 'test_containers_persister'
+require_relative '../helpers/test_persister/containers'
 
 class TestCollector
   class << self
@@ -74,7 +74,7 @@ class TestCollector
     end
 
     def new_persister(ems)
-      TestContainersPersister.new(ems, ems)
+      TestPersister::Containers.new(ems, ems)
     end
 
     def version_col(settings)

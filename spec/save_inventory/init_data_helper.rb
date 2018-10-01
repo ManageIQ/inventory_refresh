@@ -1,6 +1,4 @@
-require_relative "../helpers/test_base_persister"
-require_relative "../helpers/test_builder/cloud_manager"
-require_relative "../helpers/test_builder/network_manager"
+require_relative "../helpers/test_persister"
 
 module InitDataHelper
   def initialize_all_inventory_collections
@@ -87,7 +85,7 @@ module InitDataHelper
   end
 
   def persister_class
-    TestBasePersister
+    TestPersister
   end
 
   def association_attributes(model_class)

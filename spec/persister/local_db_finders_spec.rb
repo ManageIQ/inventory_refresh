@@ -1,9 +1,8 @@
 require_relative '../helpers/spec_mocked_data'
 require_relative '../helpers/spec_parsed_data'
-require_relative 'test_persister'
 require_relative 'targeted_refresh_spec_helper'
 
-describe ManageIQ::Providers::Inventory::Persister do
+describe InventoryRefresh::Persister do
   include SpecMockedData
   include SpecParsedData
   include TargetedRefreshSpecHelper
@@ -366,22 +365,22 @@ describe ManageIQ::Providers::Inventory::Persister do
   context "check validity of defined index" do
     it "checks primary index attributes exist" do
       expect do
-        persister.add_collection(persister.send(:cloud),
-                                 :vms,
+        persister.add_collection(:vms,
+                                 persister.send(:cloud),
                                  :manager_ref => %i(ems_ref ems_gref))
       end.to raise_error("Invalid definition of index :manager_ref, there is no attribute :ems_gref on model Vm")
     end
 
     it "checks secondary index attributes exist" do
       expect do
-        persister.add_collection(persister.send(:cloud),
-                                 :vms,
+        persister.add_collection(:vms,
+                                 persister.send(:cloud),
                                  :secondary_refs => {:by_uid_ems_and_name => %i(uid_emsa name)})
       end.to raise_error("Invalid definition of index :by_uid_ems_and_name, there is no attribute :uid_emsa on model Vm")
     end
 
     it "checks relation is allowed in index" do
-      persister.add_collection(persister.send(:cloud), :vms) do |builder|
+      persister.add_collection(:vms, persister.send(:cloud)) do |builder|
         builder.add_properties(:model_class    => ::ManageIQ::Providers::CloudManager::Vm,
                                :secondary_refs => {:by_availability_zone_and_name => %i(availability_zone name)})
       end
@@ -391,14 +390,14 @@ describe ManageIQ::Providers::Inventory::Persister do
 
     it "checks relation is on model class" do
       expect do
-        persister.add_collection(persister.send(:cloud), :vms) do |builder|
+        persister.add_collection(:vms, persister.send(:cloud)) do |builder|
           builder.add_properties(:secondary_refs => {:by_availability_zone_and_name => %i(availability_zone name)})
         end
       end.to raise_error("Invalid definition of index :by_availability_zone_and_name, there is no attribute :availability_zone on model Vm")
     end
 
     it "checks we allow any index attributes when we use custom_saving block" do
-      persister.add_collection(persister.send(:cloud), :vms) do |builder|
+      persister.add_collection(:vms, persister.send(:cloud)) do |builder|
         builder.add_properties(
           :custom_save_block => ->(ems, _ic) { ems },
           :manager_ref       => %i(a b c)

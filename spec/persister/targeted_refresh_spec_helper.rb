@@ -1,13 +1,13 @@
-# require_relative 'test_persister'
-require_relative 'test_containers_persister'
+require_relative '../helpers/test_persister/cloud'
+require_relative '../helpers/test_persister/containers'
 
 module TargetedRefreshSpecHelper
   def create_persister
-    TestPersister.new(@ems, @ems)
+    TestPersister::Cloud.new(@ems, @ems)
   end
 
   def create_containers_persister
-    TestContainersPersister.new(@ems, @ems)
+    TestPersister::Containers.new(@ems, @ems)
   end
 
   def expected_ext_management_systems_count

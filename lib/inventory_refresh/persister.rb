@@ -1,5 +1,8 @@
 module InventoryRefresh
   class Persister
+    require 'json'
+    require 'yaml'
+
     attr_reader :manager, :target, :collections
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
@@ -82,6 +85,25 @@ module InventoryRefresh
 
     def inventory_collection_builder
       ::InventoryRefresh::InventoryCollection::Builder
+    end
+
+    # Persists InventoryCollection objects into the DB
+    def persist!
+      InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
+    end
+
+    # Returns Persister object loaded from a passed JSON
+    #
+    # @param json_data [String] input JSON data
+    # @return [ManageIQ::Providers::Inventory::Persister] Persister object loaded from a passed JSON
+    def self.from_json(json_data)
+      from_hash(JSON.parse(json_data))
+    end
+
+    # Returns serialized Persisted object to JSON
+    # @return [String] serialized Persisted object to JSON
+    def to_json
+      JSON.dump(to_hash)
     end
 
     protected

@@ -1,3 +1,7 @@
+require_relative "cloud_manager"
+require_relative "network_manager"
+require_relative "container_manager"
+
 class TestBuilder
   module PersisterHelper
     extend ActiveSupport::Concern
@@ -10,6 +14,10 @@ class TestBuilder
     # builder_class for add_collection()
     def network
       ::TestBuilder::NetworkManager
+    end
+
+    def container
+      ::TestBuilder::ContainerManager
     end
 
     # @param _extra_settings [Hash]
