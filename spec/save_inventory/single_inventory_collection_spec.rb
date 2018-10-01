@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
-require_relative '../helpers/test_base_persister'
+require_relative '../helpers/test_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
@@ -15,7 +15,7 @@ describe InventoryRefresh::SaveInventory do
   #
   ######################################################################################################################
 
-  let(:persister_class) { ::TestBasePersister }
+  let(:persister_class) { ::TestPersister }
 
   before do
     @ems = FactoryGirl.create(:ems_cloud)

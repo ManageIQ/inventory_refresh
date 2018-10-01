@@ -1,7 +1,6 @@
 require_relative '../test_persister'
-require_relative '../../models/manageiq/providers/inventory/persister.rb'
 
-class TestPersister::Containers < ManageIQ::Providers::Inventory::Persister
+class TestPersister::Containers < ::TestPersister
   def initialize_inventory_collections
     %i(containers
        container_build_pods
@@ -12,45 +11,11 @@ class TestPersister::Containers < ManageIQ::Providers::Inventory::Persister
        container_projects
        container_replicators).each do |name|
 
-      add_collection(container, name)
+      add_collection(name, container)
     end
-
-    initialize_container_conditions
-
-    initialize_custom_attributes
   end
 
   protected
-
-  def initialize_container_conditions
-    # %i(container_groups
-    #    container_nodes).each do |name|
-    #   add_container_conditions(manager, name)
-    # end
-  end
-
-  def initialize_custom_attributes
-    # %i(container_nodes
-    #    container_projects).each do |name|
-    #   add_custom_attributes(name, %w(labels additional_attributes))
-    # end
-    #
-    # %i(container_groups).each do |name|
-    #   add_custom_attributes(name, %w(labels node_selectors))
-    # end
-    #
-    # %i(container_replicators
-    #    container_services).each do |name|
-    #   add_custom_attributes(name, %w(labels selectors))
-    # end
-    #
-    # %i(container_builds
-    #    container_build_pods
-    #    container_routes
-    #    container_templates).each do |name|
-    #   add_custom_attributes(name, %w(labels))
-    # end
-  end
 
   # ContainerCondition is polymorphic child of ContainerNode & ContainerGroup.
   # @param manager [ExtManagementSystem]
@@ -75,8 +40,8 @@ class TestPersister::Containers < ManageIQ::Providers::Inventory::Persister
       )
     end
 
-    add_collection(container,
-                   [:container_conditions_for, relation.model.base_class.name],
+    add_collection([:container_conditions_for, relation.model.base_class.name],
+                   container,
                    {},
                    {:auto_inventory_attributes => false}) do |builder|
 
@@ -120,7 +85,7 @@ class TestPersister::Containers < ManageIQ::Providers::Inventory::Persister
         )
       end
 
-      add_collection(container, [:custom_attributes_for, type, section.to_s], {}, { :auto_inventory_attributes => false }) do |builder|
+      add_collection([:custom_attributes_for, type, section.to_s], container, {}, { :auto_inventory_attributes => false }) do |builder|
         builder.add_properties(
           :model_class                  => ::CustomAttribute,
           :association                  => nil,

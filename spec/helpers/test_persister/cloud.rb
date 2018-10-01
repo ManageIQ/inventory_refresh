@@ -1,12 +1,11 @@
 require_relative '../test_persister'
-require_relative '../../models/manageiq/providers/inventory/persister.rb'
 
-class TestPersister::Cloud < ManageIQ::Providers::Inventory::Persister
+class TestPersister::Cloud < ::TestPersister
   def initialize_inventory_collections
     %i(vms
        miq_templates).each do |name|
 
-      add_collection(cloud, name) do |builder|
+      add_collection(name, cloud) do |builder|
         builder.add_properties(
           :secondary_refs => {:by_name => [:name], :by_uid_ems_and_name => %i(uid_ems name)}
         )
@@ -21,7 +20,7 @@ class TestPersister::Cloud < ManageIQ::Providers::Inventory::Persister
        disks
        orchestration_stacks).each do |name|
 
-      add_collection(cloud, name)
+      add_collection(name, cloud)
     end
 
     add_orchestration_stacks_resources
@@ -32,28 +31,28 @@ class TestPersister::Cloud < ManageIQ::Providers::Inventory::Persister
 
   # Cloud InventoryCollection
   def add_key_pairs
-    add_collection(cloud, :key_pairs) do |builder|
+    add_collection(:key_pairs, cloud) do |builder|
       builder.add_properties(:manager_uuids => name_references(:key_pairs))
     end
   end
 
   # Cloud InventoryCollection
   def add_orchestration_stacks_resources
-    add_collection(cloud, :orchestration_stacks_resources) do |builder|
+    add_collection(:orchestration_stacks_resources, cloud) do |builder|
       builder.add_properties(:secondary_refs => {:by_stack_and_ems_ref => %i(stack ems_ref)})
     end
   end
 
   # Cloud InventoryCollection
   def add_flavors
-    add_collection(cloud, :flavors) do |builder|
+    add_collection(:flavors, cloud) do |builder|
       builder.add_properties(:strategy => :local_db_find_references)
     end
   end
 
   # Network InventoryCollection
   def add_network_ports
-    add_collection(network, :network_ports) do |builder|
+    add_collection(:network_ports, network) do |builder|
       builder.add_properties(
         :manager_uuids  => references(:vms) + references(:network_ports) + references(:load_balancers),
         :parent         => manager.network_manager,

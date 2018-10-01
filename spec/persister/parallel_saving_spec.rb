@@ -1,7 +1,7 @@
 require_relative "test_collector"
 require_relative 'targeted_refresh_spec_helper'
 
-describe ManageIQ::Providers::Inventory::Persister do
+describe InventoryRefresh::Persister do
   include TargetedRefreshSpecHelper
 
   before(:each) do
