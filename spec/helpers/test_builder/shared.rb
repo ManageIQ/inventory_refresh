@@ -32,12 +32,6 @@ class TestBuilder
         end
       end.freeze
 
-      def vendor
-        ::ManageIQ::Providers::Inflector.provider_name(@persister_class).downcase
-      rescue StandardError
-        'unknown'
-      end
-
       def vms
         vm_template_shared
       end
@@ -69,13 +63,6 @@ class TestBuilder
           :manager_ref                  => %i(vm_or_template),
           :parent_inventory_collections => %i(vms miq_templates),
           :use_ar_object                => true, # TODO(lsmola) just because of default value on cpu_sockets, this can be fixed by separating instances_hardwares and images_hardwares
-        )
-      end
-
-      def operating_systems
-        add_properties(
-          :manager_ref                  => %i(vm_or_template),
-          :parent_inventory_collections => %i(vms miq_templates)
         )
       end
 

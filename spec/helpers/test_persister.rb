@@ -20,10 +20,10 @@ class TestPersister < InventoryRefresh::Persister
   # @return [Hash] entire Persister object serialized to hash
   def to_hash
     collections_data = collections.map do |_, collection|
-      next if collection.data.blank? &&
-        collection.targeted_scope.primary_references.blank? &&
-        collection.all_manager_uuids.nil? &&
-        collection.skeletal_primary_index.index_data.blank?
+      next if collection.data.blank?                              &&
+              collection.targeted_scope.primary_references.blank? &&
+              collection.all_manager_uuids.nil?                   &&
+              collection.skeletal_primary_index.index_data.blank?
 
       collection.to_hash
     end.compact
