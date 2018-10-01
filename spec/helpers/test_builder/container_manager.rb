@@ -6,7 +6,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
       :secondary_refs => {:by_name => %i(name)},
       :delete_method  => :disconnect_inv,
       :model_class    => ContainerProject,
-      )
+    )
     add_common_default_values
   end
 
@@ -17,33 +17,6 @@ class TestBuilder::ContainerManager < ::TestBuilder
       :delete_method  => :disconnect_inv
     )
     add_common_default_values
-  end
-
-  def computer_systems
-    add_properties(
-      :manager_ref => %i(managed_entity),
-      # TODO(lsmola) can we introspect this from the relation? Basically, the
-      # :parent_inventory_collections are needed only if :association goes :through other association. Then the
-      # parent is actually the root association (if we chain several :through associations). We should be able to
-      # create a tree of :through associations of ems and infer the parent_inventory_collections from that?
-      :parent_inventory_collections => %i(container_nodes),
-      )
-  end
-
-  def computer_system_hardwares
-    add_properties(
-      :model_class                  => ::Hardware,
-      :manager_ref                  => %i(computer_system),
-      :parent_inventory_collections => %i(container_nodes),
-      )
-  end
-
-  def computer_system_operating_systems
-    add_properties(
-      :model_class                  => ::OperatingSystem,
-      :manager_ref                  => %i(computer_system),
-      :parent_inventory_collections => %i(container_nodes),
-      )
   end
 
   # images have custom_attributes but that's done conditionally in openshift parser
@@ -64,7 +37,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
     add_properties(
       :manager_ref => %i(host port),
       :model_class => ContainerImageRegistry,
-      )
+    )
     add_common_default_values
   end
 
@@ -81,7 +54,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
 
   def containers
     add_properties(
-      :model_class => Container,
+      :model_class            => Container,
       # parser sets :ems_ref => "#{pod_id}_#{container.name}_#{container.image}"
       :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
@@ -94,7 +67,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
       :secondary_refs       => {:by_container_project_and_name => %i(container_project name)},
       :attributes_blacklist => %i(namespace),
       :model_class          => ContainerReplicator,
-      )
+    )
     add_common_default_values
   end
 
@@ -104,7 +77,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
       :manager_ref    => %i(namespace name),
       :secondary_refs => {:by_namespace_and_name => %i(namespace name)},
       :model_class    => ContainerBuildPod,
-      )
+    )
     add_common_default_values
   end
 
