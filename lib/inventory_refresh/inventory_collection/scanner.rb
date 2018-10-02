@@ -53,9 +53,12 @@ module InventoryRefresh
 
       # The data scanner modifies inside of the :inventory_collection
       delegate :association,
+               :arel,
                :attribute_references,
+               :custom_save_block,
                :data_collection_finalized=,
                :dependency_attributes,
+               :targeted?,
                :targeted_scope,
                :parent,
                :parent_inventory_collections,
@@ -104,6 +107,11 @@ module InventoryRefresh
       end
 
       def build_parent_inventory_collection!
+        # Don't try to introspect ICs with custom query or saving code
+        return if arel.present? || custom_save_block.present?
+        # We support :parent_inventory_collections only for targeted mode, where all ICs are present
+        return unless targeted?
+
         if association.present? && parent.present? && associations_hash[association].present?
           # Add immediate parent IC as dependency
           add_parent_inventory_collection_dependency!(associations_hash[association])
