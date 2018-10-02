@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 require_relative '../helpers/spec_parsed_data'
-require_relative '../persister/test_persister'
+require_relative '../helpers/test_persister'
 
 describe InventoryRefresh::SaveInventory do
   include SpecHelper
@@ -15,21 +15,21 @@ describe InventoryRefresh::SaveInventory do
                               :network_manager => FactoryGirl.create(:ems_network))
   end
 
-  let(:persister_class) { ::TestPersister }
+  let(:persister_class) { ::TestPersister::Cloud }
   let(:persister) { persister_class.new(@ems, @ems) }
 
   it "checks parent inventory collections defined manually are not overwritten" do
     # Add blank presisters
-    persister.add_collection(persister.cloud, :vms_and_templates) do |x|
+    persister.add_collection(:vms_and_templates) do |x|
       x.add_properties(:model_class => VmOrTemplate)
     end
-    persister.add_collection(persister.cloud, :hardwares) do |x|
+    persister.add_collection(:hardwares) do |x|
       x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => %i(vms_and_templates))
     end
-    persister.add_collection(persister.cloud, :disks) do |x|
+    persister.add_collection(:disks) do |x|
       x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => %i(vms_and_templates))
     end
-    persister.add_collection(persister.cloud, :networks) do |x|
+    persister.add_collection(:networks) do |x|
       x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => %i(vms_and_templates))
     end
 
@@ -64,16 +64,16 @@ describe InventoryRefresh::SaveInventory do
 
   it "checks parent inventory collections are built correctly based on the model relations" do
     # Add blank presisters
-    persister.add_collection(persister.cloud, :vms_and_templates) do |x|
+    persister.add_collection(:vms_and_templates) do |x|
       x.add_properties(:model_class => VmOrTemplate)
     end
-    persister.add_collection(persister.cloud, :hardwares) do |x|
+    persister.add_collection(:hardwares) do |x|
       x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => nil)
     end
-    persister.add_collection(persister.cloud, :disks) do |x|
+    persister.add_collection(:disks) do |x|
       x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => nil)
     end
-    persister.add_collection(persister.cloud, :networks) do |x|
+    persister.add_collection(:networks) do |x|
       x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => nil)
     end
 
@@ -112,16 +112,16 @@ describe InventoryRefresh::SaveInventory do
 
   it "checks parent inventory collections are not overwritten when set as []" do
     # Add blank presisters
-    persister.add_collection(persister.cloud, :vms_and_templates) do |x|
+    persister.add_collection(:vms_and_templates) do |x|
       x.add_properties(:model_class => VmOrTemplate, :parent_inventory_collections => [])
     end
-    persister.add_collection(persister.cloud, :hardwares) do |x|
+    persister.add_collection(:hardwares) do |x|
       x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => [])
     end
-    persister.add_collection(persister.cloud, :disks) do |x|
+    persister.add_collection(:disks) do |x|
       x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => [])
     end
-    persister.add_collection(persister.cloud, :networks) do |x|
+    persister.add_collection(:networks) do |x|
       x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => [])
     end
 
@@ -140,7 +140,7 @@ describe InventoryRefresh::SaveInventory do
   end
 
   it "checks error is thrown for non-existent inventory collection" do
-    persister.add_collection(persister.cloud, :hardwares) do |x|
+    persister.add_collection(:hardwares) do |x|
       x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => %i(random_name))
     end
 
