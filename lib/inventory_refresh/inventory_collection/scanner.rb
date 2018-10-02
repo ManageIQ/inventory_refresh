@@ -107,10 +107,7 @@ module InventoryRefresh
       end
 
       def build_parent_inventory_collection!
-        # Don't try to introspect ICs with custom query or saving code
-        return if arel.present? || custom_save_block.present?
-        # We support :parent_inventory_collections only for targeted mode, where all ICs are present
-        return unless targeted?
+        return unless supports_building_inventory_collection?
 
         if association.present? && parent.present? && associations_hash[association].present?
           # Add immediate parent IC as dependency
@@ -118,6 +115,15 @@ module InventoryRefresh
           # Add root IC in parent_inventory_collections
           self.parent_inventory_collections = [find_parent_inventory_collection(associations_hash, inventory_collection.association)]
         end
+      end
+
+      def supports_building_inventory_collection?
+        # Don't try to introspect ICs with custom query or saving code
+        return if arel.present? || custom_save_block.present?
+        # We support :parent_inventory_collections only for targeted mode, where all ICs are present
+        return unless targeted?
+
+        true
       end
 
       def add_parent_inventory_collection_dependency!(ic_name)
