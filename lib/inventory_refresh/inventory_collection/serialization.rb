@@ -28,7 +28,9 @@ module InventoryRefresh
       # @param available_inventory_collections [Array<InventoryRefresh::InventoryCollection>] List of available
       #        InventoryCollection objects
       def from_hash(inventory_objects_data, available_inventory_collections)
-        targeted_scope.merge!(inventory_objects_data["manager_uuids"].map(&:symbolize_keys!))
+        # TODO: we should be able to .from_hash(.to_hash) without needing to stringify_keys!
+        inventory_objects_data.deep_stringify_keys!
+        targeted_scope.merge!(inventory_objects_data['manager_uuids'].map(&:symbolize_keys!))
 
         inventory_objects_data['data'].each do |inventory_object_data|
           build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
