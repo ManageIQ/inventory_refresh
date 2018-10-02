@@ -325,11 +325,9 @@ module InventoryRefresh
     #          since it will lead to non consistent data.
     #        - :batch => Using batch SQL queries, this way is not safe to run in multiple workers
     #          concurrently, since it will lead to non consistent data.
-    #        - :concurrent_safe => This method is designed for concurrent saving. It uses atomic upsert to avoid
-    #          data duplication and it uses timestamp based atomic checks to avoid new data being overwritten by the
-    #          the old data.
-    #        - :concurrent_safe_batch => Same as :concurrent_safe, but the upsert/update queries are executed as
-    #          batched SQL queries, instead of sending 1 query per record.
+    #        - :concurrent_safe_batch => It uses atomic upsert to avoid data duplication and it uses timestamp based
+    #          atomic checks to avoid new data being overwritten by the the old data. The upsert/update queries are
+    #          executed as batched SQL queries, instead of sending 1 query per record.
     # @param parent_inventory_collections [Array] Array of symbols having a name pointing to the
     #        InventoryRefresh::InventoryCollection objects, that serve as parents to this InventoryCollection. There are
     #        several scenarios to consider, when deciding if InventoryCollection has parent collections, see the example.
@@ -498,11 +496,11 @@ module InventoryRefresh
 
       saver_strategy = saver_strategy.to_sym
       case saver_strategy
-      when :default, :batch, :concurrent_safe, :concurrent_safe_batch
+      when :default, :batch, :concurrent_safe_batch
         saver_strategy
       else
         raise "Unknown InventoryCollection saver strategy: :#{saver_strategy}, allowed strategies are "\
-              ":default, :batch, :concurrent_safe and :concurrent_safe_batch"
+              ":default, :batch and :concurrent_safe_batch"
       end
     end
 
@@ -668,7 +666,7 @@ module InventoryRefresh
 
       if @unique_indexes_cache.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined, to"\
-                " be able to use saver_strategy :concurrent_safe or :concurrent_safe_batch."
+                " be able to use saver_strategy :concurrent_safe_batch."
       end
 
       @unique_indexes_cache
@@ -688,7 +686,7 @@ module InventoryRefresh
 
       if @unique_indexes_cache.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined "\
-                "covering columns #{keys} to be able to use saver_strategy :concurrent_safe or :concurrent_safe_batch."
+                "covering columns #{keys} to be able to use saver_strategy :concurrent_safe_batch."
       end
 
       # Take the uniq key having the least number of columns
