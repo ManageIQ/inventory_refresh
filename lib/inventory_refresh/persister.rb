@@ -92,18 +92,54 @@ module InventoryRefresh
       InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
     end
 
-    # Returns Persister object loaded from a passed JSON
-    #
-    # @param json_data [String] input JSON data
-    # @return [ManageIQ::Providers::Inventory::Persister] Persister object loaded from a passed JSON
-    def self.from_json(json_data)
-      from_hash(JSON.parse(json_data))
-    end
-
     # Returns serialized Persisted object to JSON
     # @return [String] serialized Persisted object to JSON
     def to_json
       JSON.dump(to_hash)
+    end
+
+    # @return [Hash] entire Persister object serialized to hash
+    def to_hash
+      collections_data = collections.map do |_, collection|
+        next if collection.data.blank?                              &&
+                collection.targeted_scope.primary_references.blank? &&
+                collection.all_manager_uuids.nil?                   &&
+                collection.skeletal_primary_index.index_data.blank?
+
+        collection.to_hash
+      end.compact
+
+      {
+        :collections => collections_data
+      }
+    end
+
+    class << self
+      # Returns Persister object loaded from a passed JSON
+      #
+      # @param json_data [String] input JSON data
+      # @return [ManageIQ::Providers::Inventory::Persister] Persister object loaded from a passed JSON
+      def from_json(json_data, manager, target = nil)
+        from_hash(JSON.parse(json_data), manager, target)
+      end
+
+      # Returns Persister object built from serialized data
+      #
+      # @param persister_data [Hash] serialized Persister object in hash
+      # @return [ManageIQ::Providers::Inventory::Persister] Persister object built from serialized data
+      def from_hash(persister_data, manager, target = nil)
+        # TODO(lsmola) we need to pass serialized targeted scope here
+        target ||= InventoryRefresh::TargetCollection.new(:manager => manager)
+
+        new(manager, target).tap do |persister|
+          persister_data['collections'].each do |collection|
+            inventory_collection = persister.collections[collection['name'].try(:to_sym)]
+            raise "Unrecognized InventoryCollection name: #{inventory_collection}" if inventory_collection.blank?
+
+            inventory_collection.from_hash(collection, persister.collections)
+          end
+        end
+      end
     end
 
     protected

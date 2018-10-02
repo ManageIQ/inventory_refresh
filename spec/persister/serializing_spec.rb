@@ -18,7 +18,7 @@ describe InventoryRefresh::Persister do
     persister = create_persister
     populate_test_data(persister)
 
-    ::TestPersister.from_json(persister.to_json).persist!
+    TestPersister::Cloud.from_json(persister.to_json, @ems).persist!
 
     counts = {
       :disk           => 2,
