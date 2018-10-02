@@ -122,7 +122,7 @@ module InventoryRefresh
 
       def add_parent_inventory_collection_dependency!(ic_name)
         ic = load_inventory_collection_by_name(ic_name)
-        (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic
+        (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic if ic
       end
 
       def find_parent_inventory_collection(hash, name)
@@ -136,7 +136,7 @@ module InventoryRefresh
       def load_inventory_collection_by_name(name)
         ic = indexed_inventory_collections[name]
         if ic.nil?
-          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}"
+          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}" if targeted?
         end
         ic
       end
