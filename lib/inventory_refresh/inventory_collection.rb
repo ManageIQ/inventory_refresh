@@ -1114,12 +1114,12 @@ module InventoryRefresh
 
     # @return true if it's a noop parent targeted InventoryCollection
     def saving_targeted_parent_collection_noop?
-      targeted_noop_condition && parent_inventory_collections.nil? && targeted_scope.primary_references.blank?
+      targeted_noop_condition && parent_inventory_collections.blank? && targeted_scope.primary_references.blank?
     end
 
     # @return true if it's a noop child targeted InventoryCollection
     def saving_targeted_child_collection_noop?
-      targeted_noop_condition && !parent_inventory_collections.nil? &&
+      targeted_noop_condition && parent_inventory_collections.present? &&
         parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? }
     end
 

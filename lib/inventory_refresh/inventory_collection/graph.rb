@@ -52,25 +52,10 @@ module InventoryRefresh
         # depth 10. We should throw a warning maybe asking for simplifying the interconnections in the models.
         assert_graph!(edges)
 
-        self.nodes = sort_nodes(nodes)
-
         self
       end
 
       private
-
-      # Sort the nodes putting child nodes as last. Child nodes are InventoryCollection objects having
-      # :parent_inventory_collections definition.
-      #
-      # @param nodes [Array<InventoryRefresh::InventoryCollection>] List of Inventory collection nodes
-      # @return [Array<InventoryRefresh::InventoryCollection>] Sorted list of Inventory collection nodes
-      def sort_nodes(nodes)
-        # Separate to root nodes and child nodes, where child nodes are determined by having parent_inventory_collections
-        root_nodes, child_nodes = nodes.partition { |node| node.parent_inventory_collections.blank? }
-        # And order it that root nodes comes first, that way the disconnect of the child nodes should be always done as
-        # a part of the root nodes, as intended.
-        root_nodes + child_nodes
-      end
 
       # Asserts all nodes are of class ::InventoryRefresh::InventoryCollection
       #

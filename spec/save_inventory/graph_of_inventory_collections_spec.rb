@@ -286,14 +286,11 @@ describe InventoryRefresh::SaveInventory do
   end
 
   context 'with empty DB' do
-    before do
-      initialize_inventory_collections
-    end
-
     it 'creates and updates a graph of InventoryCollections with cycle stack -> stack' do
       # Doing 2 times, to make sure we first create all records then update all records
       2.times do
         # Fill the InventoryCollections with data
+        initialize_inventory_collections
         init_stack_data_with_stack_stack_cycle
         init_resource_data
 
@@ -309,6 +306,7 @@ describe InventoryRefresh::SaveInventory do
       # Doing 2 times, to make sure we first create all records then update all records
       2.times do
         # Fill the InventoryCollections with data
+        initialize_inventory_collections
         init_stack_data_with_stack_resource_stack_cycle
         init_resource_data
 
@@ -322,14 +320,11 @@ describe InventoryRefresh::SaveInventory do
   end
 
   context 'with empty DB and reversed InventoryCollections' do
-    before do
-      initialize_inventory_collections(:reversed => true)
-    end
-
     it 'creates and updates a graph of InventoryCollections with cycle stack -> stack' do
       # Doing 2 times, to make sure we first create all records then update all records
       2.times do
         # Fill the InventoryCollections with data
+        initialize_inventory_collections(:reversed => true)
         init_stack_data_with_stack_stack_cycle
         init_resource_data
 
@@ -345,6 +340,7 @@ describe InventoryRefresh::SaveInventory do
       # Doing 2 times, to make sure we first create all records then update all records
       2.times do
         # Fill the InventoryCollections with data
+        initialize_inventory_collections(:reversed => true)
         init_stack_data_with_stack_resource_stack_cycle
         init_resource_data
 
