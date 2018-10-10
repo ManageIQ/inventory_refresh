@@ -1,3 +1,5 @@
+require_relative '../helpers/test_persister'
+
 describe InventoryRefresh::InventoryCollection::Builder do
   before :each do
     @ems = create_manager
@@ -16,7 +18,7 @@ describe InventoryRefresh::InventoryCollection::Builder do
 
   let(:adv_settings) { {:strategy => :local_db_find_missing_references, :saver_strategy => :concurrent_safe_batch} }
 
-  let(:persister_class) { ::InventoryRefresh::Persister }
+  let(:persister_class) { ::TestPersister }
 
   # --- association ---
 
@@ -109,6 +111,12 @@ describe InventoryRefresh::InventoryCollection::Builder do
     expect(data[:some_tmp_param]).to eq :some_value
   end
 
+  it 'raises exception when non existing add_* method called' do
+    described_class.prepare_data(:tmp, persister_class) do |builder|
+      expect { builder.some_tmp_param(:some_value) }.to raise_exception(NoMethodError)
+    end
+  end
+
   # --- default values ---
 
   it 'adds default_values repeatedly' do
@@ -122,15 +130,38 @@ describe InventoryRefresh::InventoryCollection::Builder do
     expect(data[:default_values][:tmp_id]).to eq 30
   end
 
-  it 'transforms lambdas in default_values' do
+  # --- dependency attributes ---
+  it 'adds dependency_attributes repeatedly' do
+    data = described_class.prepare_data(:tmp, persister_class) do |builder|
+      builder.add_dependency_attributes(:ic1 => 'ic1')
+      builder.add_dependency_attributes(:ic2 => 'ic2', :ic1 => 'ic')
+      builder.add_dependency_attributes({ :ic2 => 'ic20_000' }, :if_missing)
+    end.to_hash
+
+    expect(data[:dependency_attributes]).to include(:ic1 => 'ic', :ic2 => 'ic2')
+  end
+
+  it 'removes dependency_attributes keys' do
+    data = described_class.prepare_data(:tmp, persister_class) do |builder|
+      builder.add_dependency_attributes(:ic1 => 'ic1', :ic2 => 'ic2', :ic3 => 'ic3')
+      builder.remove_dependency_attributes(:ic1)
+    end.to_hash
+    expect(data[:dependency_attributes]).to include(:ic2 => 'ic2', :ic3 => 'ic3')
+    expect(data[:dependency_attributes].key?(:ic1)).to be_falsey
+  end
+
+  it 'transforms lambdas' do
     bldr = described_class.prepare_data(:tmp, persister_class) do |builder|
       builder.add_default_values(:ems_id => ->(persister) { persister.manager.id })
+      # real values are other inventory_collections, but for this demostration doesn't matter
+      builder.add_dependency_attributes(:target => ->(persister) { persister.target })
     end
     bldr.evaluate_lambdas!(@persister)
 
     data = bldr.to_hash
 
     expect(data[:default_values][:ems_id]).to eq(@persister.manager.id)
+    expect(data[:dependency_attributes][:target]).to be_kind_of(InventoryRefresh::TargetCollection)
   end
 
   # --- inventory object attributes ---
