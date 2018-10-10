@@ -42,8 +42,8 @@ module InventoryRefresh
         @dependency_attributes = {}
 
         @options = options
-        @options[:auto_inventory_attributes] = true if @options[:auto_inventory_attributes].nil?
-        @options[:without_model_class] = false if @options[:without_model_class].nil?
+        skip_auto_inventory_attributes(false) if @options[:auto_inventory_attributes].nil?
+        skip_model_class(false) if @options[:without_model_class].nil?
 
         @shared_properties = options[:shared_properties] # From persister
       end
