@@ -702,16 +702,25 @@ module InventoryRefresh
       @unique_index_for_keys_cache ||= {}
       @unique_index_for_keys_cache[keys] if @unique_index_for_keys_cache[keys]
 
+      # Take the uniq key having the least number of columns
+      @unique_index_for_keys_cache[keys] = uniq_keys_candidates(keys).min_by { |x| x.columns.count }
+    end
+
+    # Find candidates for unique key. Candidate must cover all columns we are passing as keys.
+    #
+    # @param keys [Array<Symbol>]
+    # @raise [Exception] if the unique index for the columns was not found
+    # @return [Array<ActiveRecord::ConnectionAdapters::IndexDefinition>] Array of unique indexes fitting the keys
+    def uniq_keys_candidates(keys)
       # Find all uniq indexes that that are covering our keys
       uniq_key_candidates = unique_indexes.each_with_object([]) { |i, obj| obj << i if (keys - i.columns.map(&:to_sym)).empty? }
 
-      if @unique_indexes_cache.blank? || uniq_key_candidates.blank?
+      if unique_indexes.blank? || uniq_key_candidates.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined "\
                 "covering columns #{keys} to be able to use saver_strategy :concurrent_safe_batch."
       end
 
-      # Take the uniq key having the least number of columns
-      @unique_index_for_keys_cache[keys] = uniq_key_candidates.min_by { |x| x.columns.count }
+      uniq_key_candidates
     end
 
     def internal_columns
