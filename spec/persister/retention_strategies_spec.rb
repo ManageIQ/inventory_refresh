@@ -229,6 +229,14 @@ describe InventoryRefresh::Persister do
     )
   end
 
+  it "checks valid retentions strategies" do
+    expect {
+      create_persister(:retention_strategy => "made_up_name", :saver_strategy => 'batch')
+    }.to(
+       raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
+    )
+  end
+
   def assert_counts(counts)
     expect(model_counts).to match(counts)
   end
