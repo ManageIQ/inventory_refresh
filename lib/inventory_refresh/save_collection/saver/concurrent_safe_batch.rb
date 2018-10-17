@@ -307,15 +307,14 @@ module InventoryRefresh::SaveCollection
 
       # Archives all records
       #
-      # @param records [Array<Hash>] Records we want to delete.
+      # @param records [Array<Hash>] Records we want to archive.
       def archive_all_records!(records)
         inventory_collection.model_class.where(:id => records.map { |x| x[:id] }).update_all(:deleted_on => Time.now.utc)
       end
 
       # Destroys all records
       #
-      # @param records [Array<ApplicationRecord, Hash>] Records we want to delete. If we have only hashes, we need to
-      #        to fetch ApplicationRecord objects from the DB
+      # @param records [Array<Hash>] Records we want to delete.
       def destroy_all_records!(records)
         inventory_collection.model_class.where(:id => records.map { |x| x[:id] }).delete_all
       end
