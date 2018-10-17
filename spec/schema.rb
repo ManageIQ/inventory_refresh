@@ -78,6 +78,146 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["type"], name: "index_cloud_tenants_on_type", using: :btree
   end
 
+  create_table "vms", id: :bigserial, force: :cascade do |t|
+    t.string   "vendor"
+    t.string   "format"
+    t.string   "version"
+    t.string   "name"
+    t.text     "description"
+    t.string   "location"
+    t.string   "config_xml"
+    t.string   "autostart"
+    t.bigint   "host_id"
+    t.datetime "last_sync_on"
+    t.datetime "created_on"
+    t.datetime "updated_on"
+    t.bigint   "storage_id"
+    t.string   "guid"
+    t.bigint   "ems_id"
+    t.datetime "last_scan_on"
+    t.datetime "last_scan_attempt_on"
+    t.string   "uid_ems"
+    t.datetime "retires_on"
+    t.boolean  "retired"
+    t.datetime "boot_time"
+    t.string   "tools_status"
+    t.string   "standby_action"
+    t.string   "power_state"
+    t.datetime "state_changed_on"
+    t.string   "previous_state"
+    t.string   "connection_state"
+    t.datetime "last_perf_capture_on"
+    t.boolean  "registered"
+    t.boolean  "busy"
+    t.boolean  "smart"
+    t.integer  "memory_reserve"
+    t.boolean  "memory_reserve_expand"
+    t.integer  "memory_limit"
+    t.integer  "memory_shares"
+    t.string   "memory_shares_level"
+    t.integer  "cpu_reserve"
+    t.boolean  "cpu_reserve_expand"
+    t.integer  "cpu_limit"
+    t.integer  "cpu_shares"
+    t.string   "cpu_shares_level"
+    t.string   "cpu_affinity"
+    t.datetime "ems_created_on"
+    t.boolean  "template",                 default: false
+    t.bigint   "evm_owner_id"
+    t.string   "ems_ref_obj"
+    t.bigint   "miq_group_id"
+    t.boolean  "linked_clone"
+    t.boolean  "fault_tolerance"
+    t.string   "type"
+    t.string   "ems_ref"
+    t.bigint   "ems_cluster_id"
+    t.bigint   "retirement_warn"
+    t.datetime "retirement_last_warn"
+    t.integer  "vnc_port"
+    t.bigint   "flavor_id"
+    t.bigint   "availability_zone_id"
+    t.boolean  "cloud"
+    t.string   "retirement_state"
+    t.bigint   "cloud_network_id"
+    t.bigint   "cloud_subnet_id"
+    t.bigint   "cloud_tenant_id"
+    t.string   "raw_power_state"
+    t.boolean  "publicly_available"
+    t.bigint   "orchestration_stack_id"
+    t.string   "retirement_requester"
+    t.bigint   "tenant_id"
+    t.bigint   "resource_group_id"
+    t.boolean  "deprecated"
+    t.bigint   "storage_profile_id"
+    t.boolean  "cpu_hot_add_enabled"
+    t.boolean  "cpu_hot_remove_enabled"
+    t.boolean  "memory_hot_add_enabled"
+    t.integer  "memory_hot_add_limit"
+    t.integer  "memory_hot_add_increment"
+    t.string   "hostname"
+    t.datetime "deleted_on"
+    t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
+    t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
+    t.index ["flavor_id"], name: "index_vms_on_flavor_id", using: :btree
+    t.index ["guid"], name: "index_vms_on_guid", unique: true, using: :btree
+    t.index ["host_id"], name: "index_vms_on_host_id", using: :btree
+    t.index ["location"], name: "index_vms_on_location", using: :btree
+    t.index ["miq_group_id"], name: "index_vms_on_miq_group_id", using: :btree
+    t.index ["name"], name: "index_vms_on_name", using: :btree
+    t.index ["storage_id"], name: "index_vms_on_storage_id", using: :btree
+    t.index ["type"], name: "index_vms_on_type", using: :btree
+    t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
+    t.index ["deleted_on"], name: "index_vms_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_vms_on_ems_id_and_ems_ref", unique: true, using: :btree
+  end
+
+  create_table "hardwares", id: :bigserial, force: :cascade do |t|
+    t.bigint  "vm_or_template_id"
+    t.string  "config_version"
+    t.string  "virtual_hw_version"
+    t.string  "guest_os"
+    t.integer "cpu_sockets",          default: 1
+    t.string  "bios"
+    t.string  "bios_location"
+    t.string  "time_sync"
+    t.text    "annotation"
+    t.integer "memory_mb"
+    t.bigint  "host_id"
+    t.integer "cpu_speed"
+    t.string  "cpu_type"
+    t.bigint  "size_on_disk"
+    t.string  "manufacturer",         default: ""
+    t.string  "model",                default: ""
+    t.integer "number_of_nics"
+    t.integer "cpu_usage"
+    t.integer "memory_usage"
+    t.integer "cpu_cores_per_socket"
+    t.integer "cpu_total_cores"
+    t.boolean "vmotion_enabled"
+    t.bigint  "disk_free_space"
+    t.bigint  "disk_capacity"
+    t.string  "guest_os_full_name"
+    t.integer "memory_console"
+    t.integer "bitness"
+    t.string  "virtualization_type"
+    t.string  "root_device_type"
+    t.bigint  "computer_system_id"
+    t.bigint  "disk_size_minimum"
+    t.bigint  "memory_mb_minimum"
+    t.boolean "introspected"
+    t.string  "provision_state"
+    t.string  "serial_number"
+    t.bigint  "switch_id"
+    t.string  "firmware_type"
+    t.bigint  "canister_id"
+    t.datetime "deleted_on"
+    t.index ["computer_system_id"], name: "index_hardwares_on_computer_system_id", using: :btree
+    t.index ["host_id"], name: "index_hardwares_on_host_id", using: :btree
+    t.index ["vm_or_template_id"], name: "index_hardwares_on_vm_or_template_id", unique: true, using: :btree
+  end
+
+  add_foreign_key :hardwares, :vms, on_delete: :cascade, column: 'vm_or_template_id'
+
   create_table "disks", id: :bigserial, force: :cascade do |t|
     t.string   "device_name"
     t.string   "device_type"
@@ -100,11 +240,13 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "backing_type"
     t.bigint   "storage_profile_id"
     t.boolean  "bootable"
-    t.index ["device_name"], name: "index_disks_on_device_name", using: :btree
+    t.datetime "deleted_on"
+    t.index ["hardware_id", "device_name"], name: "index_disks_on_hardware_id_and_device_name", unique: true, using: :btree
     t.index ["device_type"], name: "index_disks_on_device_type", using: :btree
-    t.index ["hardware_id"], name: "index_disks_on_hardware_id", using: :btree
     t.index ["storage_id"], name: "index_disks_on_storage_id", using: :btree
   end
+
+  add_foreign_key :disks, :hardwares, on_delete: :cascade
 
   create_table "event_streams", id: :bigserial, force: :cascade do |t|
     t.string   "event_type"
@@ -231,50 +373,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["type"], name: "index_flavors_on_type", using: :btree
   end
 
-  create_table "hardwares", id: :bigserial, force: :cascade do |t|
-    t.string  "config_version"
-    t.string  "virtual_hw_version"
-    t.string  "guest_os"
-    t.integer "cpu_sockets",          default: 1
-    t.string  "bios"
-    t.string  "bios_location"
-    t.string  "time_sync"
-    t.text    "annotation"
-    t.bigint  "vm_or_template_id"
-    t.integer "memory_mb"
-    t.bigint  "host_id"
-    t.integer "cpu_speed"
-    t.string  "cpu_type"
-    t.bigint  "size_on_disk"
-    t.string  "manufacturer",         default: ""
-    t.string  "model",                default: ""
-    t.integer "number_of_nics"
-    t.integer "cpu_usage"
-    t.integer "memory_usage"
-    t.integer "cpu_cores_per_socket"
-    t.integer "cpu_total_cores"
-    t.boolean "vmotion_enabled"
-    t.bigint  "disk_free_space"
-    t.bigint  "disk_capacity"
-    t.string  "guest_os_full_name"
-    t.integer "memory_console"
-    t.integer "bitness"
-    t.string  "virtualization_type"
-    t.string  "root_device_type"
-    t.bigint  "computer_system_id"
-    t.bigint  "disk_size_minimum"
-    t.bigint  "memory_mb_minimum"
-    t.boolean "introspected"
-    t.string  "provision_state"
-    t.string  "serial_number"
-    t.bigint  "switch_id"
-    t.string  "firmware_type"
-    t.bigint  "canister_id"
-    t.index ["computer_system_id"], name: "index_hardwares_on_computer_system_id", using: :btree
-    t.index ["host_id"], name: "index_hardwares_on_host_id", using: :btree
-    t.index ["vm_or_template_id"], name: "index_hardwares_on_vm_id", using: :btree
-  end
-
   create_table "hosts", id: :bigserial, force: :cascade do |t|
     t.string   "name"
     t.string   "hostname"
@@ -341,9 +439,12 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "hostname"
     t.string   "domain"
     t.string   "ipv6address"
+    t.datetime "deleted_on"
+    t.index ["hardware_id", "description"], name: "index_networks_on_hardware_id_and_description", unique: true, using: :btree
     t.index ["device_id"], name: "index_networks_on_device_id", using: :btree
-    t.index ["hardware_id"], name: "index_networks_on_hardware_id", using: :btree
   end
+
+  add_foreign_key :networks, :hardwares, on_delete: :cascade
 
   create_table "network_ports", id: :bigserial, force: :cascade do |t|
     t.string  "type"
@@ -365,9 +466,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "deleted_on"
     t.index ["cloud_tenant_id"], name: "index_network_ports_on_cloud_tenant_id", using: :btree
     t.index ["device_id", "device_type"], name: "index_network_ports_on_device_id_and_device_type", using: :btree
-    t.index ["ems_id"], name: "index_network_ports_on_ems_id", using: :btree
     t.index ["type"], name: "index_network_ports_on_type", using: :btree
     t.index ["deleted_on"], name: "index_network_ports_on_deleted_on", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_network_ports_on_ems_id_and_ems_ref", unique: true, using: :btree
   end
 
   create_table "orchestration_stack_resources", id: :bigserial, force: :cascade do |t|
@@ -467,99 +568,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index "ancestry varchar_pattern_ops", name: "index_services_on_ancestry_vpo", using: :btree
     t.index ["ancestry"], name: "index_services_on_ancestry", using: :btree
     t.index ["type"], name: "index_services_on_type", using: :btree
-  end
-
-  create_table "vms", id: :bigserial, force: :cascade do |t|
-    t.string   "vendor"
-    t.string   "format"
-    t.string   "version"
-    t.string   "name"
-    t.text     "description"
-    t.string   "location"
-    t.string   "config_xml"
-    t.string   "autostart"
-    t.bigint   "host_id"
-    t.datetime "last_sync_on"
-    t.datetime "created_on"
-    t.datetime "updated_on"
-    t.bigint   "storage_id"
-    t.string   "guid"
-    t.bigint   "ems_id"
-    t.datetime "last_scan_on"
-    t.datetime "last_scan_attempt_on"
-    t.string   "uid_ems"
-    t.datetime "retires_on"
-    t.boolean  "retired"
-    t.datetime "boot_time"
-    t.string   "tools_status"
-    t.string   "standby_action"
-    t.string   "power_state"
-    t.datetime "state_changed_on"
-    t.string   "previous_state"
-    t.string   "connection_state"
-    t.datetime "last_perf_capture_on"
-    t.boolean  "registered"
-    t.boolean  "busy"
-    t.boolean  "smart"
-    t.integer  "memory_reserve"
-    t.boolean  "memory_reserve_expand"
-    t.integer  "memory_limit"
-    t.integer  "memory_shares"
-    t.string   "memory_shares_level"
-    t.integer  "cpu_reserve"
-    t.boolean  "cpu_reserve_expand"
-    t.integer  "cpu_limit"
-    t.integer  "cpu_shares"
-    t.string   "cpu_shares_level"
-    t.string   "cpu_affinity"
-    t.datetime "ems_created_on"
-    t.boolean  "template",                 default: false
-    t.bigint   "evm_owner_id"
-    t.string   "ems_ref_obj"
-    t.bigint   "miq_group_id"
-    t.boolean  "linked_clone"
-    t.boolean  "fault_tolerance"
-    t.string   "type"
-    t.string   "ems_ref"
-    t.bigint   "ems_cluster_id"
-    t.bigint   "retirement_warn"
-    t.datetime "retirement_last_warn"
-    t.integer  "vnc_port"
-    t.bigint   "flavor_id"
-    t.bigint   "availability_zone_id"
-    t.boolean  "cloud"
-    t.string   "retirement_state"
-    t.bigint   "cloud_network_id"
-    t.bigint   "cloud_subnet_id"
-    t.bigint   "cloud_tenant_id"
-    t.string   "raw_power_state"
-    t.boolean  "publicly_available"
-    t.bigint   "orchestration_stack_id"
-    t.string   "retirement_requester"
-    t.bigint   "tenant_id"
-    t.bigint   "resource_group_id"
-    t.boolean  "deprecated"
-    t.bigint   "storage_profile_id"
-    t.boolean  "cpu_hot_add_enabled"
-    t.boolean  "cpu_hot_remove_enabled"
-    t.boolean  "memory_hot_add_enabled"
-    t.integer  "memory_hot_add_limit"
-    t.integer  "memory_hot_add_increment"
-    t.string   "hostname"
-    t.datetime "deleted_on"
-    t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
-    t.index ["ems_id"], name: "index_vms_on_ems_id", using: :btree
-    t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
-    t.index ["flavor_id"], name: "index_vms_on_flavor_id", using: :btree
-    t.index ["guid"], name: "index_vms_on_guid", unique: true, using: :btree
-    t.index ["host_id"], name: "index_vms_on_host_id", using: :btree
-    t.index ["location"], name: "index_vms_on_location", using: :btree
-    t.index ["miq_group_id"], name: "index_vms_on_miq_group_id", using: :btree
-    t.index ["name"], name: "index_vms_on_name", using: :btree
-    t.index ["storage_id"], name: "index_vms_on_storage_id", using: :btree
-    t.index ["type"], name: "index_vms_on_type", using: :btree
-    t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
-    t.index ["deleted_on"], name: "index_vms_on_deleted_on", using: :btree
   end
 
   create_table "container_groups", id: :bigserial, force: :cascade do |t|
