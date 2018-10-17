@@ -25,25 +25,31 @@ module InventoryRefresh::SaveCollection
 
       # Applies strategy based on :retention_strategy parameter, or fallbacks to legacy_destroy_records.
       #
-      # @param records [Array<ApplicationRecord, Hash>] Records we want to delete. If we have only hashes, we need to
-      #        to fetch ApplicationRecord objects from the DB
+      # @param records [Array<ApplicationRecord, Hash, Array>] Records we want to delete or archive
       def destroy_records!(records)
         return false unless inventory_collection.delete_allowed?
         return if records.blank?
 
         if inventory_collection.retention_strategy
-          ids = if records.first.kind_of?(Hash)
-                  records.map { |x| {:id => x[primary_key]} }
-                elsif records.first.kind_of?(Array)
-                  records.map { |x| {:id => x[select_keys_indexes[primary_key]]} }
-                else
-                  records.map { |x| {:id => x.public_send(primary_key)} }
-                end
-
+          ids = ids_array(records)
           inventory_collection.store_deleted_records(ids)
           send("#{inventory_collection.retention_strategy}_all_records!", ids)
         else
           legacy_destroy_records!(records)
+        end
+      end
+
+      # Convert records to list of ids in format [{:id => X}, {:id => Y}...]
+      #
+      # @param records [Array<ApplicationRecord, Hash, Array>] Records we want to delete or archive
+      # @return [Array<Hash>] Primary keys in standardized format
+      def ids_array(records)
+        if records.first.kind_of?(Hash)
+          records.map { |x| {:id => x[primary_key]} }
+        elsif records.first.kind_of?(Array)
+          records.map { |x| {:id => x[select_keys_indexes[primary_key]]} }
+        else
+          records.map { |x| {:id => x.public_send(primary_key)} }
         end
       end
 
