@@ -61,10 +61,6 @@ class TestPersister::Cloud < ::TestPersister
     end
   end
 
-  def options
-    {}
-  end
-
   def targeted?
     true
   end
@@ -77,11 +73,16 @@ class TestPersister::Cloud < ::TestPersister
     manager.presence
   end
 
+  def saver_strategy
+    :default # TODO(lsmola) turn everything to concurrent_safe_batch
+  end
+
   def shared_options
     {
-      :strategy => strategy,
-      :targeted => targeted?,
-      :parent   => parent
-    }
+      :saver_strategy => saver_strategy,
+      :strategy       => strategy,
+      :targeted       => targeted?,
+      :parent         => parent,
+    }.merge(options)
   end
 end

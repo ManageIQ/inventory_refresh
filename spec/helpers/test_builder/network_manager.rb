@@ -3,8 +3,6 @@ class TestBuilder::NetworkManager < TestBuilder
   def network_ports
     add_properties(
       :use_ar_object  => true,
-      # TODO(lsmola) can't do batch strategy for network_ports because of security_groups relation
-      :saver_strategy => :default
     )
 
     add_common_default_values
