@@ -321,10 +321,11 @@ describe InventoryRefresh::Persister do
       :location => lazy_find_network2,
     )
 
-    vm_data60              = vm_data(60).merge(
+    vm_data60 = vm_data(60).merge(
       :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
       :location => lazy_find_network60,
     )
+
     all_network_port_uuids = []
     all_network_port_uuids << persister.network_ports.build(network_port_data(1).merge(:device => lazy_find_vm1)).uuid
     all_network_port_uuids << persister.network_ports.build(network_port_data(2).merge(:device => lazy_find_vm2)).uuid
