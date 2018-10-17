@@ -201,30 +201,7 @@ module InventoryRefresh::SaveCollection
 
       # Deletes a complement of referenced data
       def delete_complement
-        return unless inventory_collection.delete_allowed?
-
-        all_manager_uuids_size = inventory_collection.all_manager_uuids.size
-
-        logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
-                     "#{all_manager_uuids_size}...")
-
-        query = complement_of!(inventory_collection.all_manager_uuids)
-
-        ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
-        ids_of_non_active_entities.each_slice(10_000) do |batch|
-          archive_records!(batch)
-        end
-
-        logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
-                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records.size}...Complete")
-      end
-
-      # Archives records by settung :deleted_on timestamp on them
-      #
-      # @param [Array] records of Hashes containing primary keys of records we want to archive
-      def archive_records!(records)
-        inventory_collection.store_deleted_records(records.map { |x| {:id => x["id"] } })
-        inventory_collection.model_class.where(:id => records.map { |x| x["id"] }).update_all(:deleted_on => Time.now.utc)
+        raise(":delete_complement method is supported only for :saver_strategy => [:batch, :concurrent_safe_batch]")
       end
 
       # Deletes/soft-deletes a given record

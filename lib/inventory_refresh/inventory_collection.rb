@@ -87,7 +87,7 @@ module InventoryRefresh
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
                 :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
-                :created_records, :updated_records, :deleted_records,
+                :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage
 
     delegate :<<,
@@ -328,6 +328,9 @@ module InventoryRefresh
     #        - :concurrent_safe_batch => It uses atomic upsert to avoid data duplication and it uses timestamp based
     #          atomic checks to avoid new data being overwritten by the the old data. The upsert/update queries are
     #          executed as batched SQL queries, instead of sending 1 query per record.
+    # @param retention_strategy [Symbol] A retention strategy for this collection. Allowed values are:
+    #        - :destroy => Will destroy the inactive records.
+    #        - :archive => Will archive the inactive records by setting :deleted_on timestamp.
     # @param parent_inventory_collections [Array] Array of symbols having a name pointing to the
     #        InventoryRefresh::InventoryCollection objects, that serve as parents to this InventoryCollection. There are
     #        several scenarios to consider, when deciding if InventoryCollection has parent collections, see the example.
@@ -415,7 +418,7 @@ module InventoryRefresh
                    inventory_object_attributes: nil, name: nil, saver_strategy: nil,
                    parent_inventory_collections: nil, manager_uuids: [], all_manager_uuids: nil, targeted_arel: nil,
                    targeted: nil, manager_ref_allowed_nil: nil, secondary_refs: {}, use_ar_object: nil,
-                   custom_reconnect_block: nil, batch_extra_attributes: [])
+                   custom_reconnect_block: nil, batch_extra_attributes: [], retention_strategy: nil)
       @model_class            = model_class
       @manager_ref            = manager_ref || [:ems_ref]
       @secondary_refs         = secondary_refs
@@ -434,6 +437,7 @@ module InventoryRefresh
       @create_only            = create_only.nil? ? false : create_only
       @default_values         = default_values
       @name                   = name || association || model_class.to_s.demodulize.tableize
+      @retention_strategy     = process_retention_strategy(retention_strategy)
       @saver_strategy         = process_saver_strategy(saver_strategy)
       @use_ar_object          = use_ar_object || false
       @batch_extra_attributes = batch_extra_attributes
@@ -501,6 +505,23 @@ module InventoryRefresh
       else
         raise "Unknown InventoryCollection saver strategy: :#{saver_strategy}, allowed strategies are "\
               ":default, :batch and :concurrent_safe_batch"
+      end
+    end
+
+    # Processes passed retention strategy
+    #
+    # @param retention_strategy [Symbol] Passed retention strategy
+    # @return [Symbol] Returns back the passed strategy if supported, or raises exception
+    def process_retention_strategy(retention_strategy)
+      return unless retention_strategy
+
+      retention_strategy = retention_strategy.to_sym
+      case retention_strategy
+      when :destroy, :archive
+        retention_strategy
+      else
+        raise "Unknown InventoryCollection retention strategy: :#{retention_strategy}, allowed strategies are "\
+              ":destroy and :archive"
       end
     end
 
@@ -684,7 +705,7 @@ module InventoryRefresh
       # Find all uniq indexes that that are covering our keys
       uniq_key_candidates = unique_indexes.each_with_object([]) { |i, obj| obj << i if (keys - i.columns.map(&:to_sym)).empty? }
 
-      if @unique_indexes_cache.blank?
+      if @unique_indexes_cache.blank? || uniq_key_candidates.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined "\
                 "covering columns #{keys} to be able to use saver_strategy :concurrent_safe_batch."
       end
