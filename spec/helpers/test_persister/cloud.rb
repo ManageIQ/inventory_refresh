@@ -79,10 +79,10 @@ class TestPersister::Cloud < ::TestPersister
 
   def shared_options
     {
-      :saver_strategy     => saver_strategy,
-      :strategy           => strategy,
-      :targeted           => targeted?,
-      :parent             => parent,
+      :saver_strategy => saver_strategy,
+      :strategy       => strategy,
+      :targeted       => targeted?,
+      :parent         => parent,
     }.merge(options)
   end
 end

@@ -372,7 +372,7 @@ describe InventoryRefresh::SaveInventory do
     it "db unique indexes prevent duplicates from being created" do
       initialize_mocked_records
 
-      expect{
+      expect do
         FactoryGirl.create(
           :vm_cloud,
           vm_data(1).merge(
@@ -382,7 +382,7 @@ describe InventoryRefresh::SaveInventory do
             :ext_management_system => @ems,
           )
         )
-      }.to(
+      end.to(
         raise_error(/duplicate key value violates unique constraint "index_vms_on_ems_id_and_ems_ref"/)
       )
     end

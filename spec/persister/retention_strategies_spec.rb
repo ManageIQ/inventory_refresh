@@ -51,9 +51,10 @@ describe InventoryRefresh::Persister do
             match_array([network_port_data(12)[:ems_ref], network_port_data(4)[:ems_ref]])
           )
 
+          # The vm(12) gets archived, but we don't propagate to nested models, so active_hardwares returns 1
           assert_counts(
-            :active_disks     => 2,
-            :active_hardwares => 1, # The vm(12) gets archived, but we don't propagate to nested models
+            :active_disks           => 2,
+            :active_hardwares       => 1,
             :active_network_ports   => 3,
             :active_networks        => 2,
             :active_vms             => 3,
@@ -233,7 +234,7 @@ describe InventoryRefresh::Persister do
     expect {
       create_persister(:retention_strategy => "made_up_name", :saver_strategy => 'batch')
     }.to(
-       raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
+      raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
     )
   end
 
@@ -292,16 +293,18 @@ describe InventoryRefresh::Persister do
     lazy_find_hardware2  = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm2)
     lazy_find_hardware60 = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm60)
 
-    lazy_find_network1  = persister.networks.lazy_find(
+    lazy_find_network1 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware1, :description => "public"},
       {:key     => :hostname,
        :default => 'default_value_unknown'}
     )
-    lazy_find_network2  = persister.networks.lazy_find(
+
+    lazy_find_network2 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware2, :description => "public"},
       {:key     => :hostname,
        :default => 'default_value_unknown'}
     )
+
     lazy_find_network60 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware60, :description => "public"},
       {:key     => :hostname,
