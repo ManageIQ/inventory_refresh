@@ -102,7 +102,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
           hash             = attributes_index.delete(index)
 
           # Make the entity active again, otherwise we would be duplicating nested entities
-          hash[:deleted_on] = nil
+          hash[:archived_on] = nil
 
           record.assign_attributes(hash.except(:id, :type))
           if !inventory_collection.check_changed? || record.changed?

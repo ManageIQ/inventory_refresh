@@ -57,7 +57,7 @@ module InventoryRefresh::SaveCollection
       #
       # @param records [Array<Hash>] Records we want to archive.
       def archive_all_records!(records)
-        inventory_collection.model_class.where(:id => records.map { |x| x[:id] }).update_all(:deleted_on => Time.now.utc)
+        inventory_collection.model_class.where(:id => records.map { |x| x[:id] }).update_all(:archived_on => Time.now.utc)
       end
 
       # Destroys all records

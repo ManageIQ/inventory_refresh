@@ -293,8 +293,8 @@ describe InventoryRefresh::Persister do
 
       it "we prec-create object that was already disconnected and the relation is filled but not reconnected" do
         FactoryGirl.create(:container_project, container_project_data(1).merge(
-                                                 :ems_id     => @ems.id,
-                                                 :deleted_on => Time.now.utc
+          :ems_id      => @ems.id,
+          :archived_on => Time.now.utc
         ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
@@ -436,8 +436,8 @@ describe InventoryRefresh::Persister do
 
       it "lazy_find with secondary ref doesn't pre-create records but finds them in DB, even when disconnected" do
         # TODO(lsmola) we can't find disconnected records using secondary ref now, we should, right?
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id, :deleted_on => Time.now.utc))
-        FactoryGirl.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id, :deleted_on => Time.now.utc))
+        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id, :archived_on => Time.now.utc))
+        FactoryGirl.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id, :archived_on => Time.now.utc))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_name_1", :ref => :by_name)
         lazy_find_container_node    = persister.container_projects.lazy_find("container_node_name_1", :ref => :by_name)
@@ -465,16 +465,16 @@ describe InventoryRefresh::Persister do
       end
 
       it "we reconnect existing container group and reconnect relation by skeletal precreate" do
-        # TODO(lsmola) to reconnect correctly, we need :deleted_on => nil, in :builder_params, is that viable? We probably
+        # TODO(lsmola) to reconnect correctly, we need :archived_on => nil, in :builder_params, is that viable? We probably
         # do not want to solve this in general? If yes, we would have to allow this to be settable in parser. E.g.
         # for OpenShift pods watch targeted refresh, we can refresh already disconnected entity
         FactoryGirl.create(:container_group, container_group_data(1).merge(
-                                               :ems_id     => @ems.id,
-                                               :deleted_on => Time.now.utc
+          :ems_id      => @ems.id,
+          :archived_on => Time.now.utc
         ))
         FactoryGirl.create(:container_project, container_project_data(1).merge(
-                                                 :ems_id     => @ems.id,
-                                                 :deleted_on => Time.now.utc
+          :ems_id      => @ems.id,
+          :archived_on => Time.now.utc
         ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
@@ -496,9 +496,9 @@ describe InventoryRefresh::Persister do
         container_group = ContainerGroup.first
         expect(container_group).to(
           have_attributes(
-            :name       => "container_group_name_1",
-            :ems_ref    => "container_group_ems_ref_1",
-            :deleted_on => nil
+            :name        => "container_group_name_1",
+            :ems_ref     => "container_group_ems_ref_1",
+            :archived_on => nil
           )
         )
 

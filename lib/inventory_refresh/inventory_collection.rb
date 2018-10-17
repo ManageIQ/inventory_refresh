@@ -330,7 +330,7 @@ module InventoryRefresh
     #          executed as batched SQL queries, instead of sending 1 query per record.
     # @param retention_strategy [Symbol] A retention strategy for this collection. Allowed values are:
     #        - :destroy => Will destroy the inactive records.
-    #        - :archive => Will archive the inactive records by setting :deleted_on timestamp.
+    #        - :archive => Will archive the inactive records by setting :archived_on timestamp.
     # @param parent_inventory_collections [Array] Array of symbols having a name pointing to the
     #        InventoryRefresh::InventoryCollection objects, that serve as parents to this InventoryCollection. There are
     #        several scenarios to consider, when deciding if InventoryCollection has parent collections, see the example.

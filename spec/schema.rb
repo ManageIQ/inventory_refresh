@@ -155,7 +155,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "memory_hot_add_limit"
     t.integer  "memory_hot_add_increment"
     t.string   "hostname"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
     t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
     t.index ["flavor_id"], name: "index_vms_on_flavor_id", using: :btree
@@ -167,7 +167,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["storage_id"], name: "index_vms_on_storage_id", using: :btree
     t.index ["type"], name: "index_vms_on_type", using: :btree
     t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
-    t.index ["deleted_on"], name: "index_vms_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_vms_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_vms_on_ems_id_and_ems_ref", unique: true, using: :btree
   end
 
@@ -210,7 +210,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint  "switch_id"
     t.string  "firmware_type"
     t.bigint  "canister_id"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.index ["computer_system_id"], name: "index_hardwares_on_computer_system_id", using: :btree
     t.index ["host_id"], name: "index_hardwares_on_host_id", using: :btree
     t.index ["vm_or_template_id"], name: "index_hardwares_on_vm_or_template_id", unique: true, using: :btree
@@ -240,7 +240,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "backing_type"
     t.bigint   "storage_profile_id"
     t.boolean  "bootable"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.index ["hardware_id", "device_name"], name: "index_disks_on_hardware_id_and_device_name", unique: true, using: :btree
     t.index ["device_type"], name: "index_disks_on_device_type", using: :btree
     t.index ["storage_id"], name: "index_disks_on_storage_id", using: :btree
@@ -439,7 +439,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "hostname"
     t.string   "domain"
     t.string   "ipv6address"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.index ["hardware_id", "description"], name: "index_networks_on_hardware_id_and_description", unique: true, using: :btree
     t.index ["device_id"], name: "index_networks_on_device_id", using: :btree
   end
@@ -463,11 +463,11 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string  "binding_virtual_interface_type"
     t.text    "extra_attributes"
     t.string  "source"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.index ["cloud_tenant_id"], name: "index_network_ports_on_cloud_tenant_id", using: :btree
     t.index ["device_id", "device_type"], name: "index_network_ports_on_device_id_and_device_type", using: :btree
     t.index ["type"], name: "index_network_ports_on_type", using: :btree
-    t.index ["deleted_on"], name: "index_network_ports_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_network_ports_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_network_ports_on_ems_id_and_ems_ref", unique: true, using: :btree
   end
 
@@ -589,7 +589,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "reason"
     t.bigint   "container_build_pod_id"
     t.datetime "created_on"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.bigint   "old_ems_id"
     t.bigint   "old_container_project_id"
     t.datetime "updated_on"
@@ -599,7 +599,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "resource_counter"
     t.jsonb    "resource_counters", default: {}
     t.integer  "resource_counters_max"
-    t.index ["deleted_on"], name: "index_container_groups_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_container_groups_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_groups_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_groups_on_ems_id", using: :btree
     t.index ["type"], name: "index_container_groups_on_type", using: :btree
@@ -627,7 +627,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "last_exit_code"
     t.integer  "last_signal"
     t.string   "last_message"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.bigint   "ems_id"
     t.bigint   "old_ems_id"
     t.float    "request_cpu_cores"
@@ -645,7 +645,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
-    t.index ["deleted_on"], name: "index_containers_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_containers_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_containers_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["type"], name: "index_containers_on_type", using: :btree
   end
@@ -678,10 +678,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "size"
     t.datetime "created_on"
     t.bigint   "old_ems_id"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.string   "type"
     t.jsonb    "timestamps",                  default: {}
-    t.index ["deleted_on"], name: "index_container_images_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_container_images_on_archived_on", using: :btree
     t.index ["ems_id", "image_ref"], name: "index_container_images_unique_multi_column", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_images_on_ems_id", using: :btree
   end
@@ -694,9 +694,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "display_name"
     t.bigint   "ems_id"
     t.datetime "created_on"
-    t.datetime "deleted_on"
+    t.datetime "archived_on"
     t.bigint   "old_ems_id"
-    t.index ["deleted_on"], name: "index_container_projects_on_deleted_on", using: :btree
+    t.index ["archived_on"], name: "index_container_projects_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_projects_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_projects_on_ems_id", using: :btree
   end
@@ -733,8 +733,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "max_container_groups"
     t.datetime "created_on"
     t.bigint   "old_ems_id"
-    t.datetime "deleted_on"
-    t.index ["deleted_on"], name: "index_container_nodes_on_deleted_on", using: :btree
+    t.datetime "archived_on"
+    t.index ["archived_on"], name: "index_container_nodes_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_nodes_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_nodes_on_ems_id", using: :btree
     t.index ["type"], name: "index_container_nodes_on_type", using: :btree
