@@ -13,7 +13,9 @@ module InventoryRefresh::SaveCollection
       # @param ems [ExtManagementSystem] manger owning the InventoryCollection object
       # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we want to save
       def save_inventory_object_inventory(ems, inventory_collection)
-        logger.debug("Saving collection #{inventory_collection} of size #{inventory_collection.size} to"\
+        return if skip?(inventory_collection)
+
+        logger.debug("----- BEGIN ----- Saving collection #{inventory_collection} of size #{inventory_collection.size} to"\
                      " the database, for the manager: '#{ems.name}'...")
 
         if inventory_collection.custom_save_block.present?
@@ -22,11 +24,25 @@ module InventoryRefresh::SaveCollection
         else
           save_inventory(inventory_collection)
         end
-        logger.debug("Saving collection #{inventory_collection}, for the manager: '#{ems.name}'...Complete")
+        logger.debug("----- END ----- Saving collection #{inventory_collection}, for the manager: '#{ems.name}'...Complete")
         inventory_collection.saved = true
       end
 
       private
+
+      # Returns true and sets collection as saved, if the collection should be skipped.
+      #
+      # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we want to save
+      # @return [Boolean] True if processing of the collection should be skipped
+      def skip?(inventory_collection)
+        if inventory_collection.noop?
+          logger.debug("Skipping #{inventory_collection} because it results to noop.")
+          inventory_collection.saved = true
+          return true
+        end
+
+        false
+      end
 
       # Saves one InventoryCollection object into the DB using a configured saver_strategy class.
       #
