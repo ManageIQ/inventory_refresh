@@ -95,10 +95,9 @@ module InventoryRefresh::SaveCollection
           inventory_objects_index[index] = inventory_object
         end
 
-        all_attribute_keys << :created_at if supports_created_at?
-        all_attribute_keys << :updated_at if supports_updated_at?
-        all_attribute_keys << :created_on if supports_created_on?
-        all_attribute_keys << :updated_on if supports_updated_on?
+        %i(created_at updated_at created_on updated_on).each do |col|
+          all_attribute_keys << col if supports_column?(col)
+        end
         all_attribute_keys << :type if supports_sti?
 
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
@@ -346,13 +345,13 @@ module InventoryRefresh::SaveCollection
         skeletal_inventory_objects_index.each do |index, inventory_object|
           hash = skeletal_attributes_index.delete(index)
           # Partial create or update must never set a timestamp for the whole row
-          timestamps = if supports_remote_data_timestamp?(all_attribute_keys) && supports_resource_timestamps_max?
+          timestamps = if supports_remote_data_timestamp?(all_attribute_keys) && supports_column?(:resource_timestamps_max)
                          assign_partial_row_version_attributes!(:resource_timestamp,
                                                                 :resource_timestamps,
                                                                 :resource_timestamps_max,
                                                                 hash,
                                                                 all_attribute_keys)
-                       elsif supports_remote_data_version?(all_attribute_keys) && supports_resource_counters_max?
+                       elsif supports_remote_data_version?(all_attribute_keys) && supports_column?(:resource_counters_max)
                          assign_partial_row_version_attributes!(:resource_counter,
                                                                 :resource_counters,
                                                                 :resource_counters_max,
@@ -481,10 +480,10 @@ module InventoryRefresh::SaveCollection
         if inventory_collection.parallel_safe?
           # We've done upsert, so records were either created or updated. We can recognize that by checking if
           # created and updated timestamps are the same
-          created_attr = "created_on" if inventory_collection.supports_created_on?
-          created_attr ||= "created_at" if inventory_collection.supports_created_at?
-          updated_attr = "updated_on" if inventory_collection.supports_updated_on?
-          updated_attr ||= "updated_at" if inventory_collection.supports_updated_at?
+          created_attr = "created_on" if inventory_collection.supports_column?(:created_on)
+          created_attr ||= "created_at" if inventory_collection.supports_column?(:created_at)
+          updated_attr = "updated_on" if inventory_collection.supports_column?(:updated_on)
+          updated_attr ||= "updated_at" if inventory_collection.supports_column?(:updated_at)
 
           if created_attr && updated_attr
             created, updated = result.to_a.partition { |x| x[created_attr] == x[updated_attr] }

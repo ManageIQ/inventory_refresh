@@ -59,56 +59,56 @@ describe InventoryRefresh::InventoryCollection::Builder do
   # --- shared properties ---
 
   it 'applies shared properties' do
-    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:uuid => 1}).to_hash
+    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:targeted => true}).to_hash
 
-    expect(data[:uuid]).to eq 1
+    expect(data[:targeted]).to be_truthy
   end
 
   it "doesn't overwrite defined properties by shared properties" do
-    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:uuid => 1}) do |builder|
-      builder.add_properties(:uuid => 2)
+    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:name => "unknown"}) do |builder|
+      builder.add_properties(:name => "my_collection")
     end.to_hash
 
-    expect(data[:uuid]).to eq 2
+    expect(data[:name]).to eq "my_collection"
   end
 
   # --- properties ---
 
   it 'adds properties with add_properties repeatedly' do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_properties(:first => 1, :second => 2)
-      builder.add_properties(:third => 3)
+      builder.add_properties(:name => "collection", :association => :association_from_parent)
+      builder.add_properties(:parent => @ems)
     end.to_hash
 
-    expect(data[:first]).to eq 1
-    expect(data[:second]).to eq 2
-    expect(data[:third]).to eq 3
+    expect(data[:name]).to eq "collection"
+    expect(data[:association]).to eq :association_from_parent
+    expect(data[:parent]).to eq @ems
   end
 
   it 'overrides properties in :overwrite mode' do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_properties(:param => 1)
-      builder.add_properties({:param => 2}, :overwrite)
+      builder.add_properties(:name => "my_collection")
+      builder.add_properties({:name => "other_collection"}, :overwrite)
     end.to_hash
 
-    expect(data[:param]).to eq 2
+    expect(data[:name]).to eq "other_collection"
   end
 
   it "doesn't override properties in :if_missing mode" do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_properties(:param => 1)
-      builder.add_properties({:param => 2}, :if_missing)
+      builder.add_properties(:name => "my_collection")
+      builder.add_properties({:name => "other_collection"}, :if_missing)
     end.to_hash
 
-    expect(data[:param]).to eq 1
+    expect(data[:name]).to eq "my_collection"
   end
 
   it 'adds property by method_missing' do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_some_tmp_param(:some_value)
+      builder.add_manager_ref(:some_foreign_key)
     end.to_hash
 
-    expect(data[:some_tmp_param]).to eq :some_value
+    expect(data[:manager_ref]).to eq :some_foreign_key
   end
 
   it 'raises exception when non existing add_* method called' do

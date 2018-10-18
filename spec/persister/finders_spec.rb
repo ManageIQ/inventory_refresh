@@ -128,7 +128,7 @@ describe InventoryRefresh::Persister do
 
     # Check the full reference matches
     expect(hardware_lazy1.reference.full_reference).to eq(:vm_or_template => vm_lazy)
-    expect(hardware_lazy2.reference.full_reference).to eq hardware_lazy2.reference.full_reference
+    expect(hardware_lazy1.reference.full_reference).to eq hardware_lazy2.reference.full_reference
   end
 
   it "checks build finds existing inventory object instead of duplicating" do

@@ -3,6 +3,39 @@ module InventoryRefresh
     class Builder
       class MissingModelClassError < StandardError; end
 
+      def self.allowed_properties
+        %i(all_manager_uuids
+           arel
+           association
+           attributes_blacklist
+           attributes_whitelist
+           batch_extra_attributes
+           complete
+           create_only
+           custom_save_block
+           custom_reconnect_block
+           default_values
+           delete_method
+           dependency_attributes
+           check_changed
+           inventory_object_attributes
+           manager_ref
+           manager_ref_allowed_nil
+           manager_uuids
+           model_class
+           name
+           parent
+           parent_inventory_collections
+           retention_strategy
+           strategy
+           saver_strategy
+           secondary_refs
+           targeted
+           targeted_arel
+           update_only
+           use_ar_object)
+      end
+
       # Default options for builder
       #   :adv_settings
       #     - values from Advanced settings (doesn't overwrite values specified in code)
@@ -98,6 +131,8 @@ module InventoryRefresh
       # @param props [Hash]
       # @param mode [Symbol] :overwrite | :if_missing
       def add_properties(props = {}, mode = :overwrite)
+        props.each_key { |property_name| assert_allowed_property(property_name) }
+
         @properties = merge_hashes(@properties, props, mode)
       end
 
@@ -154,6 +189,12 @@ module InventoryRefresh
       end
 
       protected
+
+      def assert_allowed_property(name)
+        unless self.class.allowed_properties.include?(name)
+          raise "InventoryCollection property #{name} is not allowed. Allowed properties are:\n#{self.class.allowed_properties.map(&:to_s).join(', ')}"
+        end
+      end
 
       # Extends source hash with
       # - a) all keys from dest (overwrite mode)
