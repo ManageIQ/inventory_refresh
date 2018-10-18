@@ -117,6 +117,13 @@ describe InventoryRefresh::InventoryCollection::Builder do
     end
   end
 
+  it 'raises exception when unallowed property added' do
+    message = "InventoryCollection property :bad_property is not allowed. Allowed properties are:\n#{InventoryRefresh::InventoryCollection::Builder.allowed_properties.map(&:to_s).join(', ')}"
+    described_class.prepare_data(:tmp, persister_class) do |builder|
+      expect { builder.add_properties(:bad_property => :value) }.to raise_exception(message)
+    end
+  end
+
   # --- default values ---
 
   it 'adds default_values repeatedly' do

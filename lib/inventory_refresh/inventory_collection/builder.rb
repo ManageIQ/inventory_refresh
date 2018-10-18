@@ -4,36 +4,20 @@ module InventoryRefresh
       class MissingModelClassError < StandardError; end
 
       def self.allowed_properties
-        %i(all_manager_uuids
-           arel
-           association
-           attributes_blacklist
-           attributes_whitelist
-           batch_extra_attributes
-           complete
-           create_only
-           custom_save_block
-           custom_reconnect_block
-           default_values
-           delete_method
-           dependency_attributes
-           check_changed
-           inventory_object_attributes
-           manager_ref
-           manager_ref_allowed_nil
-           manager_uuids
-           model_class
-           name
-           parent
-           parent_inventory_collections
-           retention_strategy
-           strategy
-           saver_strategy
-           secondary_refs
-           targeted
-           targeted_arel
-           update_only
-           use_ar_object)
+        %i(all_manager_uuids            arel                    association
+           attributes_blacklist         attributes_whitelist    batch_extra_attributes
+           complete                     create_only             custom_save_block
+           custom_reconnect_block       default_values          delete_method
+           dependency_attributes        check_changed           inventory_object_attributes
+           manager_ref                  manager_ref_allowed_nil manager_uuids
+           model_class                  name                    parent
+           parent_inventory_collections retention_strategy      strategy
+           saver_strategy               secondary_refs          targeted
+           targeted_arel                update_only             use_ar_object).to_set
+      end
+
+      def allowed_properties
+        @allowed_properties ||= self.class.allowed_properties
       end
 
       # Default options for builder
@@ -191,8 +175,8 @@ module InventoryRefresh
       protected
 
       def assert_allowed_property(name)
-        unless self.class.allowed_properties.include?(name)
-          raise "InventoryCollection property #{name} is not allowed. Allowed properties are:\n#{self.class.allowed_properties.map(&:to_s).join(', ')}"
+        unless allowed_properties.include?(name)
+          raise "InventoryCollection property :#{name} is not allowed. Allowed properties are:\n#{self.allowed_properties.to_a.map(&:to_s).join(', ')}"
         end
       end
 
