@@ -25,6 +25,36 @@ describe InventoryRefresh::Persister do
 
   context "testing delete_complement" do
     [{:saver_strategy => 'batch'}, {:saver_strategy => 'concurrent_safe_batch'}].each do |extra_options|
+      it "archives the data with :retention_strategy => 'archive' and different values of all_manager_uuids" do
+        %i(nil blank filled).each do |all_manager_uuids_status|
+          Vm.destroy_all
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          vm1 = FactoryGirl.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
+          vm2 = FactoryGirl.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+
+          persister.vms.build(vm_data(3))
+
+          persister.vms.all_manager_uuids = case all_manager_uuids_status
+                                            when :nil    then nil
+                                            when :blank  then []
+                                            when :filled then [{ 'ems_ref' => vm1.ems_ref }]
+                                            end
+
+          persister.persist!
+
+          active_persisted = case all_manager_uuids_status
+                             when :nil then [vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(3)[:ems_ref]]
+                             when :blank then [vm_data(3)[:ems_ref]]
+                             when :filled then [vm_data(1)[:ems_ref], vm_data(3)[:ems_ref]]
+                             end
+
+          expect(Vm.active.pluck(:ems_ref)).to(
+            match_array(active_persisted)
+          )
+        end
+      end
+
       context "not providing nested hardware, disks and networks" do
         it "archives the data with :retention_strategy => 'archive' and with #{extra_options}" do
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
