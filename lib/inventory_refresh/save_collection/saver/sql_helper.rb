@@ -139,15 +139,12 @@ module InventoryRefresh::SaveCollection
         first_value = manager_uuids.shift.to_h
         first_value = "(#{all_attribute_keys_array.map { |x| quote(connection, first_value[x], x, true) }.join(",")})"
 
-        if manager_uuids.blank?
-          values = first_value
-        else
-          # Rest of the values, without the type cast
-          values = manager_uuids.map! do |hash|
-            "(#{all_attribute_keys_array.map { |x| quote(connection, hash[x], x, false) }.join(",")})"
-          end.join(",")
-          values = [first_value, values].join(",")
-        end
+        # Rest of the values, without the type cast
+        values = manager_uuids.map! do |hash|
+          "(#{all_attribute_keys_array.map { |x| quote(connection, hash[x], x, false) }.join(",")})"
+        end.join(",")
+
+        values = values.blank? ? first_value : [first_value, values].join(",")
 
         <<-SQL
           SELECT *
