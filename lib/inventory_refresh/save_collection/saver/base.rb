@@ -127,6 +127,8 @@ module InventoryRefresh::SaveCollection
                   :batch_size, :batch_size_for_persisting, :model_class, :serializable_keys, :deserializable_keys, :pg_types, :table_name,
                   :q_table_name
 
+      delegate :supports_column?, :to => :inventory_collection
+
       # Saves the InventoryCollection
       #
       # @param association [Symbol] An existing association on manager
@@ -280,8 +282,8 @@ module InventoryRefresh::SaveCollection
       # @param update_time [Time] data hash
       def assign_attributes_for_update!(hash, update_time)
         hash[:type]         = model_class.name if supports_sti? && hash[:type].nil?
-        hash[:updated_on]   = update_time if supports_updated_on?
-        hash[:updated_at]   = update_time if supports_updated_at?
+        hash[:updated_on]   = update_time if supports_column?(:updated_on)
+        hash[:updated_at]   = update_time if supports_column?(:updated_at)
       end
 
       # Enriches data hash with timestamp and type columns
@@ -289,8 +291,8 @@ module InventoryRefresh::SaveCollection
       # @param hash [Hash] data hash
       # @param create_time [Time] data hash
       def assign_attributes_for_create!(hash, create_time)
-        hash[:created_on]   = create_time if supports_created_on?
-        hash[:created_at]   = create_time if supports_created_at?
+        hash[:created_on]   = create_time if supports_column?(:created_on)
+        hash[:created_at]   = create_time if supports_column?(:created_at)
         assign_attributes_for_update!(hash, create_time)
       end
 
@@ -324,26 +326,6 @@ module InventoryRefresh::SaveCollection
         @supports_sti_cache ||= inventory_collection.supports_sti?
       end
 
-      # @return [Boolean] true if the model_class has created_on column
-      def supports_created_on?
-        @supports_created_on_cache ||= inventory_collection.supports_created_on?
-      end
-
-      # @return [Boolean] true if the model_class has updated_on column
-      def supports_updated_on?
-        @supports_updated_on_cache ||= inventory_collection.supports_updated_on?
-      end
-
-      # @return [Boolean] true if the model_class has created_at column
-      def supports_created_at?
-        @supports_created_at_cache ||= inventory_collection.supports_created_at?
-      end
-
-      # @return [Boolean] true if the model_class has updated_at column
-      def supports_updated_at?
-        @supports_updated_at_cache ||= inventory_collection.supports_updated_at?
-      end
-
       # @return [Boolean] true if any serializable keys are present
       def serializable_keys?
         @serializable_keys_bool_cache ||= serializable_keys.present?
@@ -357,16 +339,6 @@ module InventoryRefresh::SaveCollection
       # @return [Boolean] true if the model_class has resource_counter column
       def supports_remote_data_version?(all_attribute_keys)
         all_attribute_keys.include?(:resource_counter) # include? on Set is O(1)
-      end
-
-      # @return [Boolean] true if the model_class has resource_timestamps column
-      def supports_resource_timestamps_max?
-        @supports_resource_timestamps_max_cache ||= inventory_collection.supports_resource_timestamps_max?
-      end
-
-      # @return [Boolean] true if the model_class has resource_counters column
-      def supports_resource_counters_max?
-        @supports_resource_counters_max_cache ||= inventory_collection.supports_resource_counters_max?
       end
     end
   end

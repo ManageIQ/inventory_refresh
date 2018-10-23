@@ -87,9 +87,9 @@ module InventoryRefresh
           #
           # @param attributes [Hash] Attributes we want to extend with version related attributes
           def fill_versions!(attributes)
-            if inventory_collection.supports_resource_timestamps_max? && attributes[:resource_timestamp]
+            if inventory_collection.supports_column?(:resource_timestamps_max) && attributes[:resource_timestamp]
               fill_specific_version_attr(:resource_timestamps, :resource_timestamp, attributes)
-            elsif inventory_collection.supports_resource_counters_max? && attributes[:resource_counter]
+            elsif inventory_collection.supports_column?(:resource_counters_max) && attributes[:resource_counter]
               fill_specific_version_attr(:resource_counters, :resource_counter, attributes)
             end
           end
