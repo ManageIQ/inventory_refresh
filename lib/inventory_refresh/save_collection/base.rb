@@ -36,7 +36,7 @@ module InventoryRefresh::SaveCollection
       # @return [Boolean] True if processing of the collection should be skipped
       def skip?(inventory_collection)
         if inventory_collection.noop?
-          logger.debug("Skipping #{inventory_collection} because it results to noop.")
+          logger.debug("Skipping #{inventory_collection} processing because it will do no operation.")
           inventory_collection.saved = true
           return true
         end
