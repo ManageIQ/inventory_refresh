@@ -113,10 +113,13 @@ module InventoryRefresh::SaveCollection
           Arel.sql("(#{active_entities_query(all_attribute_keys_array, manager_uuids)})")
         )
 
+        all_entities_query = inventory_collection.full_collection_for_comparison
+        all_entities_query = all_entities_query.active if inventory_collection.retention_strategy == :archive
+
         all_entities     = Arel::Table.new(:all_entities)
         all_entities_cte = Arel::Nodes::As.new(
           all_entities,
-          Arel.sql("(#{inventory_collection.full_collection_for_comparison.active.select(:id, *all_attribute_keys_array).to_sql})")
+          Arel.sql("(#{all_entities_query.select(:id, *all_attribute_keys_array).to_sql})")
         )
         join_condition   = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
         where_condition  = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
