@@ -599,6 +599,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "resource_counter"
     t.jsonb    "resource_counters", default: {}
     t.integer  "resource_counters_max"
+    t.string   "resource_version"
     t.index ["archived_on"], name: "index_container_groups_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_groups_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_groups_on_ems_id", using: :btree
