@@ -356,6 +356,9 @@ module InventoryRefresh::SaveCollection
         hashes                    = []
         create_time               = time_now
 
+        # We cannot set the resource_version doing partial update
+        all_attribute_keys -= [resource_version_column]
+
         skeletal_inventory_objects_index.each do |index, inventory_object|
           hash = skeletal_attributes_index.delete(index)
           # Partial create or update must never set a timestamp for the whole row
