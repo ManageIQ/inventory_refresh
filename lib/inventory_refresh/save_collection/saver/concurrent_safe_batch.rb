@@ -184,9 +184,9 @@ module InventoryRefresh::SaveCollection
                                                    [:resource_counter, :resource_counters_max]
                                                  end
 
-                next if skeletonize_or_skip_record(record.try(version_attr) || record.try(:[], version_attr),
+                next if skeletonize_or_skip_record(record_key(record, version_attr),
                                                    hash[version_attr],
-                                                   record.try(max_version_attr) || record.try(:[], max_version_attr),
+                                                   record_key(record, max_version_attr),
                                                    inventory_object)
               end
 
