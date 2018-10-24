@@ -264,12 +264,13 @@ module InventoryRefresh
 
       @internal_columns = [] + internal_timestamp_columns
       @internal_columns << :type if supports_sti?
-      @internal_columns += %i(resource_timestamps_max
-                              resource_timestamps
-                              resource_timestamp
-                              resource_counters_max
-                              resource_counters
-                              resource_counter).collect do |col|
+      @internal_columns += [resource_version_column,
+                            :resource_timestamps_max,
+                            :resource_timestamps,
+                            :resource_timestamp,
+                            :resource_counters_max,
+                            :resource_counters,
+                            :resource_counter].collect do |col|
         col if supports_column?(col)
       end.compact
     end
