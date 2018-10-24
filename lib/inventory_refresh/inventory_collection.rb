@@ -255,6 +255,10 @@ module InventoryRefresh
       uniq_key_candidates
     end
 
+    def resource_version_column
+      :resource_version
+    end
+
     def internal_columns
       return @internal_columns if @internal_columns
 

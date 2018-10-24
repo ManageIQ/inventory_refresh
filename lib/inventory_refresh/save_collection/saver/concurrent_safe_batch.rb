@@ -14,12 +14,13 @@ module InventoryRefresh::SaveCollection
                :association_to_foreign_key_mapping,
                :association_to_foreign_type_mapping,
                :attribute_references,
+               :resource_version_column,
                :to => :inventory_collection
 
       # Attribute accessor to ApplicationRecord object or Hash
       #
       # @param record [Hash, ApplicationRecord] record or hash
-      # @param key [Symbol] key pointing to attribute of the record
+      # @param key [String] key pointing to attribute of the record
       # @return [Object] value of the record on the key
       def record_key(record, key)
         send(record_key_method, record, key)
@@ -28,7 +29,7 @@ module InventoryRefresh::SaveCollection
       # Attribute accessor to ApplicationRecord object
       #
       # @param record [ApplicationRecord] record
-      # @param key [Symbol] key pointing to attribute of the record
+      # @param key [String] key pointing to attribute of the record
       # @return [Object] value of the record on the key
       def ar_record_key(record, key)
         record.public_send(key)
@@ -37,7 +38,7 @@ module InventoryRefresh::SaveCollection
       # Attribute accessor to Hash object
       #
       # @param record [Hash] hash
-      # @param key [Symbol] key pointing to attribute of the record
+      # @param key [String] key pointing to attribute of the record
       # @return [Object] value of the record on the key
       def pure_sql_record_key(record, key)
         record[select_keys_indexes[key]]
@@ -171,6 +172,7 @@ module InventoryRefresh::SaveCollection
             else
               # Record was found in the DB and sent for saving, we will be updating the DB.
               next unless assert_referential_integrity(hash)
+              next unless changed?(record, hash, all_attribute_keys)
               inventory_object.id = primary_key_value
 
               if inventory_collection.parallel_safe? &&
@@ -232,6 +234,18 @@ module InventoryRefresh::SaveCollection
         # Destroy the last batch
         destroy_records!(records_for_destroy)
         records_for_destroy = [] # Cleanup so GC can release it sooner
+      end
+
+      def changed?(record, hash, all_attribute_keys)
+        return true unless inventory_collection.check_changed?
+
+        if supports_resource_version?(all_attribute_keys) && supports_column?(resource_version_column)
+          record_resource_version = record_key(record, resource_version_column.to_s)
+
+          return record_resource_version != hash[resource_version_column]
+        end
+
+        true
       end
 
       def db_columns_index(record, pure_sql: false)
