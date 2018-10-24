@@ -171,9 +171,9 @@ module InventoryRefresh::SaveCollection
               end
             else
               # Record was found in the DB and sent for saving, we will be updating the DB.
+              inventory_object.id = primary_key_value
               next unless assert_referential_integrity(hash)
               next unless changed?(record, hash, all_attribute_keys)
-              inventory_object.id = primary_key_value
 
               if inventory_collection.parallel_safe? &&
                  (supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys))
