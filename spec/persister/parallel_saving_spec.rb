@@ -113,6 +113,107 @@ describe InventoryRefresh::Persister do
         end
       end
 
+      it "checks the full row saving with increasing versions but constant resource_version" do
+        bigger_newest_version = newest_version(settings)
+
+        2.times do |i|
+          persister = TestCollector.refresh(
+            TestCollector.generate_batches_of_full_container_group_data(
+              :settings         => settings,
+              :ems_name         => @ems.name,
+              :version          => bigger_newest_version,
+              :resource_version => "same_version",
+            )
+          )
+
+          ContainerGroup.find_each.each do |container_group|
+            expected_version = if settings[:upsert_only]
+                                 # TODO(lsmola) we should be able to process this also for upsert only, right now we
+                                 # just optimize the updating path, so if we would upsert 2 same records in parallel,
+                                 # we would not check the resource timestamp.
+                                 #
+                                 # If we will check it we fail to save full row, then we skeletalize it and save it in
+                                 # chunks, the timestamp is bigger, so it leads to saving it. So we need to somehow
+                                 # prevent skeletalization in this case. Probably by loading the records by
+                                 # map_ids_to_inventory_objects and checking if those should be skeletalized.
+                                 expected_version(settings, container_group, bigger_newest_version)
+                               else
+                                 expected_version(settings, container_group, newest_version(settings))
+                               end
+
+            expect(container_group).to(
+              have_attributes(
+                :name                      => "container_group_#{expected_version}",
+                version_col(settings)      => expected_version,
+                versions_max_col(settings) => nil,
+                versions_col(settings)     => {},
+                :reason                    => expected_version.to_s,
+                :phase                     => "#{expected_version} status",
+              )
+            )
+          end
+
+          if i == 0
+            match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
+          else
+            # No changes because resource version is the same
+            match_created(persister)
+
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
+          end
+          match_deleted(persister)
+
+          bigger_newest_version += 10
+        end
+      end
+
+      it "checks the full row saving with increasing versions and changing resource_version" do
+        bigger_newest_version = newest_version(settings)
+
+        2.times do |i|
+          persister = TestCollector.refresh(
+            TestCollector.generate_batches_of_full_container_group_data(
+              :settings         => settings,
+              :ems_name         => @ems.name,
+              :version          => bigger_newest_version,
+              :resource_version => "different_version_#{i}",
+            )
+          )
+
+          ContainerGroup.find_each.each do |container_group|
+            expected_version = expected_version(settings, container_group, bigger_newest_version)
+
+            expect(container_group).to(
+              have_attributes(
+                :name                      => "container_group_#{expected_version}",
+                version_col(settings)      => expected_version,
+                versions_max_col(settings) => nil,
+                versions_col(settings)     => {},
+                :reason                    => expected_version.to_s,
+                :phase                     => "#{expected_version} status",
+              )
+            )
+          end
+
+          if i == 0
+            match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
+          else
+            # No changes because resource version is the same
+            match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
+          end
+          match_deleted(persister)
+
+          bigger_newest_version += 10
+        end
+      end
+
       it "checks the partial rows saving with the same versions" do
         container_group_created_on = nil
 
@@ -283,6 +384,85 @@ describe InventoryRefresh::Persister do
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
                 :phase                     => "#{expected_version} status",
+              )
+            )
+          end
+
+          if i == 0
+            match_updated(persister, :container_groups => ContainerGroup.all)
+          else
+            match_updated(persister)
+          end
+          match_created(persister)
+          match_deleted(persister)
+        end
+      end
+
+      it "check partial then full with the same version and same resource version" do
+        2.times do |i|
+          persister = TestCollector.refresh(
+            TestCollector.generate_batches_of_partial_container_group_data(
+              :settings         => settings,
+              :ems_name         => @ems.name,
+              :version          => newest_version(settings),
+              :resource_version => "same_version",
+            )
+          )
+
+          ContainerGroup.find_each do |container_group|
+            expected_version = expected_version(settings, container_group, newest_version(settings))
+
+            expect(container_group).to(
+              have_attributes(
+                :name                      => nil,
+                version_col(settings)      => nil,
+                versions_max_col(settings) => expected_version,
+                :reason                    => expected_version.to_s,
+                :phase                     => "#{expected_version} status",
+                :resource_version          => nil
+              )
+            )
+
+            expect(container_group.send(versions_col(settings))).to(
+              match(
+                "phase"      => expected_version,
+                "dns_policy" => expected_version,
+                "reason"     => expected_version,
+              )
+            )
+          end
+
+          if i == 0
+            match_created(persister, :container_groups => ContainerGroup.all)
+          else
+            match_created(persister)
+          end
+          match_updated(persister)
+          match_deleted(persister)
+        end
+
+        2.times do |i|
+          persister = TestCollector.refresh(
+            TestCollector.generate_batches_of_full_container_group_data(
+              :settings         => settings,
+              :ems_name         => @ems.name,
+              :version          => newest_version(settings),
+              :resource_version => "same_version",
+            )
+          )
+
+          ContainerGroup.find_each do |container_group|
+            expected_version = expected_version(settings, container_group, newest_version(settings))
+
+            expect(container_group).to(
+              have_attributes(
+                :name                      => "container_group_#{expected_version}",
+                version_col(settings)      => expected_version,
+                versions_max_col(settings) => nil,
+                versions_col(settings)     => {},
+                :reason                    => expected_version.to_s,
+                :phase                     => "#{expected_version} status",
+                :resource_version          => "same_version",
               )
             )
           end

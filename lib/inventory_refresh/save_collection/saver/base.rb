@@ -24,7 +24,7 @@ module InventoryRefresh::SaveCollection
         @arel_primary_key       = @model_class.arel_attribute(@primary_key)
         @unique_index_keys      = inventory_collection.unique_index_keys
         @unique_index_keys_to_s = inventory_collection.manager_ref_to_cols.map(&:to_s)
-        @select_keys            = [@primary_key] + @unique_index_keys_to_s
+        @select_keys            = [@primary_key] + @unique_index_keys_to_s + internal_columns.map(&:to_s)
         @unique_db_primary_keys = Set.new
         @unique_db_indexes      = Set.new
 
@@ -89,7 +89,11 @@ module InventoryRefresh::SaveCollection
 
       attr_reader :inventory_collection, :association
 
-      delegate :build_stringified_reference, :build_stringified_reference_for_record, :to => :inventory_collection
+      delegate :build_stringified_reference,
+               :build_stringified_reference_for_record,
+               :resource_version_column,
+               :internal_columns,
+               :to => :inventory_collection
 
       # Applies serialize method for each relevant attribute, which will cast the value to the right type.
       #
@@ -331,14 +335,20 @@ module InventoryRefresh::SaveCollection
         @serializable_keys_bool_cache ||= serializable_keys.present?
       end
 
-      # @return [Boolean] true if the model_class has resource_timestamp column
+      # @return [Boolean] true if the keys we are saving have resource_timestamp column
       def supports_remote_data_timestamp?(all_attribute_keys)
         all_attribute_keys.include?(:resource_timestamp) # include? on Set is O(1)
       end
 
-      # @return [Boolean] true if the model_class has resource_counter column
+      # @return [Boolean] true if the keys we are saving have resource_counter column
       def supports_remote_data_version?(all_attribute_keys)
         all_attribute_keys.include?(:resource_counter) # include? on Set is O(1)
+      end
+
+      # @return [Boolean] true if the keys we are saving have resource_version column, which solves for a quick check
+      #                   if the record was modified
+      def supports_resource_version?(all_attribute_keys)
+        all_attribute_keys.include?(resource_version_column) # include? on Set is O(1)
       end
     end
   end

@@ -2,61 +2,72 @@ require_relative '../helpers/test_persister/containers'
 
 class TestCollector
   class << self
-    def generate_batches_of_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0, persister: nil)
+    def generate_batches_of_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
+                                                         persister: nil, resource_version: nil)
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
-        parse_partial_container_group(index, persister, settings, incremented_counter(settings, version, index))
+        parse_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
+                                      resource_version)
       end
 
       persister
     end
 
-    def generate_batches_of_different_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0, persister: nil)
+    def generate_batches_of_different_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4,
+                                                                   index_start: 0, persister: nil, resource_version: nil)
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
-        parse_another_partial_container_group(index, persister, settings, incremented_counter(settings, version, index))
+        parse_another_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
+                                              resource_version)
       end
 
       persister
     end
 
-    def generate_batches_of_full_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0, persister: nil)
+    def generate_batches_of_full_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
+                                                      persister: nil, resource_version: nil)
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
-        parse_container_group(index, persister, settings, incremented_counter(settings, version, index))
+        parse_container_group(index, persister, settings, incremented_counter(settings, version, index), resource_version)
       end
 
       persister
     end
 
-    def parse_another_partial_container_group(index, persister, settings, partial_newest)
-      persister.container_groups.build_partial(
+    def parse_another_partial_container_group(index, persister, settings, partial_newest, resource_version)
+      data                    = {
         :ems_ref              => "container_group_#{index}",
         version_col(settings) => partial_newest,
         :reason               => partial_newest,
         :message              => partial_newest,
         :dns_policy           => index.to_s,
-      )
+      }
+      data[:resource_version] = resource_version if resource_version
+
+      persister.container_groups.build_partial(data)
     end
 
-    def parse_partial_container_group(index, persister, settings, partial_newest)
-      persister.container_groups.build_partial(
+    def parse_partial_container_group(index, persister, settings, partial_newest, resource_version)
+      data                    = {
         :ems_ref              => "container_group_#{index}",
         :phase                => "#{partial_newest} status",
         version_col(settings) => partial_newest,
         :reason               => partial_newest,
         :dns_policy           => index.to_s,
-      )
+      }
+      data[:resource_version] = resource_version if resource_version
+
+      persister.container_groups.build_partial(data)
     end
 
-    def parse_container_group(index, persister, settings, counter)
-      persister.container_groups.build(
+    def parse_container_group(index, persister, settings, counter, resource_version)
+      data                    = {
         :ems_ref              => "container_group_#{index}",
         :dns_policy           => index.to_s,
         :name                 => "container_group_#{counter}",
@@ -64,7 +75,10 @@ class TestCollector
         version_col(settings) => counter,
         :reason               => counter,
         :message              => counter,
-      )
+      }
+      data[:resource_version] = resource_version if resource_version
+
+      persister.container_groups.build(data)
     end
 
     def refresh(persister)
