@@ -67,47 +67,47 @@ describe InventoryRefresh::Persister do
           region2 = FactoryGirl.create(:source_region, :ems_ref => "region2", :ext_management_system => @ems)
           region3 = FactoryGirl.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
 
-          vm1 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(1).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription1,
-                                     :source_region         => region1,
-                                   )
+          vm1  = FactoryGirl.create(:vm_cloud,
+                                    vm_data(1).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription1,
+                                      :source_region         => region1,
+                                    )
           )
-          vm2 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(2).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription2,
-                                     :source_region         => region2,
-                                   )
+          _vm2 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(2).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region2,
+                                    )
           )
-          vm3 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(3).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription2,
-                                     :source_region         => region3,
-                                   )
+          _vm3 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(3).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region3,
+                                    )
           )
-          vm4 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(4).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription2,
-                                     :source_region         => region1,
-                                   )
+          _vm4 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(4).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region1,
+                                    )
           )
-          vm5 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(5).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription1,
-                                     :source_region         => region2,
-                                   )
+          _vm5 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(5).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription1,
+                                      :source_region         => region2,
+                                    )
           )
-          vm6 = FactoryGirl.create(:vm_cloud,
-                                   vm_data(6).merge(
-                                     :ext_management_system => @ems,
-                                     :subscription          => subscription1,
-                                     :source_region         => region1,
-                                   )
+          _vm6 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(6).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription1,
+                                      :source_region         => region1,
+                                    )
           )
 
 
@@ -140,7 +140,7 @@ describe InventoryRefresh::Persister do
         it "fails if all_manager_uuids_scope is using wrong relation" do
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
-          persister.vms.all_manager_uuids = []
+          persister.vms.all_manager_uuids       = []
           persister.vms.all_manager_uuids_scope = [
             {:non_existent_relation => persister.source_regions.lazy_find("region1"), :subscription => persister.subscriptions.lazy_find("subscription1")},
             {:non_existent_relation => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
@@ -154,7 +154,7 @@ describe InventoryRefresh::Persister do
         it "fails if all_manager_uuids_scope is pointing to the wrong value" do
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
-          persister.vms.all_manager_uuids = []
+          persister.vms.all_manager_uuids       = []
           persister.vms.all_manager_uuids_scope = [
             {:source_region => persister.source_regions.lazy_find("region1_fake", :key => :name), :subscription => persister.subscriptions.lazy_find("subscription1")},
             {:source_region => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
@@ -169,11 +169,11 @@ describe InventoryRefresh::Persister do
         end
 
         it "fails if all_manager_uuids_scope have inconsistent keys" do
-          region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
+          _region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
 
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
-          persister.vms.all_manager_uuids = []
+          persister.vms.all_manager_uuids       = []
           persister.vms.all_manager_uuids_scope = [
             {:source_region => persister.source_regions.lazy_find("region1")},
             {:source_region => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
