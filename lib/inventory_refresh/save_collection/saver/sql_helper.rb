@@ -103,7 +103,7 @@ module InventoryRefresh::SaveCollection
       #        spare some memory
       # @return [Arel::SelectManager] Arel for getting complement of uuids. This method modifies the passed
       #         manager_uuids to spare some memory
-      def complement_of!(manager_uuids)
+      def complement_of!(manager_uuids, all_manager_uuids_scope)
         all_attribute_keys       = inventory_collection.manager_ref
         all_attribute_keys_array = inventory_collection.manager_ref.map(&:to_s)
 
@@ -113,13 +113,10 @@ module InventoryRefresh::SaveCollection
           Arel.sql("(#{active_entities_query(all_attribute_keys_array, manager_uuids)})")
         )
 
-        all_entities_query = inventory_collection.full_collection_for_comparison
-        all_entities_query = all_entities_query.active if inventory_collection.retention_strategy == :archive
-
         all_entities     = Arel::Table.new(:all_entities)
         all_entities_cte = Arel::Nodes::As.new(
           all_entities,
-          Arel.sql("(#{all_entities_query.select(:id, *all_attribute_keys_array).to_sql})")
+          Arel.sql("(#{all_entities_query(all_manager_uuids_scope).select(:id, *all_attribute_keys_array).to_sql})")
         )
         join_condition   = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
         where_condition  = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
@@ -133,6 +130,54 @@ module InventoryRefresh::SaveCollection
       end
 
       private
+
+      def all_entities_query(all_manager_uuids_scope)
+        all_entities_query = inventory_collection.full_collection_for_comparison
+        all_entities_query = all_entities_query.active if inventory_collection.retention_strategy == :archive
+
+        if all_manager_uuids_scope
+          scope_keys = all_manager_uuids_scope.first.keys.map { |x| association_to_foreign_key_mapping[x.to_sym] }.map(&:to_s)
+          scope = load_scope(all_manager_uuids_scope)
+          condition = inventory_collection.build_multi_selection_condition(scope, scope_keys)
+          all_entities_query = all_entities_query.where(condition)
+        end
+
+        all_entities_query
+      end
+
+      def load_scope(all_manager_uuids_scope)
+        scope_keys = all_manager_uuids_scope.first.keys.to_set
+
+        all_manager_uuids_scope.map do |cond|
+          assert_scope!(scope_keys, cond)
+
+          cond.map do |key, value|
+            foreign_key       = association_to_foreign_key_mapping[key.to_sym]
+            foreign_key_value = value.load&.id
+
+            assert_foreign_keys!(key, value, foreign_key, foreign_key_value)
+
+            [foreign_key, foreign_key_value]
+          end.to_h
+        end
+      end
+
+      def assert_scope!(scope_keys, cond)
+        if cond.keys.to_set != scope_keys
+          raise "'#{inventory_collection}' expected keys for :all_manager_uuids_scope are #{scope_keys.to_a}, got"\
+                " #{cond.keys}. Keys must be the same for all scopes provided."
+        end
+      end
+
+      def assert_foreign_keys!(key, value, foreign_key, foreign_key_value)
+        unless foreign_key
+          raise "'#{inventory_collection}' doesn't have relation :#{key} provided in :all_manager_uuids_scope."
+        end
+
+        unless foreign_key_value
+          raise "'#{inventory_collection}' couldn't load scope value :#{key} => #{value.inspect} provided in :all_manager_uuids_scope"
+        end
+      end
 
       def active_entities_query(all_attribute_keys_array, manager_uuids)
         connection = ActiveRecord::Base.connection

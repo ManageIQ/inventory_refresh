@@ -77,8 +77,26 @@ module InventoryRefresh
         #        InventoryCollections, i.e. InventoryCollections having parent_inventory_collections nil. The deleting of
         #        child collections is already handled by the scope of the parent_inventory_collections and using Rails
         #        :dependent => :destroy,
+        # @param all_manager_uuids_scope [Array] A scope limiting the :all_manager_uuids parameter. E.g. we can send
+        #        all_manager_uuids for 1 region, leading to delete a complement of the entities just under that 1
+        #        region.
+        #        If all_manager_uuids_scope is used with :all_manager_uuids => nil, it will do delete_complement of the
+        #        scope itself. E.g. sending a list of all active regions, we will delete complement entities not
+        #        belonging to those regions.
+        #        Example 1:
+        #          :all_manager_uuids       => [{:source_ref => x}, {:source_ref => y}],
+        #          :all_manager_uuids_scope => [{:region => regions.lazy_find(X)}, {:region => regions.lazy_find(Y)}]
+        #
+        #        Will cause deletion/archival or all entities that don't have source_ref "x" or "y", but only under
+        #        regions X and Y.
+        #
+        #        Example 2:
+        #          :all_manager_uuids       => nil # nil is the default value
+        #          :all_manager_uuids_scope => [{:region => regions.lazy_find(X)}, {:region => regions.lazy_find(Y)}]
+        #
+        #        Will cause deletion/archival or all entities that are not in region X or Y
         def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,
-                            manager_uuids, all_manager_uuids)
+                            manager_uuids, all_manager_uuids, all_manager_uuids_scope)
           @manager_ref             = manager_ref || %i(ems_ref)
           @manager_ref_allowed_nil = manager_ref_allowed_nil || []
           @secondary_refs          = secondary_refs || {}
@@ -86,6 +104,7 @@ module InventoryRefresh
           # Targeted mode related attributes
           # TODO(lsmola) Should we refactor this to use references too?
           @all_manager_uuids       = all_manager_uuids
+          @all_manager_uuids_scope = all_manager_uuids_scope
         end
 
         # @param dependency_attributes [Hash] Manually defined dependencies of this InventoryCollection. We can use this
@@ -211,7 +230,7 @@ module InventoryRefresh
           @attributes_whitelist             = Set.new
           @batch_extra_attributes           = batch_extra_attributes || []
           @inventory_object_attributes      = inventory_object_attributes
-          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections)
+          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections __all_manager_uuids_scope)
           @transitive_dependency_attributes = Set.new
 
           blacklist_attributes!(attributes_blacklist) if attributes_blacklist.present?

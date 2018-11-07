@@ -78,6 +78,9 @@ module InventoryRefresh
     # @return [Array, nil] nil or a list of all :manager_uuids that are present in the Provider's InventoryCollection.
     attr_accessor :all_manager_uuids
 
+    # @return [Array, nil] Scope for applying :all_manager_uuids
+    attr_accessor :all_manager_uuids_scope
+
     # @return [Set] A set of InventoryCollection objects that depends on this InventoryCollection object.
     attr_accessor :dependees
 
@@ -156,7 +159,8 @@ module InventoryRefresh
                       properties[:manager_ref_allowed_nil],
                       properties[:secondary_refs],
                       properties[:manager_uuids],
-                      properties[:all_manager_uuids])
+                      properties[:all_manager_uuids],
+                      properties[:all_manager_uuids_scope])
 
       init_ic_relations(properties[:dependency_attributes],
                         properties[:parent_inventory_collections])
