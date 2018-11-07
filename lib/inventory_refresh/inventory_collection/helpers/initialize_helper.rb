@@ -83,18 +83,12 @@ module InventoryRefresh
         #        If all_manager_uuids_scope is used with :all_manager_uuids => nil, it will do delete_complement of the
         #        scope itself. E.g. sending a list of all active regions, we will delete complement entities not
         #        belonging to those regions.
-        #        Example 1:
+        #        Example:
         #          :all_manager_uuids       => [{:source_ref => x}, {:source_ref => y}],
         #          :all_manager_uuids_scope => [{:region => regions.lazy_find(X)}, {:region => regions.lazy_find(Y)}]
         #
         #        Will cause deletion/archival or all entities that don't have source_ref "x" or "y", but only under
         #        regions X and Y.
-        #
-        #        Example 2:
-        #          :all_manager_uuids       => nil # nil is the default value
-        #          :all_manager_uuids_scope => [{:region => regions.lazy_find(X)}, {:region => regions.lazy_find(Y)}]
-        #
-        #        Will cause deletion/archival or all entities that are not in region X or Y
         def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,
                             manager_uuids, all_manager_uuids, all_manager_uuids_scope)
           @manager_ref             = manager_ref || %i(ems_ref)
