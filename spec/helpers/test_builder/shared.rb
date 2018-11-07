@@ -77,6 +77,14 @@ class TestBuilder
         )
       end
 
+      def source_regions
+        add_common_default_values
+      end
+
+      def subscriptions
+        add_common_default_values
+      end
+
       protected
 
       def add_common_default_values
