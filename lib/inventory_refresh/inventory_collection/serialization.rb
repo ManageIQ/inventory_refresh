@@ -28,13 +28,13 @@ module InventoryRefresh
       # @param available_inventory_collections [Array<InventoryRefresh::InventoryCollection>] List of available
       #        InventoryCollection objects
       def from_hash(inventory_objects_data, available_inventory_collections)
-        targeted_scope.merge!(inventory_objects_data["manager_uuids"].map(&:symbolize_keys!))
+        targeted_scope.merge!(inventory_objects_data["manager_uuids"].map(&:symbolize_keys!)) if inventory_objects_data["manager_uuids"]
 
-        inventory_objects_data['data'].each do |inventory_object_data|
+        (inventory_objects_data['data'] || []).each do |inventory_object_data|
           build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
         end
 
-        inventory_objects_data['partial_data'].each do |inventory_object_data|
+        (inventory_objects_data['partial_data'] || []).each do |inventory_object_data|
           skeletal_primary_index.build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
         end
 
@@ -105,9 +105,9 @@ module InventoryRefresh
         raise "Nested lazy_relation of #{inventory_collection} is too deep, left processing: #{hash}" if depth > 20
 
         hash.transform_values do |value|
-          if value.kind_of?(Hash) && value['type'] == "InventoryRefresh::InventoryObjectLazy"
+          if value.kind_of?(Hash) && value['inventory_collection_name']
             hash_to_lazy_relation(value, available_inventory_collections, depth)
-          elsif value.kind_of?(Array) && value.first.kind_of?(Hash) && value.first['type'] == "InventoryRefresh::InventoryObjectLazy"
+          elsif value.kind_of?(Array) && value.first.kind_of?(Hash) && value.first['inventory_collection_name']
             # TODO(lsmola) do we need to compact it sooner? What if first element is nil? On the other hand, we want to
             # deprecate this Vm HABTM assignment because it's not effective
             value.compact.map { |x| hash_to_lazy_relation(x, available_inventory_collections, depth) }
