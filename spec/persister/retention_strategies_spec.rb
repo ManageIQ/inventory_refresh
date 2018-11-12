@@ -67,49 +67,42 @@ describe InventoryRefresh::Persister do
           region2 = FactoryGirl.create(:source_region, :ems_ref => "region2", :ext_management_system => @ems)
           region3 = FactoryGirl.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
 
-          vm1  = FactoryGirl.create(:vm_cloud,
-                                    vm_data(1).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription1,
-                                      :source_region         => region1,
-                                    )
-          )
+          vm1 = FactoryGirl.create(:vm_cloud,
+                                   vm_data(1).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription1,
+                                     :source_region         => region1,
+                                   ))
           _vm2 = FactoryGirl.create(:vm_cloud,
                                     vm_data(2).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region2,
-                                    )
-          )
+                                    ))
           _vm3 = FactoryGirl.create(:vm_cloud,
                                     vm_data(3).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region3,
-                                    )
-          )
+                                    ))
           _vm4 = FactoryGirl.create(:vm_cloud,
                                     vm_data(4).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region1,
-                                    )
-          )
+                                    ))
           _vm5 = FactoryGirl.create(:vm_cloud,
                                     vm_data(5).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription1,
                                       :source_region         => region2,
-                                    )
-          )
+                                    ))
           _vm6 = FactoryGirl.create(:vm_cloud,
                                     vm_data(6).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription1,
                                       :source_region         => region1,
-                                    )
-          )
-
+                                    ))
 
           expect(Vm.active.pluck(:ems_ref)).to(
             match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(3)[:ems_ref], vm_data(4)[:ems_ref],
@@ -393,9 +386,9 @@ describe InventoryRefresh::Persister do
   end
 
   it "checks valid retentions strategies" do
-    expect {
+    expect do
       create_persister(:retention_strategy => "made_up_name", :saver_strategy => 'batch')
-    }.to(
+    end.to(
       raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
     )
   end
@@ -415,7 +408,7 @@ describe InventoryRefresh::Persister do
       :active_disks           => Disk.active.count,
       :archived_disks         => Disk.archived.count,
       :active_networks        => Network.active.count,
-      :archived_networks      => Network.archived.count,
+      :archived_networks      => Network.archived.count
     }
   end
 

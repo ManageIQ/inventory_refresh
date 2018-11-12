@@ -1,5 +1,5 @@
 FactoryGirl.define do
-factory :orchestration_stack do
+  factory :orchestration_stack do
     ems_ref "1"
   end
 
