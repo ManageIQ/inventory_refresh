@@ -71,6 +71,13 @@ module InventoryRefresh
         #        this attribute, the db_collection_for_comparison will be automatically limited by the manager_uuids, in a
         #        case of a simple relation. In a case of a complex relation, we can leverage :manager_uuids in a
         #        custom :targeted_arel. We can pass also lambda, for lazy_evaluation.
+        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,  manager_uuids)
+          @manager_ref             = manager_ref || %i(ems_ref)
+          @manager_ref_allowed_nil = manager_ref_allowed_nil || []
+          @secondary_refs          = secondary_refs || {}
+          @manager_uuids           = manager_uuids || []
+        end
+
         # @param all_manager_uuids [Array] Array of all manager_uuids of the InventoryObjects. With the :targeted true,
         #        having this parameter defined will invoke only :delete_method on a complement of this set, making sure
         #        the DB has only this set of data after. This :attribute serves for deleting of top level
@@ -89,13 +96,7 @@ module InventoryRefresh
         #
         #        Will cause deletion/archival or all entities that don't have source_ref "x" or "y", but only under
         #        regions X and Y.
-        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,
-                            manager_uuids, all_manager_uuids, all_manager_uuids_scope)
-          @manager_ref             = manager_ref || %i(ems_ref)
-          @manager_ref_allowed_nil = manager_ref_allowed_nil || []
-          @secondary_refs          = secondary_refs || {}
-          @manager_uuids           = manager_uuids || []
-          # Targeted mode related attributes
+        def init_all_manager_uuids(all_manager_uuids, all_manager_uuids_scope)
           # TODO(lsmola) Should we refactor this to use references too?
           @all_manager_uuids       = all_manager_uuids
           @all_manager_uuids_scope = all_manager_uuids_scope

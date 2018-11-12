@@ -158,9 +158,10 @@ module InventoryRefresh
       init_references(properties[:manager_ref],
                       properties[:manager_ref_allowed_nil],
                       properties[:secondary_refs],
-                      properties[:manager_uuids],
-                      properties[:all_manager_uuids],
-                      properties[:all_manager_uuids_scope])
+                      properties[:manager_uuids])
+
+      init_all_manager_uuids(properties[:all_manager_uuids],
+                             properties[:all_manager_uuids_scope])
 
       init_ic_relations(properties[:dependency_attributes],
                         properties[:parent_inventory_collections])
