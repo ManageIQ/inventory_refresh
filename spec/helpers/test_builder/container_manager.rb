@@ -62,6 +62,13 @@ class TestBuilder::ContainerManager < ::TestBuilder
     add_common_default_values
   end
 
+  def nested_containers
+    add_properties(
+      :model_class => NestedContainer,
+      :manager_ref => %i(container_group name),
+    )
+  end
+
   def container_replicators
     add_properties(
       :secondary_refs       => {:by_container_project_and_name => %i(container_project name)},

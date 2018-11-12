@@ -117,6 +117,10 @@ module SpecParsedData
     }.merge(data)
   end
 
+  def nested_container_data(i, data = {})
+    container_data(i, data = {}).merge(:type => "NestedContainer",)
+  end
+
   def container_data(i, data = {})
     {
       :type                 => "Container",

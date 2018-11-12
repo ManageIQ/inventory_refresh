@@ -12,6 +12,8 @@ module ManageIQ
       has_many :container_image_registries, :foreign_key => :ems_id, :dependent => :destroy
       has_many :container_images, -> { active }, :foreign_key => :ems_id, :dependent => :destroy
 
+      has_many :nested_containers, :through => :container_groups
+
       # Archived and active entities to destroy when the container manager is deleted
       has_many :all_containers, :foreign_key => :ems_id, :dependent => :destroy, :class_name => "Container"
       has_many :all_container_groups, :foreign_key => :ems_id, :dependent => :destroy, :class_name => "ContainerGroup"
