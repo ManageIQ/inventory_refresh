@@ -103,7 +103,7 @@ module InventoryRefresh::SaveCollection
       #        spare some memory
       # @return [Arel::SelectManager] Arel for getting complement of uuids. This method modifies the passed
       #         manager_uuids to spare some memory
-      def complement_of!(manager_uuids, all_manager_uuids_scope)
+      def complement_of!(manager_uuids, all_manager_uuids_scope, all_manager_uuids_timestamp)
         all_attribute_keys       = inventory_collection.manager_ref
         all_attribute_keys_array = inventory_collection.manager_ref.map(&:to_s)
 
@@ -116,7 +116,7 @@ module InventoryRefresh::SaveCollection
         all_entities     = Arel::Table.new(:all_entities)
         all_entities_cte = Arel::Nodes::As.new(
           all_entities,
-          Arel.sql("(#{all_entities_query(all_manager_uuids_scope).select(:id, *all_attribute_keys_array).to_sql})")
+          Arel.sql("(#{all_entities_query(all_manager_uuids_scope, all_manager_uuids_timestamp).select(:id, *all_attribute_keys_array).to_sql})")
         )
         join_condition   = all_attribute_keys.map { |key| active_entities[key].eq(all_entities[key]) }.inject(:and)
         where_condition  = all_attribute_keys.map { |key| active_entities[key].eq(nil) }.inject(:and)
@@ -131,7 +131,7 @@ module InventoryRefresh::SaveCollection
 
       private
 
-      def all_entities_query(all_manager_uuids_scope)
+      def all_entities_query(all_manager_uuids_scope, all_manager_uuids_timestamp)
         all_entities_query = inventory_collection.full_collection_for_comparison
         all_entities_query = all_entities_query.active if inventory_collection.retention_strategy == :archive
 
@@ -142,6 +142,12 @@ module InventoryRefresh::SaveCollection
           all_entities_query = all_entities_query.where(condition)
         end
 
+        if all_manager_uuids_timestamp && supports_column?(:resource_timestamp)
+          all_manager_uuids_timestamp = Time.parse(all_manager_uuids_timestamp)
+
+          date_field = model_class.arel_table[:resource_timestamp]
+          all_entities_query = all_entities_query.where(date_field.lt(all_manager_uuids_timestamp))
+        end
         all_entities_query
       end
 

@@ -100,6 +100,7 @@ module InventoryRefresh::SaveCollection
           all_attribute_keys << col if supports_column?(col)
         end
         all_attribute_keys << :type if supports_sti?
+        all_attribute_keys << :archived_on if supports_column?(:archived_on)
 
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
