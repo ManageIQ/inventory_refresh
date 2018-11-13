@@ -98,7 +98,9 @@ describe InventoryRefresh::Persister do
       expect(NestedContainer.archived.pluck(:ems_ref)).to(
         match_array([nested_container_data(12)[:ems_ref], nested_container_data(22)[:ems_ref]])
       )
-      # This should be the right thing
+      # TODO(lsmola) This should be the right thing, but there is no way to enforce ensure this now, we test that next
+      # refresh will fix it, archiving nested container 13 and reconnecting 12.
+      #
       # expect(NestedContainer.active.pluck(:ems_ref)).to(
       #   match_array([nested_container_data(11)[:ems_ref], nested_container_data(12)[:ems_ref],
       #                nested_container_data(21)[:ems_ref], nested_container_data(23)[:ems_ref]])
@@ -117,7 +119,7 @@ describe InventoryRefresh::Persister do
         )
       )
       persister.nested_containers.build(
-        nested_container_data(14).merge(
+        nested_container_data(12).merge(
           :container_group    => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
           :resource_timestamp => time_after
         )
@@ -133,11 +135,11 @@ describe InventoryRefresh::Persister do
       )
 
       expect(NestedContainer.active.pluck(:ems_ref)).to(
-        match_array([nested_container_data(11)[:ems_ref], nested_container_data(14)[:ems_ref],
+        match_array([nested_container_data(11)[:ems_ref], nested_container_data(12)[:ems_ref],
                      nested_container_data(21)[:ems_ref], nested_container_data(23)[:ems_ref]])
       )
       expect(NestedContainer.archived.pluck(:ems_ref)).to(
-        match_array([nested_container_data(12)[:ems_ref], nested_container_data(13)[:ems_ref], nested_container_data(22)[:ems_ref]])
+        match_array([nested_container_data(13)[:ems_ref], nested_container_data(22)[:ems_ref]])
       )
     end
   end
