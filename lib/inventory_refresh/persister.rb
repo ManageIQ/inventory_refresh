@@ -96,7 +96,10 @@ module InventoryRefresh
       ::InventoryRefresh::InventoryCollection::Builder
     end
 
-    # Persists InventoryCollection objects into the DB
+    # Persists InventoryCollection objects into the DB or sweeps inactive records based on :last_seen_at attribute,
+    # if the :total_parts attribute was passed
+    #
+    # @return [Boolean] If false, the job wasn't finished and should be requeued
     def persist!
       if total_parts
         sweep_inactive_records!
@@ -199,7 +202,9 @@ module InventoryRefresh
 
     private
 
-    def upsert_refresh_state_part(status:, refresh_state_status: nil, error_message: nil)
+    def upsert_refresh_state_records(status: nil, refresh_state_status: nil, error_message: nil)
+      return unless refresh_state_uuid
+
       refresh_states_inventory_collection = ::InventoryRefresh::InventoryCollection.new(
         :manager_ref                 => [:uuid],
         :saver_strategy              => :concurrent_safe_batch,
@@ -227,44 +232,102 @@ module InventoryRefresh
         ))
       end
 
-      refresh_state_part_data = {
-        :uuid          => refresh_state_part_uuid,
-        :refresh_state => refresh_states_inventory_collection.lazy_find(
-          RefreshState.owner_ref(manager).merge({:uuid => refresh_state_uuid})
-        ),
-        :status        => status
-      }
-      refresh_state_part_data[:error_message] = error_message if error_message
+      if status
+        refresh_state_part_data = {
+          :uuid          => refresh_state_part_uuid,
+          :refresh_state => refresh_states_inventory_collection.lazy_find(
+            RefreshState.owner_ref(manager).merge({:uuid => refresh_state_uuid})
+          ),
+          :status        => status
+        }
+        refresh_state_part_data[:error_message] = error_message if error_message
 
-      refresh_state_parts_inventory_collection.build(refresh_state_part_data)
+        refresh_state_parts_inventory_collection.build(refresh_state_part_data)
+      end
 
       InventoryRefresh::SaveInventory.save_inventory(
         manager, [refresh_states_inventory_collection, refresh_state_parts_inventory_collection]
       )
     end
 
+    # Persists InventoryCollection objects into the DB
+    #
+    # @return [Boolean] If false, the job wasn't finished and should be requeued
     def persist_collections!
-      upsert_refresh_state_part(:status => :started, :refresh_state_status => :started)
+      upsert_refresh_state_records(:status => :started, :refresh_state_status => :started)
 
       InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
 
-      upsert_refresh_state_part(:status => :finished)
+      upsert_refresh_state_records(:status => :finished)
+
+      true
     rescue => e
       logger.error(e)
       logger.error(e.backtrace)
-      upsert_refresh_state_part(:status => :error, :error_message => e.message.truncate(150))
+      upsert_refresh_state_records(:status => :error, :error_message => e.message.truncate(150))
+
+      true
     end
 
+    # Sweeps inactive records based on :last_seen_at attribute
+    #
+    # @return [Boolean] If false, the job wasn't finished and should be requeued
     def sweep_inactive_records!
       refresh_state = manager.refresh_states.find_by(:uuid => refresh_state_uuid)
-     
-      refresh_state.update_attributes!(:status => :sweeping, :total_parts => total_parts, :sweep_scope => sweep_scope)
-      InventoryRefresh::SaveInventory.sweep_inactive_records(manager, inventory_collections, refresh_state)
-      refresh_state.update_attributes!(:status => :finished)
+      unless refresh_state
+        upsert_refresh_state_records(:refresh_state_status => :started)
+
+        refresh_state = manager.refresh_states.find_by!(:uuid => refresh_state_uuid)
+      end
+
+      refresh_state.update_attributes!(:status => :waiting_for_refresh_state_parts, :total_parts => total_parts, :sweep_scope => sweep_scope)
+
+      if total_parts == refresh_state.refresh_state_parts.count
+        start_sweeping!(refresh_state)
+      else
+        return wait_for_sweeping!(refresh_state)
+      end
+
+      true
     rescue => e
       logger.error(e)
       logger.error(e.backtrace)
-      refresh_state.update_attributes!(:status => :sweeping_error, :error_message => e.message.truncate(150))
+      refresh_state.update_attributes!(:status => :error, :error_message => "Error while sweeping: #{e.message.truncate(150)}")
+
+      true
+    end
+
+    def start_sweeping!(refresh_state)
+      error_count = refresh_state.refresh_state_parts.where(:status => :error).count
+
+      if error_count > 0
+        refresh_state.update_attributes!(:status => :error, :error_message => "Error when saving one or more parts, sweeping can't be done.")
+      else
+        refresh_state.update_attributes!(:status => :sweeping)
+        InventoryRefresh::SaveInventory.sweep_inactive_records(manager, inventory_collections, refresh_state)
+        refresh_state.update_attributes!(:status => :finished)
+      end
+    end
+
+    def wait_for_sweeping!(refresh_state)
+      sweep_retry_count = refresh_state.sweep_retry_count + 1
+
+      if sweep_retry_count > sweep_retry_count_limit
+        refresh_state.update_attributes!(
+          :status => :error,
+          :error_message => "Sweep retry count limit of #{sweep_retry_count_limit} was reached.")
+
+        return true
+      else
+        refresh_state.update_attributes!(:status => :waiting_for_refresh_state_parts, :sweep_retry_count => sweep_retry_count)
+
+        # When returning false the Persitor worker should requeue the the same Persister job
+        return false
+      end
+    end
+
+    def sweep_retry_count_limit
+      100
     end
   end
 end
