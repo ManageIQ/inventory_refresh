@@ -38,6 +38,22 @@ module InventoryRefresh::SaveCollection
         insert_query
       end
 
+      # Build batch upsert query only for passed all_attribute_keys
+      #
+      # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
+      # @param hashes [Array<Hash>] data used for building a batch upsert sql query
+      def build_partial_upsert_query(all_attribute_keys, hashes)
+        # Cache the connection for the batch
+        connection = get_connection
+
+        all_attribute_keys_array = all_attribute_keys.to_a + unique_index_columns
+
+        upsert_query = insert_query_insert_values(hashes, all_attribute_keys_array, connection)
+        upsert_query += insert_query_on_conflict_behavior(all_attribute_keys_array - unique_index_columns, :do_update, nil, [], nil)
+
+        upsert_query
+      end
+
       private
 
       def insert_query_insert_values(hashes, all_attribute_keys_array, connection)
