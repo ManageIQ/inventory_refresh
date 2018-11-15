@@ -1,9 +1,18 @@
+require "inventory_refresh/inventory_collection"
+require "inventory_refresh/logging"
+require "inventory_refresh/save_inventory"
+
 module InventoryRefresh
   class Persister
+    include InventoryRefresh::Logging
+    include InventoryRefresh::SaveCollection::Saver::SqlHelper
+
     require 'json'
     require 'yaml'
 
     attr_reader :manager, :target, :collections
+
+    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
     # @param target [Object] A refresh Target object
@@ -89,7 +98,11 @@ module InventoryRefresh
 
     # Persists InventoryCollection objects into the DB
     def persist!
-      InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
+      if total_parts
+        sweep_inactive_records!
+      else
+        persist_collections!
+      end
     end
 
     # Returns serialized Persisted object to JSON
@@ -101,10 +114,10 @@ module InventoryRefresh
     # @return [Hash] entire Persister object serialized to hash
     def to_hash
       collections_data = collections.map do |_, collection|
-        next if collection.data.blank?                              &&
-                collection.targeted_scope.primary_references.blank? &&
-                collection.all_manager_uuids.nil?                   &&
-                collection.skeletal_primary_index.index_data.blank?
+        next if collection.data.blank? &&
+          collection.targeted_scope.primary_references.blank? &&
+          collection.all_manager_uuids.nil? &&
+          collection.skeletal_primary_index.index_data.blank?
 
         collection.to_hash
       end.compact
@@ -159,9 +172,9 @@ module InventoryRefresh
     def builder_settings(extra_settings = {})
       opts = inventory_collection_builder.default_options
 
-      opts[:shared_properties] = shared_options
+      opts[:shared_properties]         = shared_options
       opts[:auto_inventory_attributes] = true
-      opts[:without_model_class] = false
+      opts[:without_model_class]       = false
 
       opts.merge(extra_settings)
     end
@@ -182,6 +195,76 @@ module InventoryRefresh
         :targeted => targeted?,
         :parent   => manager.presence
       }
+    end
+
+    private
+
+    def upsert_refresh_state_part(status:, refresh_state_status: nil, error_message: nil)
+      refresh_states_inventory_collection = ::InventoryRefresh::InventoryCollection.new(
+        :manager_ref                 => [:uuid],
+        :saver_strategy              => :concurrent_safe_batch,
+        :parent                      => manager,
+        :association                 => :refresh_states,
+        :create_only                 => true,
+        :model_class                 => RefreshState,
+        :inventory_object_attributes => [:ems_id, :uuid, :status]
+      )
+
+      refresh_state_parts_inventory_collection = ::InventoryRefresh::InventoryCollection.new(
+        :manager_ref                 => [:refresh_state, :uuid],
+        :saver_strategy              => :concurrent_safe_batch,
+        :parent                      => manager,
+        :association                 => :refresh_state_parts,
+        :create_only                 => true,
+        :model_class                 => RefreshStatePart,
+        :inventory_object_attributes => [:refresh_state, :uuid, :status, :error_message]
+      )
+
+      if refresh_state_status
+        refresh_states_inventory_collection.build(RefreshState.owner_ref(manager).merge(
+          :uuid   => refresh_state_uuid,
+          :status => refresh_state_status,
+        ))
+      end
+
+      refresh_state_part_data = {
+        :uuid          => refresh_state_part_uuid,
+        :refresh_state => refresh_states_inventory_collection.lazy_find(
+          RefreshState.owner_ref(manager).merge({:uuid => refresh_state_uuid})
+        ),
+        :status        => status
+      }
+      refresh_state_part_data[:error_message] = error_message if error_message
+
+      refresh_state_parts_inventory_collection.build(refresh_state_part_data)
+
+      InventoryRefresh::SaveInventory.save_inventory(
+        manager, [refresh_states_inventory_collection, refresh_state_parts_inventory_collection]
+      )
+    end
+
+    def persist_collections!
+      upsert_refresh_state_part(:status => :started, :refresh_state_status => :started)
+
+      InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
+
+      upsert_refresh_state_part(:status => :finished)
+    rescue => e
+      logger.error(e)
+      logger.error(e.backtrace)
+      upsert_refresh_state_part(:status => :error, :error_message => e.message.truncate(150))
+    end
+
+    def sweep_inactive_records!
+      refresh_state = manager.refresh_states.find_by(:uuid => refresh_state_uuid)
+     
+      refresh_state.update_attributes!(:status => :sweeping, :total_parts => total_parts, :sweep_scope => sweep_scope)
+      InventoryRefresh::SaveInventory.sweep_inactive_records(manager, inventory_collections, refresh_state)
+      refresh_state.update_attributes!(:status => :finished)
+    rescue => e
+      logger.error(e)
+      logger.error(e.backtrace)
+      refresh_state.update_attributes!(:status => :sweeping_error, :error_message => e.message.truncate(150))
     end
   end
 end
