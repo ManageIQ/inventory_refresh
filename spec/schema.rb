@@ -860,6 +860,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string "status"
     t.integer "total_parts"
     t.jsonb "sweep_scope"
+    t.integer "sweep_retry_count", default: 0
     t.string "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
