@@ -143,7 +143,7 @@ module InventoryRefresh::SaveCollection
         end
 
         if all_manager_uuids_timestamp && supports_column?(:resource_timestamp)
-          all_manager_uuids_timestamp = Time.parse(all_manager_uuids_timestamp)
+          all_manager_uuids_timestamp = Time.parse(all_manager_uuids_timestamp).utc
 
           date_field = model_class.arel_table[:resource_timestamp]
           all_entities_query = all_entities_query.where(date_field.lt(all_manager_uuids_timestamp))
