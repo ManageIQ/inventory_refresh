@@ -29,6 +29,9 @@ module InventoryRefresh::SaveCollection
       #
       # @param records [Array<ApplicationRecord, Hash, Array>] Records we want to delete or archive
       def destroy_records!(records)
+        # TODO(lsmola) the output of this can still grow in a memory a lot, if we would delete a huge chunk of
+        # records. Will we just stream it out? Or maybe give a max amount of deleted records here?
+
         return false unless inventory_collection.delete_allowed?
         return if records.blank?
 
