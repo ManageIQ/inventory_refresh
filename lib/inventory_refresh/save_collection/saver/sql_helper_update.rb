@@ -44,6 +44,21 @@ module InventoryRefresh::SaveCollection
         update_query
       end
 
+      # Build batch update query only for passed all_attribute_keys
+      #
+      # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
+      # @param hashes [Array<Hash>] data used for building a batch update sql query
+      def build_partial_update_query(all_attribute_keys, hashes)
+        # Cache the connection for the batch
+        connection = get_connection
+
+        all_attribute_keys = (all_attribute_keys + unique_index_columns).uniq
+
+        update_query = update_query_beginning(all_attribute_keys)
+        update_query += update_query_from_values(hashes, all_attribute_keys, connection, unique_index_columns)
+        update_query
+      end
+
       private
 
       def update_query_beginning(all_attribute_keys_array)
@@ -72,17 +87,21 @@ module InventoryRefresh::SaveCollection
         end
       end
 
-      def update_query_from_values(hashes, all_attribute_keys_array, connection)
+      def update_query_from_values(hashes, all_attribute_keys_array, connection, matching = [:id])
         values = hashes.map! do |hash|
           "(#{all_attribute_keys_array.map { |x| quote(connection, hash[x], x, true) }.join(",")})"
         end.join(",")
+
+        where_cond = matching.map do |x|
+          "updated_values.#{quote_column_name(x)} = #{q_table_name}.#{quote_column_name(x)}"
+        end.join(" AND ")
 
         <<-SQL
           FROM (
             VALUES
               #{values}
           ) AS updated_values (#{all_attribute_keys_array.map { |x| quote_column_name(x) }.join(",")})
-          WHERE updated_values.id = #{q_table_name}.id
+          WHERE #{where_cond}
         SQL
       end
 

@@ -150,7 +150,7 @@ module InventoryRefresh::SaveCollection
         last_seen_at = Time.now.utc
         attributes_index.each {|_k, v| v[:last_seen_at] = last_seen_at }
 
-        query = build_partial_upsert_query(all_attribute_keys, attributes_index.values)
+        query = build_partial_update_query(all_attribute_keys, attributes_index.values)
 
         get_connection.execute(query)
       end
