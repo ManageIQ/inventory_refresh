@@ -8,4 +8,7 @@ class ExtManagementSystem < ::ActiveRecord::Base
   has_many :hardwares,         :through => :vms_and_templates
   has_many :disks,             :through => :hardwares
   has_many :networks,          :through => :hardwares
+
+  has_many :source_regions, :foreign_key => :ems_id
+  has_many :subscriptions, :foreign_key => :ems_id
 end

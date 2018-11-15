@@ -7,6 +7,8 @@ class VmOrTemplate < ActiveRecord::Base
 
   belongs_to :ext_management_system, :foreign_key => :ems_id
   belongs_to :flavor
+  belongs_to :source_region
+  belongs_to :subscription
 
   has_one :hardware, :dependent => :destroy
   has_many :disks, :through => :hardware

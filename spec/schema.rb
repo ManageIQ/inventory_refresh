@@ -155,6 +155,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "memory_hot_add_limit"
     t.integer  "memory_hot_add_increment"
     t.string   "hostname"
+    t.bigint   "source_region_id"
+    t.bigint   "subscription_id"
     t.datetime "archived_on"
     t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
     t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
@@ -167,6 +169,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["storage_id"], name: "index_vms_on_storage_id", using: :btree
     t.index ["type"], name: "index_vms_on_type", using: :btree
     t.index ["uid_ems"], name: "index_vms_on_vmm_uuid", using: :btree
+    t.index ["source_region_id"], name: "index_vms_on_source_region_id", using: :btree
+    t.index ["subscription_id"], name: "index_vms_on_subscription_id", using: :btree
     t.index ["archived_on"], name: "index_vms_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_vms_on_ems_id_and_ems_ref", unique: true, using: :btree
   end
@@ -577,7 +581,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "resource_version_string"
     t.string   "restart_policy"
     t.string   "dns_policy"
-    t.bigint   "ems_id"
+    t.bigint   "ems_id", null: false
     t.bigint   "container_node_id"
     t.datetime "last_perf_capture_on"
     t.bigint   "container_replicator_id"
@@ -629,7 +633,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.integer  "last_signal"
     t.string   "last_message"
     t.datetime "archived_on"
-    t.bigint   "ems_id"
+    t.bigint   "ems_id", null: false
     t.bigint   "old_ems_id"
     t.float    "request_cpu_cores"
     t.bigint   "request_memory_bytes"
@@ -664,7 +668,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "name"
     t.string   "image_ref"
     t.bigint   "container_image_registry_id"
-    t.bigint   "ems_id"
+    t.bigint   "ems_id", null: false
     t.datetime "last_sync_on"
     t.datetime "last_scan_attempt_on"
     t.string   "digest"
@@ -759,5 +763,30 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_on"
     t.index ["ems_id", "ems_ref"], name: "index_container_build_pods_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_build_pods_on_ems_id", using: :btree
+  end
+
+  create_table "source_regions", force: :cascade do |t|
+    t.bigint "ems_id", null: false
+    t.string "ems_ref"
+    t.string "name"
+    t.string "endpoint"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "archived_on"
+    t.index ["archived_on"], name: "index_source_regions_on_archived_on"
+    t.index ["ems_id", "ems_ref"], name: "index_source_regions_on_ems_id_and_ems_ref", unique: true
+    t.index ["ems_id"], name: "index_source_regions_on_ems_id"
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "ems_id", null: false
+    t.string "ems_ref"
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "archived_on"
+    t.index ["archived_on"], name: "index_subscriptions_on_archived_on"
+    t.index ["ems_id", "ems_ref"], name: "index_subscriptions_on_ems_id_and_ems_ref", unique: true
+    t.index ["ems_id"], name: "index_subscriptions_on_ems_id"
   end
 end

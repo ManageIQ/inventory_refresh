@@ -52,7 +52,8 @@ module InventoryRefresh
                :to => :inventory_collection
 
       # The data scanner modifies inside of the :inventory_collection
-      delegate :association,
+      delegate :all_manager_uuids_scope,
+               :association,
                :arel,
                :attribute_references,
                :custom_save_block,
@@ -85,12 +86,23 @@ module InventoryRefresh
         end
 
         build_parent_inventory_collections!
+        scan_all_manager_uuids_scope!
 
         # Mark InventoryCollection as finalized aka. scanned
         self.data_collection_finalized = true
       end
 
       private
+
+      def scan_all_manager_uuids_scope!
+        return if all_manager_uuids_scope.nil?
+
+        all_manager_uuids_scope.each do |scope|
+          scope.each_value do |value|
+            scan_all_manager_uuids_scope_attribute!(value)
+          end
+        end
+      end
 
       def build_parent_inventory_collections!
         if parent_inventory_collections.nil?
@@ -157,8 +169,23 @@ module InventoryRefresh
         end
       end
 
+      def loadable?(value)
+        inventory_object_lazy?(value) || inventory_object?(value)
+      end
+
+      def add_reference(value_inventory_collection, value)
+        value_inventory_collection.add_reference(value.reference, :key => value.key)
+      end
+
+      def scan_all_manager_uuids_scope_attribute!(value)
+        return unless loadable?(value)
+
+        add_reference(value.inventory_collection, value)
+        (dependency_attributes[:__all_manager_uuids_scope] ||= Set.new) << value.inventory_collection
+      end
+
       def scan_inventory_object_attribute!(key, value)
-        return if !inventory_object_lazy?(value) && !inventory_object?(value)
+        return unless loadable?(value)
         value_inventory_collection = value.inventory_collection
 
         # Storing attributes and their dependencies
@@ -166,7 +193,7 @@ module InventoryRefresh
 
         # Storing a reference in the target inventory_collection, then each IC knows about all the references and can
         # e.g. load all the referenced uuids from a DB
-        value_inventory_collection.add_reference(value.reference, :key => value.key)
+        add_reference(value_inventory_collection, value)
 
         if inventory_object_lazy?(value)
           # Storing if attribute is a transitive dependency, so a lazy_find :key results in dependency

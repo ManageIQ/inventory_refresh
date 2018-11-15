@@ -15,7 +15,9 @@ class TestPersister::Cloud < ::TestPersister
     add_key_pairs
     add_flavors
 
-    %i(hardwares
+    %i(source_regions
+       subscriptions
+       hardwares
        networks
        disks
        orchestration_stacks).each do |name|

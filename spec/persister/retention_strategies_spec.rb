@@ -55,6 +55,131 @@ describe InventoryRefresh::Persister do
         end
       end
 
+      context "with :all_manager_uuids_scope" do
+        it "archives the data with :retention_strategy => 'archive'" do
+          Vm.destroy_all
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          subscription1 = FactoryGirl.create(:subscription, :ems_ref => "subscription1", :ext_management_system => @ems)
+          subscription2 = FactoryGirl.create(:subscription, :ems_ref => "subscription2", :ext_management_system => @ems)
+
+          region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
+          region2 = FactoryGirl.create(:source_region, :ems_ref => "region2", :ext_management_system => @ems)
+          region3 = FactoryGirl.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
+
+          vm1 = FactoryGirl.create(:vm_cloud,
+                                   vm_data(1).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription1,
+                                     :source_region         => region1,
+                                   ))
+          _vm2 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(2).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region2,
+                                    ))
+          _vm3 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(3).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region3,
+                                    ))
+          _vm4 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(4).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription2,
+                                      :source_region         => region1,
+                                    ))
+          _vm5 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(5).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription1,
+                                      :source_region         => region2,
+                                    ))
+          _vm6 = FactoryGirl.create(:vm_cloud,
+                                    vm_data(6).merge(
+                                      :ext_management_system => @ems,
+                                      :subscription          => subscription1,
+                                      :source_region         => region1,
+                                    ))
+
+          expect(Vm.active.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(3)[:ems_ref], vm_data(4)[:ems_ref],
+                         vm_data(5)[:ems_ref], vm_data(6)[:ems_ref]])
+          )
+          expect(Vm.archived.pluck(:ems_ref)).to(
+            match_array([])
+          )
+
+          persister.vms.build(vm_data(3))
+
+          persister.vms.all_manager_uuids       = [{'ems_ref' => vm1.ems_ref}]
+          persister.vms.all_manager_uuids_scope = [
+            {:source_region => persister.source_regions.lazy_find("region1"), :subscription => persister.subscriptions.lazy_find("subscription1")},
+            {:source_region => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
+          ]
+
+          persister.persist!
+
+          expect(Vm.active.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(3)[:ems_ref], vm_data(4)[:ems_ref]])
+          )
+          expect(Vm.archived.pluck(:ems_ref)).to(
+            match_array([vm_data(5)[:ems_ref], vm_data(6)[:ems_ref]])
+          )
+        end
+
+        it "fails if all_manager_uuids_scope is using wrong relation" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          persister.vms.all_manager_uuids       = []
+          persister.vms.all_manager_uuids_scope = [
+            {:non_existent_relation => persister.source_regions.lazy_find("region1"), :subscription => persister.subscriptions.lazy_find("subscription1")},
+            {:non_existent_relation => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
+          ]
+
+          expect { persister.persist! }.to(
+            raise_error("'InventoryCollection:<Vm>, blacklist: [genealogy_parent], strategy: local_db_find_missing_references' doesn't have relation :non_existent_relation provided in :all_manager_uuids_scope.")
+          )
+        end
+
+        it "fails if all_manager_uuids_scope is pointing to the wrong value" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          persister.vms.all_manager_uuids       = []
+          persister.vms.all_manager_uuids_scope = [
+            {:source_region => persister.source_regions.lazy_find("region1_fake", :key => :name), :subscription => persister.subscriptions.lazy_find("subscription1")},
+            {:source_region => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
+          ]
+
+          expect { persister.persist! }.to(
+            raise_error("'InventoryCollection:<Vm>, blacklist: [genealogy_parent], strategy: local_db_find_missing_references'"\
+                        " couldn't load scope value :source_region => InventoryObjectLazy:('region1_fake',"\
+                        " InventoryCollection:<SourceRegion>, strategy: local_db_find_missing_references,"\
+                        " ref: manager_ref, key: name) provided in :all_manager_uuids_scope")
+          )
+        end
+
+        it "fails if all_manager_uuids_scope have inconsistent keys" do
+          _region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
+
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          persister.vms.all_manager_uuids       = []
+          persister.vms.all_manager_uuids_scope = [
+            {:source_region => persister.source_regions.lazy_find("region1")},
+            {:source_region => persister.source_regions.lazy_find("region2"), :subscription => persister.subscriptions.lazy_find("subscription1")}
+          ]
+
+          expect { persister.persist! }.to(
+            raise_error("'InventoryCollection:<Vm>, blacklist: [genealogy_parent], strategy: local_db_find_missing_references'"\
+                        " expected keys for :all_manager_uuids_scope are [:source_region], got [:source_region, :subscription]."\
+                        " Keys must be the same for all scopes provided.")
+          )
+        end
+      end
+
       context "not providing nested hardware, disks and networks" do
         it "archives the data with :retention_strategy => 'archive' and with #{extra_options}" do
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
@@ -261,9 +386,9 @@ describe InventoryRefresh::Persister do
   end
 
   it "checks valid retentions strategies" do
-    expect {
+    expect do
       create_persister(:retention_strategy => "made_up_name", :saver_strategy => 'batch')
-    }.to(
+    end.to(
       raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
     )
   end
@@ -283,7 +408,7 @@ describe InventoryRefresh::Persister do
       :active_disks           => Disk.active.count,
       :archived_disks         => Disk.archived.count,
       :active_networks        => Network.active.count,
-      :archived_networks      => Network.archived.count,
+      :archived_networks      => Network.archived.count
     }
   end
 
