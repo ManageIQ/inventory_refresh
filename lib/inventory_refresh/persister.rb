@@ -154,6 +154,11 @@ module InventoryRefresh
 
             inventory_collection.from_hash(collection, persister.collections)
           end
+
+          persister.refresh_state_uuid      = persister_data['refresh_state_uuid']
+          persister.refresh_state_part_uuid = persister_data['refresh_state_part_uuid']
+          persister.total_parts             = persister_data['total_parts']
+          persister.sweep_scope             = persister_data['sweep_scope']
         end
       end
     end
@@ -212,7 +217,7 @@ module InventoryRefresh
         :association                 => :refresh_states,
         :create_only                 => true,
         :model_class                 => RefreshState,
-        :inventory_object_attributes => [:ems_id, :uuid, :status]
+        :inventory_object_attributes => [:ems_id, :uuid, :status, :source_id, :tenant_id]
       )
 
       refresh_state_parts_inventory_collection = ::InventoryRefresh::InventoryCollection.new(
