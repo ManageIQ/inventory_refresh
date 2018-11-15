@@ -2,6 +2,7 @@ require_relative "test_collector"
 require_relative 'targeted_refresh_spec_helper'
 require_relative '../helpers/spec_parsed_data'
 
+require "inventory_refresh/null_logger"
 
 describe InventoryRefresh::Persister do
   include TargetedRefreshSpecHelper
@@ -122,6 +123,11 @@ describe InventoryRefresh::Persister do
       persister.container_groups.build(container_group_data(5).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
       persister.persist!
 
+      expect(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        eq(1)
+      )
+
       # Refresh second part and mark :last_seen_at
       persister = create_containers_persister(:retention_strategy => "archive")
       persister.refresh_state_uuid = refresh_state_uuid
@@ -129,6 +135,11 @@ describe InventoryRefresh::Persister do
 
       persister.container_groups.build(container_group_data(6).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
       persister.persist!
+
+      expect(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        eq(2)
+      )
 
       # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
       persister = create_containers_persister(:retention_strategy => "archive")
@@ -150,6 +161,140 @@ describe InventoryRefresh::Persister do
         match_array([container_node_data(1)[:ems_ref], container_node_data(2)[:ems_ref]])
       )
       expect(ContainerNode.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+    end
+
+    it "checks partial update failure will error out the whole refresh_state" do
+      allow(InventoryRefresh).to receive(:logger).and_return(::InventoryRefresh::NullLogger.new)
+
+      _cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems))
+      _cg2 = FactoryGirl.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems))
+      _cg3 = FactoryGirl.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems))
+      _cg4 = FactoryGirl.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems))
+      _cg6 = FactoryGirl.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems))
+      _cg7 = FactoryGirl.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems))
+      _cn1 = FactoryGirl.create(:container_node, container_node_data(1).merge(:ext_management_system => @ems))
+      _cn2 = FactoryGirl.create(:container_node, container_node_data(2).merge(:ext_management_system => @ems))
+
+      refresh_state_uuid = SecureRandom.uuid
+      part1_uuid = SecureRandom.uuid
+      part2_uuid = SecureRandom.uuid
+
+      # Refresh first part and mark :last_seen_at
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.refresh_state_uuid = refresh_state_uuid
+      persister.refresh_state_part_uuid = part1_uuid
+
+      persister.container_groups.build(container_group_data(1).merge(:ext_management_system => @ems))
+      persister.container_groups.build(container_group_data(2).merge(:ext_management_system => @ems))
+      persister.container_groups.build(container_group_data(5).merge(:ext_management_system => @ems))
+      persister.persist!
+
+      expect(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        eq(1)
+      )
+
+      # Refresh second part and mark :last_seen_at
+      # Make it fail on @ems.container_groups query
+      allow(@ems).to receive(:container_groups).and_return(nil)
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.refresh_state_uuid = refresh_state_uuid
+      persister.refresh_state_part_uuid = part2_uuid
+
+      persister.container_groups.build(container_group_data(6).merge(:ext_management_system => @ems))
+      persister.persist!
+
+      expect(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        eq(1)
+      )
+
+      # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.refresh_state_uuid = refresh_state_uuid
+      persister.total_parts = 2
+      persister.sweep_scope = [:container_groups]
+      persister.persist!
+
+      refresh_state = @ems.refresh_states.find_by(:uuid => refresh_state_uuid)
+      expect(refresh_state.status).to(eq("error"))
+      expect(refresh_state.error_message).to(eq("Error when saving one or more parts, sweeping can't be done."))
+      expect(refresh_state.refresh_state_parts.where(:status => :error).count).to(eq(1))
+      expect(refresh_state.refresh_state_parts.where(:status => :error).first.error_message).to(include("undefined method `where' for nil:NilClass"))
+
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref], container_group_data(2)[:ems_ref],
+                     container_group_data(5)[:ems_ref], container_group_data(6)[:ems_ref],
+                     container_group_data(3)[:ems_ref], container_group_data(4)[:ems_ref],
+                     container_group_data(7)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+
+      expect(ContainerNode.active.pluck(:ems_ref)).to(
+        match_array([container_node_data(1)[:ems_ref], container_node_data(2)[:ems_ref]])
+      )
+      expect(ContainerNode.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+    end
+
+    it "checks sweep fails after hundred tries, waiting for all parts to be finished" do
+      _cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems))
+
+      refresh_state_uuid = SecureRandom.uuid
+
+      101.times do
+        # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
+        persister = create_containers_persister(:retention_strategy => "archive")
+        persister.refresh_state_uuid = refresh_state_uuid
+        persister.total_parts = 2
+        persister.sweep_scope = [:container_groups]
+        persister.persist!
+      end
+
+      refresh_state = @ems.refresh_states.find_by(:uuid => refresh_state_uuid)
+
+      expect(refresh_state.status).to eq("error")
+      expect(refresh_state.error_message).to eq("Sweep retry count limit of 100 was reached.")
+
+      # Sweeping doesn't happen if there is a failure
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+    end
+
+    it "checks sweeping fails gracefully" do
+      allow(InventoryRefresh).to receive(:logger).and_return(::InventoryRefresh::NullLogger.new)
+      allow_any_instance_of(RefreshState).to receive(:refresh_state_parts).and_return(nil)
+
+      _cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems))
+
+      refresh_state_uuid = SecureRandom.uuid
+
+      # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.refresh_state_uuid = refresh_state_uuid
+      persister.total_parts = 2
+      persister.sweep_scope = [:container_groups]
+      persister.persist!
+
+      refresh_state = @ems.refresh_states.find_by(:uuid => refresh_state_uuid)
+
+      expect(refresh_state.status).to eq("error")
+      expect(refresh_state.error_message).to eq("Error while sweeping: undefined method `count' for nil:NilClass")
+
+      # Sweeping doesn't happen if there is a failure
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
         match_array([])
       )
     end
