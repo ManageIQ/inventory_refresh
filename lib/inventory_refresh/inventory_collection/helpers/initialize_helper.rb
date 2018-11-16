@@ -96,10 +96,13 @@ module InventoryRefresh
         #
         #        Will cause deletion/archival or all entities that don't have source_ref "x" or "y", but only under
         #        regions X and Y.
-        def init_all_manager_uuids(all_manager_uuids, all_manager_uuids_scope)
+        # @param all_manager_uuids_timestamp [String] A timestamp in UTC marking a time before we collected all of the
+        #        all_manager_uuids. Meaning we won't be archiving any newer entities.
+        def init_all_manager_uuids(all_manager_uuids, all_manager_uuids_scope, all_manager_uuids_timestamp)
           # TODO(lsmola) Should we refactor this to use references too?
-          @all_manager_uuids       = all_manager_uuids
-          @all_manager_uuids_scope = all_manager_uuids_scope
+          @all_manager_uuids           = all_manager_uuids
+          @all_manager_uuids_scope     = all_manager_uuids_scope
+          @all_manager_uuids_timestamp = all_manager_uuids_timestamp
         end
 
         # @param dependency_attributes [Hash] Manually defined dependencies of this InventoryCollection. We can use this

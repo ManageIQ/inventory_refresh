@@ -9,7 +9,8 @@ class TestPersister::Containers < ::TestPersister
        container_images
        container_nodes
        container_projects
-       container_replicators).each do |name|
+       container_replicators
+       nested_containers).each do |name|
 
       add_collection(name, container)
     end
@@ -35,6 +36,6 @@ class TestPersister::Containers < ::TestPersister
       :strategy       => strategy,
       :targeted       => targeted?,
       :parent         => manager.presence
-    }
+    }.merge(options)
   end
 end

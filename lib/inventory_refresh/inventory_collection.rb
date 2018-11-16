@@ -81,6 +81,9 @@ module InventoryRefresh
     # @return [Array, nil] Scope for applying :all_manager_uuids
     attr_accessor :all_manager_uuids_scope
 
+    # @return [String] Timestamp in UTC before fetching :all_manager_uuids
+    attr_accessor :all_manager_uuids_timestamp
+
     # @return [Set] A set of InventoryCollection objects that depends on this InventoryCollection object.
     attr_accessor :dependees
 
@@ -161,7 +164,8 @@ module InventoryRefresh
                       properties[:manager_uuids])
 
       init_all_manager_uuids(properties[:all_manager_uuids],
-                             properties[:all_manager_uuids_scope])
+                             properties[:all_manager_uuids_scope],
+                             properties[:all_manager_uuids_timestamp])
 
       init_ic_relations(properties[:dependency_attributes],
                         properties[:parent_inventory_collections])

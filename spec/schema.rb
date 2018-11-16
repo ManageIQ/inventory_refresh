@@ -650,9 +650,59 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
+    t.datetime "resource_timestamp"
+    t.jsonb    "resource_timestamps", default: {}
+    t.datetime "resource_timestamps_max"
     t.index ["archived_on"], name: "index_containers_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_containers_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["type"], name: "index_containers_on_type", using: :btree
+  end
+
+  create_table "nested_containers", id: :bigserial, force: :cascade do |t|
+    t.string   "ems_ref"
+    t.integer  "restart_count"
+    t.string   "state"
+    t.string   "name"
+    t.string   "backing_ref"
+    t.datetime "last_perf_capture_on"
+    t.string   "type"
+    t.bigint   "container_image_id"
+    t.string   "reason"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.integer  "exit_code"
+    t.integer  "signal"
+    t.string   "message"
+    t.string   "last_state"
+    t.string   "last_reason"
+    t.datetime "last_started_at"
+    t.datetime "last_finished_at"
+    t.integer  "last_exit_code"
+    t.integer  "last_signal"
+    t.string   "last_message"
+    t.datetime "archived_on"
+    t.bigint   "old_ems_id"
+    t.float    "request_cpu_cores"
+    t.bigint   "request_memory_bytes"
+    t.float    "limit_cpu_cores"
+    t.bigint   "limit_memory_bytes"
+    t.string   "image"
+    t.string   "image_pull_policy"
+    t.string   "memory"
+    t.float    "cpu_cores"
+    t.bigint   "container_group_id", :null => false
+    t.boolean  "privileged"
+    t.bigint   "run_as_user"
+    t.boolean  "run_as_non_root"
+    t.string   "capabilities_add"
+    t.string   "capabilities_drop"
+    t.text     "command"
+    t.datetime "resource_timestamp"
+    t.jsonb    "resource_timestamps", default: {}
+    t.datetime "resource_timestamps_max"
+    t.index ["archived_on"], name: "index_nested_containers_on_archived_on", using: :btree
+    t.index ["container_group_id", "name"], name: "index_nested_containers_uniq", unique: true, using: :btree
+    t.index ["type"], name: "index_nested_containers_on_type", using: :btree
   end
 
   create_table "container_image_registries", id: :bigserial, force: :cascade do |t|

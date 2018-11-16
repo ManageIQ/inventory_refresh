@@ -12,7 +12,9 @@ module InventoryRefresh::SaveCollection
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
                      "#{all_manager_uuids_size}...")
 
-        query = complement_of!(inventory_collection.all_manager_uuids, inventory_collection.all_manager_uuids_scope)
+        query = complement_of!(inventory_collection.all_manager_uuids,
+                               inventory_collection.all_manager_uuids_scope,
+                               inventory_collection.all_manager_uuids_timestamp)
 
         ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
         ids_of_non_active_entities.each_slice(10_000) do |batch|
