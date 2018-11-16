@@ -99,7 +99,7 @@ module InventoryRefresh
     # Persists InventoryCollection objects into the DB or sweeps inactive records based on :last_seen_at attribute,
     # if the :total_parts attribute was passed
     #
-    # @return [Boolean] If false, the job wasn't finished and should be requeued
+    # @return [Boolean] If true, the job wasn't finished and should be re-queued
     def persist!
       if total_parts
         sweep_inactive_records!
@@ -257,7 +257,7 @@ module InventoryRefresh
 
     # Persists InventoryCollection objects into the DB
     #
-    # @return [Boolean] If false, the job wasn't finished and should be requeued
+    # @return [Boolean] If true, the job wasn't finished and should be re-queued
     def persist_collections!
       upsert_refresh_state_records(:status => :started, :refresh_state_status => :started)
 
@@ -265,18 +265,18 @@ module InventoryRefresh
 
       upsert_refresh_state_records(:status => :finished)
 
-      true
+      false
     rescue => e
       logger.error(e)
       logger.error(e.backtrace)
       upsert_refresh_state_records(:status => :error, :error_message => e.message.truncate(150))
 
-      true
+      nil
     end
 
     # Sweeps inactive records based on :last_seen_at attribute
     #
-    # @return [Boolean] If false, the job wasn't finished and should be requeued
+    # @return [Boolean] If true, the job wasn't finished and should be re-queued
     def sweep_inactive_records!
       refresh_state = manager.refresh_states.find_by(:uuid => refresh_state_uuid)
       unless refresh_state
@@ -293,13 +293,13 @@ module InventoryRefresh
         return wait_for_sweeping!(refresh_state)
       end
 
-      true
+      false
     rescue => e
       logger.error(e)
       logger.error(e.backtrace)
       refresh_state.update_attributes!(:status => :error, :error_message => "Error while sweeping: #{e.message.truncate(150)}")
 
-      true
+      nil
     end
 
     def start_sweeping!(refresh_state)
@@ -322,12 +322,12 @@ module InventoryRefresh
           :status => :error,
           :error_message => "Sweep retry count limit of #{sweep_retry_count_limit} was reached.")
 
-        return true
+        false
       else
         refresh_state.update_attributes!(:status => :waiting_for_refresh_state_parts, :sweep_retry_count => sweep_retry_count)
 
-        # When returning false the Persitor worker should requeue the the same Persister job
-        return false
+        # When returning true the Persitor worker should requeue the the same Persister job
+        true
       end
     end
 
