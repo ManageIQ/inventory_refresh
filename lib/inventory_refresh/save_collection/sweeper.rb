@@ -52,8 +52,11 @@ module InventoryRefresh::SaveCollection
 
       table       = model_class.arel_table
       date_field  = table[:last_seen_at]
-      query       = inventory_collection.full_collection_for_comparison
-                      .where(date_field.lt(refresh_start)).or(inventory_collection.full_collection_for_comparison.where(:last_seen_at => nil))
+      all_entities_query = inventory_collection.full_collection_for_comparison
+      all_entities_query.active if inventory_collection.retention_strategy == :archive
+
+      query       = all_entities_query
+                      .where(date_field.lt(refresh_start)).or(all_entities_query.where(:last_seen_at => nil))
                       .select(table[:id])
 
       query.find_in_batches do |batch|
