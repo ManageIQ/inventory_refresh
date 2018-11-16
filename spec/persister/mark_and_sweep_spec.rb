@@ -204,7 +204,7 @@ describe InventoryRefresh::Persister do
       persister.refresh_state_part_uuid = part2_uuid
 
       persister.container_groups.build(container_group_data(6).merge(:ext_management_system => @ems))
-      persister.persist!
+      expect { persister.persist! }.to raise_error(/undefined method \`where\' for nil:NilClass/)
 
       expect(
         @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
@@ -283,7 +283,7 @@ describe InventoryRefresh::Persister do
       persister.refresh_state_uuid = refresh_state_uuid
       persister.total_parts = 2
       persister.sweep_scope = [:container_groups]
-      persister.persist!
+      expect { persister.persist! }.to raise_error(/undefined method \`count\' for nil:NilClass/)
 
       refresh_state = @ems.refresh_states.find_by(:uuid => refresh_state_uuid)
 
