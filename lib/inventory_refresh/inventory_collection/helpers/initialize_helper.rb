@@ -385,9 +385,10 @@ module InventoryRefresh
         end
 
         def init_changed_records_stats
-          @created_records = []
-          @updated_records = []
-          @deleted_records = []
+          @created_records       = []
+          @updated_records       = []
+          @deleted_records       = []
+          @deleted_records_count = 0
         end
 
         # Processes passed saver strategy

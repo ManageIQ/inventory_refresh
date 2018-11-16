@@ -22,7 +22,7 @@ module InventoryRefresh::SaveCollection
         end
 
         logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
-                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records.size}...Complete")
+                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records_count}...Complete")
       end
 
       # Applies strategy based on :retention_strategy parameter, or fallbacks to legacy_destroy_records.

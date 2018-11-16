@@ -99,6 +99,9 @@ module InventoryRefresh
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage
 
+    # @return [Integer] how many records were deleted under the InventoryCollection
+    attr_accessor :deleted_records_count
+
     delegate :<<,
              :build,
              :build_partial,
@@ -206,7 +209,19 @@ module InventoryRefresh
     #
     # @param records [Array<ApplicationRecord, Hash>] list of stored records
     def store_deleted_records(records)
-      @deleted_records.concat(records_identities(records))
+      # TODO(lsmola) we need to move output streaming here, output_client of manageiq-messaging should be passed here
+      # and we should just keep track of a count here, not all ids. At least for deleting, the ids do not have upper
+      # limit, so the memory could bump a lot.
+
+      limit = 2000
+      ids   = records_identities(records)
+
+      self.deleted_records_count += ids.size
+
+      if deleted_records_count < limit
+        # Store max number of ids, so the memory doesn't grow
+        @deleted_records.concat(ids)
+      end
     end
 
     # @return [Array<Symbol>] all columns that are part of the best fit unique index
