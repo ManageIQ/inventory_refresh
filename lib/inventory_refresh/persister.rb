@@ -267,11 +267,9 @@ module InventoryRefresh
 
       false
     rescue => e
-      logger.error(e)
-      logger.error(e.backtrace)
       upsert_refresh_state_records(:status => :error, :error_message => e.message.truncate(150))
 
-      nil
+      raise(e)
     end
 
     # Sweeps inactive records based on :last_seen_at attribute
@@ -295,11 +293,9 @@ module InventoryRefresh
 
       false
     rescue => e
-      logger.error(e)
-      logger.error(e.backtrace)
       refresh_state.update_attributes!(:status => :error, :error_message => "Error while sweeping: #{e.message.truncate(150)}")
 
-      nil
+      raise(e)
     end
 
     def start_sweeping!(refresh_state)
