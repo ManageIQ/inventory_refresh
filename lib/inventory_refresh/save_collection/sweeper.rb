@@ -7,20 +7,22 @@ module InventoryRefresh::SaveCollection
       # Sweeps inactive records based on :last_seen_on and :refresh_start timestamps. All records having :last_seen_on
       # lower than :refresh_start or nil will be archived/deleted.
       #
-      # @param ems [ExtManagementSystem] manager owning the inventory_collections
-      # @param inventory_collections [Array<InventoryRefresh::InventoryCollection>] array of InventoryCollection objects
+      # @param _ems [ActiveRecord] Manager owning the inventory_collections
+      # @param inventory_collections [Array<InventoryRefresh::InventoryCollection>] Array of InventoryCollection objects
       #        for sweeping
       # @param refresh_state [ActiveRecord] Record of :refresh_states
-      def sweep(ems, inventory_collections, refresh_state)
+      def sweep(_ems, inventory_collections, refresh_state)
         inventory_collections.each do |inventory_collection|
-          next unless inventory_collection.supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
-          # Ignoring full refresh and db load only ICs
-          next unless inventory_collection.strategy == :local_db_find_missing_references
-          # If sweep_scope is defined, lets validate that
-          next unless in_scope?(inventory_collection, refresh_state.sweep_scope)
+          next unless sweep_possible?(inventory_collection, refresh_state)
 
           self.new(inventory_collection, refresh_state).sweep
         end
+      end
+
+      def sweep_possible?(inventory_collection, refresh_state)
+        inventory_collection.supports_column?(:last_seen_at) && inventory_collection.parallel_safe? &&
+          inventory_collection.strategy == :local_db_find_missing_references &&
+          in_scope?(inventory_collection, refresh_state.sweep_scope)
       end
 
       def in_scope?(inventory_collection, sweep_scope)

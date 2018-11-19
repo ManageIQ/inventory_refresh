@@ -96,11 +96,7 @@ module InventoryRefresh::SaveCollection
           inventory_objects_index[index] = inventory_object
         end
 
-        %i(created_at updated_at created_on updated_on).each do |col|
-          all_attribute_keys << col if supports_column?(col)
-        end
-        all_attribute_keys << :type if supports_sti?
-        all_attribute_keys << :archived_on if supports_column?(:archived_on)
+        expand_all_attribute_keys!(all_attribute_keys)
 
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
@@ -127,7 +123,7 @@ module InventoryRefresh::SaveCollection
 
         logger.debug("Marking :last_seen_at of #{inventory_collection} of size #{inventory_collection.size}...")
 
-        mark_last_seen_at(attributes_index) if supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
+        mark_last_seen_at(attributes_index)
 
         # Let the GC clean this up
         inventory_objects_index = nil
@@ -142,13 +138,22 @@ module InventoryRefresh::SaveCollection
         raise e
       end
 
+      def expand_all_attribute_keys!(all_attribute_keys)
+        %i(created_at updated_at created_on updated_on).each do |col|
+          all_attribute_keys << col if supports_column?(col)
+        end
+        all_attribute_keys << :type if supports_sti?
+        all_attribute_keys << :archived_on if supports_column?(:archived_on)
+      end
+
       def mark_last_seen_at(attributes_index)
+        return unless supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
         return if attributes_index.blank?
 
         all_attribute_keys = [:last_seen_at]
 
         last_seen_at = Time.now.utc
-        attributes_index.each {|_k, v| v[:last_seen_at] = last_seen_at }
+        attributes_index.each_value {|v| v[:last_seen_at] = last_seen_at }
 
         query = build_partial_update_query(all_attribute_keys, attributes_index.values)
 
