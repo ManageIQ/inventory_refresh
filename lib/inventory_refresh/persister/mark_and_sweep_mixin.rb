@@ -17,17 +17,17 @@ module InventoryRefresh
           :association                 => :refresh_states,
           :create_only                 => true,
           :model_class                 => RefreshState,
-          :inventory_object_attributes => [:ems_id, :uuid, :status, :source_id, :tenant_id]
+          :inventory_object_attributes => %i(ems_id uuid status source_id tenant_id)
         )
 
         refresh_state_parts_inventory_collection = ::InventoryRefresh::InventoryCollection.new(
-          :manager_ref                 => [:refresh_state, :uuid],
+          :manager_ref                 => %i(refresh_state uuid),
           :saver_strategy              => :concurrent_safe_batch,
           :parent                      => manager,
           :association                 => :refresh_state_parts,
           :create_only                 => true,
           :model_class                 => RefreshStatePart,
-          :inventory_object_attributes => [:refresh_state, :uuid, :status, :error_message]
+          :inventory_object_attributes => %i(refresh_state uuid status error_message)
         )
 
         return refresh_states_inventory_collection, refresh_state_parts_inventory_collection
@@ -42,7 +42,6 @@ module InventoryRefresh
         build_refresh_state_part(refresh_states_inventory_collection, refresh_state_parts_inventory_collection,
                                  status, error_message)
 
-
         InventoryRefresh::SaveInventory.save_inventory(
           manager, [refresh_states_inventory_collection, refresh_state_parts_inventory_collection]
         )
@@ -51,19 +50,21 @@ module InventoryRefresh
       def build_refresh_state(refresh_states_inventory_collection, refresh_state_status)
         return unless refresh_state_status
 
-        refresh_states_inventory_collection.build(RefreshState.owner_ref(manager).merge(
-          :uuid   => refresh_state_uuid,
-          :status => refresh_state_status,
-        ))
+        refresh_states_inventory_collection.build(
+          RefreshState.owner_ref(manager).merge(
+            :uuid   => refresh_state_uuid,
+            :status => refresh_state_status,
+          )
+        )
       end
 
       def build_refresh_state_part(refresh_states_ic, refresh_state_parts_ic, status, error_message)
         return unless status
 
-        refresh_state_part_data                 = {
+        refresh_state_part_data = {
           :uuid          => refresh_state_part_uuid,
           :refresh_state => refresh_states_ic.lazy_find(
-            RefreshState.owner_ref(manager).merge({:uuid => refresh_state_uuid})
+            RefreshState.owner_ref(manager).merge(:uuid => refresh_state_uuid)
           ),
           :status        => status
         }
@@ -83,7 +84,7 @@ module InventoryRefresh
         upsert_refresh_state_records(:status => :finished)
 
         false
-      rescue => e
+      rescue StandardError => e
         upsert_refresh_state_records(:status => :error, :error_message => e.message.truncate(150))
 
         raise(e)
@@ -95,7 +96,7 @@ module InventoryRefresh
       def sweep_inactive_records!
         refresh_state = set_sweeping_started!
 
-        refresh_state.update_attributes!(:status => :waiting_for_refresh_state_parts, :total_parts => total_parts, :sweep_scope => sweep_scope)
+        refresh_state.update!(:status => :waiting_for_refresh_state_parts, :total_parts => total_parts, :sweep_scope => sweep_scope)
 
         if total_parts == refresh_state.refresh_state_parts.count
           start_sweeping!(refresh_state)
@@ -104,8 +105,8 @@ module InventoryRefresh
         end
 
         false
-      rescue => e
-        refresh_state.update_attributes!(:status => :error, :error_message => "Error while sweeping: #{e.message.truncate(150)}")
+      rescue StandardError => e
+        refresh_state.update!(:status => :error, :error_message => "Error while sweeping: #{e.message.truncate(150)}")
 
         raise(e)
       end
@@ -124,12 +125,12 @@ module InventoryRefresh
       def start_sweeping!(refresh_state)
         error_count = refresh_state.refresh_state_parts.where(:status => :error).count
 
-        if error_count > 0
-          refresh_state.update_attributes!(:status => :error, :error_message => "Error when saving one or more parts, sweeping can't be done.")
+        if error_count.positive?
+          refresh_state.update!(:status => :error, :error_message => "Error when saving one or more parts, sweeping can't be done.")
         else
-          refresh_state.update_attributes!(:status => :sweeping)
+          refresh_state.update!(:status => :sweeping)
           InventoryRefresh::SaveInventory.sweep_inactive_records(manager, inventory_collections, refresh_state)
-          refresh_state.update_attributes!(:status => :finished)
+          refresh_state.update!(:status => :finished)
         end
       end
 
@@ -137,13 +138,14 @@ module InventoryRefresh
         sweep_retry_count = refresh_state.sweep_retry_count + 1
 
         if sweep_retry_count > sweep_retry_count_limit
-          refresh_state.update_attributes!(
-            :status => :error,
-            :error_message => "Sweep retry count limit of #{sweep_retry_count_limit} was reached.")
+          refresh_state.update!(
+            :status        => :error,
+            :error_message => "Sweep retry count limit of #{sweep_retry_count_limit} was reached."
+          )
 
           false
         else
-          refresh_state.update_attributes!(:status => :waiting_for_refresh_state_parts, :sweep_retry_count => sweep_retry_count)
+          refresh_state.update!(:status => :waiting_for_refresh_state_parts, :sweep_retry_count => sweep_retry_count)
 
           # When returning true the Persitor worker should requeue the the same Persister job
           true

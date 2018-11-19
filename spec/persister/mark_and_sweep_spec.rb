@@ -51,7 +51,7 @@ describe InventoryRefresh::Persister do
       )
       expect(ContainerGroup.where(date_field.lt(time_now)).or(ContainerGroup.where(:last_seen_at => nil)).pluck(:ems_ref)).to(
         match_array([container_group_data(3)[:ems_ref], container_group_data(4)[:ems_ref],
-                    container_group_data(6)[:ems_ref], container_group_data(7)[:ems_ref]])
+                     container_group_data(6)[:ems_ref], container_group_data(7)[:ems_ref]])
       )
 
       # Refresh second part and mark :last_seen_at
@@ -124,7 +124,8 @@ describe InventoryRefresh::Persister do
       persister.persist!
 
       expect(
-        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count
+      ).to(
         eq(1)
       )
 
@@ -137,7 +138,8 @@ describe InventoryRefresh::Persister do
       persister.persist!
 
       expect(
-        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count
+      ).to(
         eq(2)
       )
 
@@ -192,7 +194,8 @@ describe InventoryRefresh::Persister do
       persister.persist!
 
       expect(
-        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count
+      ).to(
         eq(1)
       )
 
@@ -207,7 +210,8 @@ describe InventoryRefresh::Persister do
       expect { persister.persist! }.to raise_error(/undefined method \`where\' for nil:NilClass/)
 
       expect(
-        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count).to(
+        @ems.refresh_states.find_by(:uuid => refresh_state_uuid).refresh_state_parts.where(:status => :finished).count
+      ).to(
         eq(1)
       )
 

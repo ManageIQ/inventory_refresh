@@ -153,7 +153,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys = [:last_seen_at]
 
         last_seen_at = Time.now.utc
-        attributes_index.each_value {|v| v[:last_seen_at] = last_seen_at }
+        attributes_index.each_value { |v| v[:last_seen_at] = last_seen_at }
 
         query = build_partial_update_query(all_attribute_keys, attributes_index.values)
 

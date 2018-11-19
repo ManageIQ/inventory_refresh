@@ -15,7 +15,7 @@ module InventoryRefresh::SaveCollection
         inventory_collections.each do |inventory_collection|
           next unless sweep_possible?(inventory_collection, refresh_state)
 
-          self.new(inventory_collection, refresh_state).sweep
+          new(inventory_collection, refresh_state).sweep
         end
       end
 
@@ -57,9 +57,9 @@ module InventoryRefresh::SaveCollection
       all_entities_query = inventory_collection.full_collection_for_comparison
       all_entities_query.active if inventory_collection.retention_strategy == :archive
 
-      query       = all_entities_query
-                      .where(date_field.lt(refresh_start)).or(all_entities_query.where(:last_seen_at => nil))
-                      .select(table[:id])
+      query = all_entities_query
+              .where(date_field.lt(refresh_start)).or(all_entities_query.where(:last_seen_at => nil))
+              .select(table[:id])
 
       query.find_in_batches do |batch|
         destroy_records!(batch)
