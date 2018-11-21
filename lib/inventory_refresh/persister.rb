@@ -64,7 +64,7 @@ module InventoryRefresh
     # @return [InventoryRefresh::InventoryCollection] returns a defined InventoryCollection or undefined method
     def method_missing(method_name, *arguments, &block)
       if inventory_collections_names.include?(method_name)
-        self.class.define_collections_reader(method_name)
+        self.define_collections_reader(method_name)
         send(method_name)
       else
         super
@@ -77,8 +77,8 @@ module InventoryRefresh
     end
 
     # Defines a new attr reader returning InventoryCollection object
-    def self.define_collections_reader(collection_key)
-      define_method(collection_key) do
+    def define_collections_reader(collection_key)
+      define_singleton_method(collection_key) do
         collections[collection_key]
       end
     end
