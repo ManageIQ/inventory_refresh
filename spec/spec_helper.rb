@@ -16,6 +16,9 @@ RSpec.configure do |config|
   end
 end
 
+InventoryRefresh.logger = Logger.new(STDOUT)
+InventoryRefresh.logger.level = Logger::ERROR
+
 Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
 $LOAD_PATH << File.join(__dir__, "models")
 Dir[File.expand_path("models/**/*.rb", __dir__)].each { |f| require f }
