@@ -1,12 +1,10 @@
 require "inventory_refresh/inventory_collection"
 require "inventory_refresh/logging"
 require "inventory_refresh/save_inventory"
-require "inventory_refresh/persister/mark_and_sweep_mixin"
 
 module InventoryRefresh
   class Persister
     include InventoryRefresh::Logging
-    include InventoryRefresh::Persister::MarkAndSweepMixin
 
     require 'json'
     require 'yaml'
@@ -102,11 +100,7 @@ module InventoryRefresh
     #
     # @return [Boolean] If true, the job wasn't finished and should be re-queued
     def persist!
-      if total_parts
-        sweep_inactive_records!
-      else
-        persist_collections!
-      end
+      InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
     end
 
     # Returns serialized Persisted object to JSON
