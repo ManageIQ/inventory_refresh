@@ -12,8 +12,6 @@ describe InventoryRefresh::Persister do
     @ems = FactoryGirl.create(:ems_container, :name => "test_ems")
   end
 
-
-
   context "with :retention_strategy => 'archive'" do
     it "automatically fills :last_seen_at timestamp for refreshed entities and archives them in last step" do
       time_now = Time.now.utc
@@ -78,8 +76,7 @@ describe InventoryRefresh::Persister do
       # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
       InventoryRefresh::SaveInventory.sweep_inactive_records(persister.manager,
                                                              persister.inventory_collections,
-                                                             refresh_state(2, time_now)
-      )
+                                                             refresh_state(2, time_now))
 
       expect(ContainerGroup.active.pluck(:ems_ref)).to(
         match_array([container_group_data(1)[:ems_ref], container_group_data(2)[:ems_ref],
@@ -136,9 +133,8 @@ describe InventoryRefresh::Persister do
 
       # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
       InventoryRefresh::SaveInventory.sweep_inactive_records(persister.manager,
-                                                      persister.inventory_collections,
-                                                      refresh_state(2, time_now, ["container_groups"])
-      )
+                                                             persister.inventory_collections,
+                                                             refresh_state(2, time_now, ["container_groups"]))
 
       expect(ContainerGroup.active.pluck(:ems_ref)).to(
         match_array([container_group_data(1)[:ems_ref], container_group_data(2)[:ems_ref],
