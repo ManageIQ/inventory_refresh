@@ -1,11 +1,5 @@
-require "inventory_refresh/inventory_collection"
-require "inventory_refresh/logging"
-require "inventory_refresh/save_inventory"
-
 module InventoryRefresh
   class Persister
-    include InventoryRefresh::Logging
-
     require 'json'
     require 'yaml'
 
@@ -95,10 +89,7 @@ module InventoryRefresh
       ::InventoryRefresh::InventoryCollection::Builder
     end
 
-    # Persists InventoryCollection objects into the DB or sweeps inactive records based on :last_seen_at attribute,
-    # if the :total_parts attribute was passed
-    #
-    # @return [Boolean] If true, the job wasn't finished and should be re-queued
+    # Persists InventoryCollection objects into the DB
     def persist!
       InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
     end
