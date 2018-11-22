@@ -5,6 +5,8 @@ module InventoryRefresh
 
     attr_reader :manager, :target, :collections
 
+    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope
+
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
     # @param target [Object] A refresh Target object
     def initialize(manager, target = nil)
@@ -101,9 +103,9 @@ module InventoryRefresh
     # @return [Hash] entire Persister object serialized to hash
     def to_hash
       collections_data = collections.map do |_, collection|
-        next if collection.data.blank?                              &&
+        next if collection.data.blank? &&
                 collection.targeted_scope.primary_references.blank? &&
-                collection.all_manager_uuids.nil?                   &&
+                collection.all_manager_uuids.nil? &&
                 collection.skeletal_primary_index.index_data.blank?
 
         collection.to_hash
@@ -138,6 +140,11 @@ module InventoryRefresh
 
             inventory_collection.from_hash(collection, persister.collections)
           end
+
+          persister.refresh_state_uuid      = persister_data['refresh_state_uuid']
+          persister.refresh_state_part_uuid = persister_data['refresh_state_part_uuid']
+          persister.total_parts             = persister_data['total_parts']
+          persister.sweep_scope             = persister_data['sweep_scope']
         end
       end
     end
@@ -159,9 +166,9 @@ module InventoryRefresh
     def builder_settings(extra_settings = {})
       opts = inventory_collection_builder.default_options
 
-      opts[:shared_properties] = shared_options
+      opts[:shared_properties]         = shared_options
       opts[:auto_inventory_attributes] = true
-      opts[:without_model_class] = false
+      opts[:without_model_class]       = false
 
       opts.merge(extra_settings)
     end

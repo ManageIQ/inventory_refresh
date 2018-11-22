@@ -564,7 +564,9 @@ module InventoryRefresh
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def full_collection_for_comparison
       return arel unless arel.nil?
-      parent.send(association)
+      rel = parent.send(association)
+      rel = rel.active if rel && supports_column?(:archived_on) && retention_strategy == :archive
+      rel
     end
 
     # Creates InventoryRefresh::InventoryObject object from passed hash data

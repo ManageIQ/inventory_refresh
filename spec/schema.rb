@@ -597,6 +597,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "old_ems_id"
     t.bigint   "old_container_project_id"
     t.datetime "updated_on"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
@@ -650,6 +651,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
@@ -697,6 +699,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
@@ -789,6 +792,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_on"
     t.bigint   "old_ems_id"
     t.datetime "archived_on"
+    t.datetime "last_seen_at"
     t.index ["archived_on"], name: "index_container_nodes_on_archived_on", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_nodes_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_nodes_on_ems_id", using: :btree

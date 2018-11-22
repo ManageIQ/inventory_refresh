@@ -11,4 +11,7 @@ class ExtManagementSystem < ::ActiveRecord::Base
 
   has_many :source_regions, :foreign_key => :ems_id
   has_many :subscriptions, :foreign_key => :ems_id
+
+  has_many :refresh_states, :foreign_key => :ems_id
+  has_many :refresh_state_parts, :through => :refresh_states
 end

@@ -96,11 +96,7 @@ module InventoryRefresh::SaveCollection
           inventory_objects_index[index] = inventory_object
         end
 
-        %i(created_at updated_at created_on updated_on).each do |col|
-          all_attribute_keys << col if supports_column?(col)
-        end
-        all_attribute_keys << :type if supports_sti?
-        all_attribute_keys << :archived_on if supports_column?(:archived_on)
+        expand_all_attribute_keys!(all_attribute_keys)
 
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
@@ -120,14 +116,19 @@ module InventoryRefresh::SaveCollection
             create_records!(all_attribute_keys, batch, attributes_index, :on_conflict => on_conflict)
           end
 
-          # Let the GC clean this up
-          inventory_objects_index = nil
-          attributes_index = nil
-
           if inventory_collection.parallel_safe?
             create_or_update_partial_records(all_attribute_keys)
           end
         end
+
+        logger.debug("Marking :last_seen_at of #{inventory_collection} of size #{inventory_collection.size}...")
+
+        mark_last_seen_at(attributes_index)
+
+        # Let the GC clean this up
+        inventory_objects_index = nil
+        attributes_index = nil
+
         logger.debug("Processing #{inventory_collection}, "\
                      "created=#{inventory_collection.created_records.count}, "\
                      "updated=#{inventory_collection.updated_records.count}, "\
@@ -135,6 +136,28 @@ module InventoryRefresh::SaveCollection
       rescue => e
         logger.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
         raise e
+      end
+
+      def expand_all_attribute_keys!(all_attribute_keys)
+        %i(created_at updated_at created_on updated_on).each do |col|
+          all_attribute_keys << col if supports_column?(col)
+        end
+        all_attribute_keys << :type if supports_sti?
+        all_attribute_keys << :archived_on if supports_column?(:archived_on)
+      end
+
+      def mark_last_seen_at(attributes_index)
+        return unless supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
+        return if attributes_index.blank?
+
+        all_attribute_keys = [:last_seen_at]
+
+        last_seen_at = Time.now.utc
+        attributes_index.each_value { |v| v[:last_seen_at] = last_seen_at }
+
+        query = build_partial_update_query(all_attribute_keys, attributes_index.values)
+
+        get_connection.execute(query)
       end
 
       # Batch updates existing records that are in the DB using attributes_index. And delete the ones that were not
@@ -162,7 +185,7 @@ module InventoryRefresh::SaveCollection
             index = db_columns_index(record)
 
             inventory_object = inventory_objects_index.delete(index)
-            hash             = attributes_index.delete(index)
+            hash             = attributes_index[index]
 
             if inventory_object.nil?
               # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
