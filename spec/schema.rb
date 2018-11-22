@@ -843,27 +843,4 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["ems_id", "ems_ref"], name: "index_subscriptions_on_ems_id_and_ems_ref", unique: true
     t.index ["ems_id"], name: "index_subscriptions_on_ems_id"
   end
-
-  create_table "refresh_state_parts", force: :cascade do |t|
-    t.bigint "refresh_state_id", null: false
-    t.uuid "uuid", null: false
-    t.string "status"
-    t.string "error_message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["refresh_state_id", "uuid"], name: "index_refresh_state_parts_on_refresh_state_id_and_uuid", unique: true
-  end
-
-  create_table "refresh_states", force: :cascade do |t|
-    t.bigint "ems_id", null: false
-    t.uuid "uuid", null: false
-    t.string "status"
-    t.integer "total_parts"
-    t.jsonb "sweep_scope"
-    t.integer "sweep_retry_count", default: 0
-    t.string "error_message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["ems_id", "uuid"], name: "index_refresh_states_on_ems_id_and_uuid", unique: true
-  end
 end
