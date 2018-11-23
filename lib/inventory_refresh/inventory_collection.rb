@@ -193,7 +193,7 @@ module InventoryRefresh
       (@unconnected_edges ||= []) <<
         InventoryRefresh::InventoryCollection::UnconnectedEdge.new(
           inventory_object, inventory_object_key, inventory_object_lazy
-      )
+        )
     end
 
     # Caches what records were created, for later use, e.g. post provision behavior

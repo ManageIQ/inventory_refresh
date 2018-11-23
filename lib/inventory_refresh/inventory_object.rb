@@ -31,7 +31,7 @@ module InventoryRefresh
     end
 
     # @return [InventoryRefresh::InventoryObject] returns self
-    def load(*args)
+    def load(*_args)
       self
     end
 
