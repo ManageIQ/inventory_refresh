@@ -112,7 +112,11 @@ module InventoryRefresh
       end.compact
 
       {
-        :collections => collections_data
+        :refresh_state_uuid      => refresh_state_uuid,
+        :refresh_state_part_uuid => refresh_state_part_uuid,
+        :total_parts             => total_parts,
+        :sweep_scope             => sweep_scope,
+        :collections             => collections_data,
       }
     end
 
