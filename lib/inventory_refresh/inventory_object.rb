@@ -97,6 +97,7 @@ module InventoryRefresh
     #
     # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] parent InventoryCollection object
     # @param all_attribute_keys [Array<Symbol>] Attribute keys we will modify based on object's data
+    # @param inventory_object [InventoryRefresh::InventoryObject] InventoryObject object owning these attributes
     # @return [Hash] Data in DB format
     def attributes_with_keys(inventory_collection_scope = nil, all_attribute_keys = [], inventory_object = nil)
       # We should explicitly pass a scope, since the inventory_object can be mapped to more InventoryCollections with
