@@ -89,8 +89,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "autostart"
     t.bigint   "host_id"
     t.datetime "last_sync_on"
-    t.datetime "created_on"
-    t.datetime "updated_on"
+    t.datetime "created_on", null: false
+    t.datetime "updated_on", null: false
     t.bigint   "storage_id"
     t.string   "guid"
     t.bigint   "ems_id"
@@ -129,7 +129,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.boolean  "linked_clone"
     t.boolean  "fault_tolerance"
     t.string   "type"
-    t.string   "ems_ref"
+    t.string   "ems_ref", null: false
     t.bigint   "ems_cluster_id"
     t.bigint   "retirement_warn"
     t.datetime "retirement_last_warn"

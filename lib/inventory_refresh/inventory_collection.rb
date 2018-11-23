@@ -292,8 +292,13 @@ module InventoryRefresh
       end.compact
     end
 
+    # @return [Array] Array of column names that have not null constraint
+    def not_null_columns
+      @not_null_constraint_columns ||= model_class.columns.reject(&:null).map { |x| x.name.to_sym } - [model_class.primary_key.to_sym]
+    end
+
     def base_columns
-      @base_columns ||= unique_index_columns + internal_columns
+      @base_columns ||= (unique_index_columns + internal_columns + not_null_columns).uniq
     end
 
     # @param value [Object] Object we want to test

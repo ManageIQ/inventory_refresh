@@ -28,5 +28,17 @@ describe InventoryRefresh::Persister do
       expect(@persister.vms).to be_kind_of(InventoryRefresh::InventoryCollection)
       expect { @persister.tmp }.to raise_exception(NoMethodError)
     end
+
+    it 'gives correct base columns' do
+      @persister.add_collection(:vms)
+
+      expect(@persister.vms.not_null_columns).to(
+        match_array(%i(created_on updated_on ems_ref))
+      )
+
+      expect(@persister.vms.base_columns).to(
+        match_array(%i(ems_id ems_ref created_on updated_on type))
+      )
+    end
   end
 end
