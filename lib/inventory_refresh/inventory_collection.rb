@@ -294,7 +294,7 @@ module InventoryRefresh
 
     # @return [Array] Array of column names that have not null constraint
     def not_null_columns
-      @not_null_constraint_columns ||= model_class.columns.select { |x| !x.null }.map {|x| x.name.to_sym} - [model_class.primary_key.to_sym]
+      @not_null_constraint_columns ||= model_class.columns.reject(&:null).map { |x| x.name.to_sym } - [model_class.primary_key.to_sym]
     end
 
     def base_columns
