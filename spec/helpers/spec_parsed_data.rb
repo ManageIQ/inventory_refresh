@@ -197,6 +197,7 @@ module SpecParsedData
       :ems_ref                 => "container_project_ems_ref_#{i}",
       :name                    => "container_project_name_#{i}",
       :ems_created_on          => "2015-07-29T12:50:33Z",
+      :display_name            => "container_project_display_name_#{i}",
       :resource_version_string => 6
     }.merge(data)
   end
