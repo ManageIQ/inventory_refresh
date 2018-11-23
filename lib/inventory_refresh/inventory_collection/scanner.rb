@@ -85,6 +85,11 @@ module InventoryRefresh
           end
         end
 
+        # Scan InventoryCollection skeletal data
+        inventory_collection.skeletal_primary_index.each_value do |inventory_object|
+          scan_inventory_object!(inventory_object)
+        end
+
         build_parent_inventory_collections!
         scan_all_manager_uuids_scope!
 
