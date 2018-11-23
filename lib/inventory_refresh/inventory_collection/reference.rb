@@ -35,6 +35,10 @@ module InventoryRefresh
         nested_secondary_index
       end
 
+      def loadable?
+        keys.any? { |attribute| full_reference[attribute].present? }
+      end
+
       class << self
         # Builds string uuid from passed Hash and keys
         #

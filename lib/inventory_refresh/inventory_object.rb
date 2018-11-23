@@ -31,7 +31,7 @@ module InventoryRefresh
     end
 
     # @return [InventoryRefresh::InventoryObject] returns self
-    def load
+    def load(*args)
       self
     end
 
@@ -98,7 +98,7 @@ module InventoryRefresh
     # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] parent InventoryCollection object
     # @param all_attribute_keys [Array<Symbol>] Attribute keys we will modify based on object's data
     # @return [Hash] Data in DB format
-    def attributes_with_keys(inventory_collection_scope = nil, all_attribute_keys = [])
+    def attributes_with_keys(inventory_collection_scope = nil, all_attribute_keys = [], inventory_object = nil)
       # We should explicitly pass a scope, since the inventory_object can be mapped to more InventoryCollections with
       # different blacklist and whitelist. The generic code always passes a scope.
       inventory_collection_scope ||= inventory_collection
@@ -111,7 +111,7 @@ module InventoryRefresh
         elsif loadable?(value) || inventory_collection_scope.association_to_foreign_key_mapping[key]
           # Lets fill also the original data, so other InventoryObject referring to this attribute gets the right
           # result
-          data[key] = value.load if value.respond_to?(:load)
+          data[key] = value.load(inventory_object, key) if value.respond_to?(:load)
           if (foreign_key = inventory_collection_scope.association_to_foreign_key_mapping[key])
             # We have an association to fill, lets fill also the :key, cause some other InventoryObject can refer to it
             record_id = data[key].try(:id)

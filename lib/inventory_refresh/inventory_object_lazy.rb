@@ -44,10 +44,16 @@ module InventoryRefresh
 
     # @return [InventoryRefresh::InventoryObject, Object] InventoryRefresh::InventoryObject instance or an attribute
     #         on key
-    def load
+    def load(inventory_object = nil, inventory_object_key = nil)
       transform_nested_secondary_indexes! if transform_nested_lazy_finds && nested_secondary_index?
 
-      key ? load_object_with_key : load_object
+      loaded_object = key ? load_object_with_key : load_object
+      if inventory_object && inventory_object_key && !loaded_object && reference.loadable?
+        # Object was not loaded, but the reference is pointing to something, lets return it as edge that should've
+        # been loaded.
+        inventory_object.inventory_collection.store_unconnected_edges(inventory_object, inventory_object_key, self)
+      end
+      loaded_object
     end
 
     # return [Boolean] true if the Lazy object is causing a dependency, Lazy link is always a dependency if no :key
