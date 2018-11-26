@@ -33,6 +33,30 @@ module InventoryRefresh::SaveCollection
       #
       # @param all_attribute_keys [Set] Superset of all keys of all records being saved
       def create_or_update_partial_records(all_attribute_keys)
+        skeletal_inventory_objects_index, skeletal_attributes_index = load_partial_attributes(all_attribute_keys)
+
+        indexed_inventory_objects, hashes = process_partial_data(skeletal_inventory_objects_index,
+                                                                 skeletal_attributes_index,
+                                                                 all_attribute_keys)
+        return if hashes.blank?
+
+        processed_record_refs = skeletal_precreate!(hashes, all_attribute_keys)
+        hashes_for_update = hashes_for_update(hashes, processed_record_refs)
+        partial_updates!(hashes_for_update, all_attribute_keys)
+
+        # TODO(lsmola) we need to move here the hash loading ar object etc. otherwise the lazy_find with key will not
+        # be correct
+        if inventory_collection.dependees.present?
+          # We need to get primary keys of the created objects, but only if there are dependees that would use them
+          map_ids_to_inventory_objects(indexed_inventory_objects,
+                                       all_attribute_keys,
+                                       hashes,
+                                       nil,
+                                       :on_conflict => :do_nothing)
+        end
+      end
+
+      def load_partial_attributes(all_attribute_keys)
         skeletal_attributes_index        = {}
         skeletal_inventory_objects_index = {}
 
@@ -53,27 +77,9 @@ module InventoryRefresh::SaveCollection
         end
 
         # We cannot set the resource_version doing partial update
-        all_attribute_keys -= [resource_version_column]
+        all_attribute_keys.delete(resource_version_column)
 
-        indexed_inventory_objects, hashes = process_partial_data(skeletal_inventory_objects_index,
-                                                                 skeletal_attributes_index,
-                                                                 all_attribute_keys)
-        return if hashes.blank?
-
-        processed_record_refs = skeletal_precreate!(hashes, all_attribute_keys)
-        hashes_for_update = hashes_for_update(hashes, processed_record_refs)
-        partial_update!(hashes_for_update, all_attribute_keys)
-
-        # TODO(lsmola) we need to move here the hash loading ar object etc. otherwise the lazy_find with key will not
-        # be correct
-        if inventory_collection.dependees.present?
-          # We need to get primary keys of the created objects, but only if there are dependees that would use them
-          map_ids_to_inventory_objects(indexed_inventory_objects,
-                                       all_attribute_keys,
-                                       hashes,
-                                       nil,
-                                       :on_conflict => :do_nothing)
-        end
+        return skeletal_inventory_objects_index, skeletal_attributes_index
       end
 
       def hashes_for_update(hashes, processed_record_refs)
@@ -101,30 +107,46 @@ module InventoryRefresh::SaveCollection
         processed_record_refs
       end
 
-      def partial_update!(hashes, all_attribute_keys)
+      def partial_updates!(hashes, all_attribute_keys)
         results = {}
         (all_attribute_keys - inventory_collection.base_columns).each do |column_name|
           filtered = hashes.select { |x| x.key?(column_name) }
 
           filtered.each_slice(batch_size_for_persisting) do |batch|
-            # We need to set correct timestamps_max for this particular attribute, based on what is in timestamps
-            if supports_remote_data_timestamp?(all_attribute_keys)
-              batch.each { |x| x[:resource_timestamps_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
-            elsif supports_remote_data_version?(all_attribute_keys)
-              batch.each { |x| x[:resource_counters_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
-            end
-
-            result = create_partial!((inventory_collection.base_columns + [column_name]).to_set & all_attribute_keys,
-                                     batch,
-                                     :on_conflict => :do_update,
-                                     :column_name => column_name)
-            result.each do |res|
-              results[res["id"]] = res
-            end
+            partial_update!(batch, all_attribute_keys, column_name, results)
           end
         end
 
         inventory_collection.store_updated_records(results.values)
+      end
+
+      def partial_update!(batch, all_attribute_keys, column_name, results)
+        fill_comparables_max!(batch, all_attribute_keys, column_name)
+        result = create_partial!((inventory_collection.base_columns + [column_name]).to_set & all_attribute_keys,
+                                 batch,
+                                 :on_conflict => :do_update,
+                                 :column_name => column_name)
+        result.each do |res|
+          results[res["id"]] = res
+        end
+      end
+
+      def fill_comparables_max!(batch, all_attribute_keys, column_name)
+        comparables_max_name = comparable_max_column_name(all_attribute_keys)
+
+        # We need to set correct timestamps_max for this particular attribute, based on what is in timestamps
+        batch.each do |x|
+          next unless x[:__non_serialized_versions][column_name]
+          x[comparables_max_name] = x[:__non_serialized_versions][column_name]
+        end
+      end
+
+      def comparable_max_column_name(all_attribute_keys)
+        if supports_remote_data_timestamp?(all_attribute_keys)
+          :resource_timestamps_max
+        elsif supports_remote_data_version?(all_attribute_keys)
+          :resource_counters_max
+        end
       end
 
       def process_partial_data(skeletal_inventory_objects_index, skeletal_attributes_index, all_attribute_keys)
@@ -133,35 +155,37 @@ module InventoryRefresh::SaveCollection
         create_time               = time_now
 
         skeletal_inventory_objects_index.each do |index, inventory_object|
-          hash = skeletal_attributes_index.delete(index)
-          # Partial create or update must never set a timestamp for the whole row
-          timestamps = if supports_remote_data_timestamp?(all_attribute_keys) && supports_column?(:resource_timestamps_max)
-                         assign_partial_row_version_attributes!(:resource_timestamp,
-                                                                :resource_timestamps,
-                                                                :resource_timestamps_max,
-                                                                hash,
-                                                                all_attribute_keys)
-                       elsif supports_remote_data_version?(all_attribute_keys) && supports_column?(:resource_counters_max)
-                         assign_partial_row_version_attributes!(:resource_counter,
-                                                                :resource_counters,
-                                                                :resource_counters_max,
-                                                                hash,
-                                                                all_attribute_keys)
-                       end
-          # Transform hash to DB format
-          hash = transform_to_hash!(all_attribute_keys, hash)
-
-          assign_attributes_for_create!(hash, create_time)
-
+          hash = prepare_partial_hash(skeletal_attributes_index.delete(index), all_attribute_keys, create_time)
           next unless assert_referential_integrity(hash)
 
-          hash[:__non_serialized_versions] = timestamps # store non serialized timestamps for the partial updates
           hashes << hash
           # Index on Unique Columns values, so we can easily fill in the :id later
           indexed_inventory_objects[unique_index_columns.map { |x| hash[x] }] = inventory_object
         end
 
         return indexed_inventory_objects, hashes
+      end
+
+      def prepare_partial_hash(hash, all_attribute_keys, create_time)
+        # Partial create or update must never set a timestamp for the whole row
+        timestamps = if supports_remote_data_timestamp?(all_attribute_keys) && supports_column?(:resource_timestamps_max)
+                       assign_partial_row_version_attributes!(:resource_timestamp,
+                                                              :resource_timestamps,
+                                                              hash,
+                                                              all_attribute_keys)
+                     elsif supports_remote_data_version?(all_attribute_keys) && supports_column?(:resource_counters_max)
+                       assign_partial_row_version_attributes!(:resource_counter,
+                                                              :resource_counters,
+                                                              hash,
+                                                              all_attribute_keys)
+                     end
+        # Transform hash to DB format
+        hash = transform_to_hash!(all_attribute_keys, hash)
+
+        assign_attributes_for_create!(hash, create_time)
+
+        hash[:__non_serialized_versions] = timestamps # store non serialized timestamps for the partial updates
+        hash
       end
 
       # Batch upserts 1 data column of the row, plus the internal columns
@@ -191,14 +215,13 @@ module InventoryRefresh::SaveCollection
         false
       end
 
-      def assign_partial_row_version_attributes!(full_row_version_attr, partial_row_version_attr,
-                                                 partial_row_version_attr_max, hash, all_attribute_keys)
-        hash[partial_row_version_attr_max] = hash.delete(full_row_version_attr)
+      def assign_partial_row_version_attributes!(full_row_version_attr, partial_row_version_attr, hash, all_attribute_keys)
+        hash[comparable_max_column_name(all_attribute_keys)] = hash.delete(full_row_version_attr)
 
-        if hash[partial_row_version_attr].present?
-          # Lets clean to only what we save, since when we build the skeletal object, we can set more
-          hash[partial_row_version_attr] = hash[partial_row_version_attr].slice(*all_attribute_keys)
-        end
+        return if hash[partial_row_version_attr].blank?
+
+        # Lets clean to only what we save, since when we build the skeletal object, we can set more
+        hash[partial_row_version_attr] = hash[partial_row_version_attr].slice(*all_attribute_keys)
       end
     end
   end
