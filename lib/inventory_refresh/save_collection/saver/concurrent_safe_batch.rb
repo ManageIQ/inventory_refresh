@@ -347,9 +347,6 @@ module InventoryRefresh::SaveCollection
         # saved are not being sent here. We have only rows that are new, but become old as we send the query (so other
         # parallel process saved the data in the meantime). Or if some attributes are newer than the whole row
         # being sent.
-        #
-        # TODO(lsmola) we should have a timestamp check here, so we don't create skeletal objects from old rows, right
-        # now, we create skeletal objects if the timestamps are equal?
         hash.each_key do |db_index|
           inventory_collection.skeletal_primary_index.skeletonize_primary_index(hash[db_index].manager_uuid)
         end
@@ -417,20 +414,26 @@ module InventoryRefresh::SaveCollection
 
         return if hashes.blank?
 
+        processed_record_refs = []
         # First, lets try to create all partial records
         hashes.each_slice(batch_size_for_persisting) do |batch|
           result = create_partial!(all_attribute_keys,
                                    batch,
                                    :on_conflict => :do_nothing)
           inventory_collection.store_created_records(result)
+          # Store refs of created records, so we can ignore them for update
+          result.each { |hash| processed_record_refs << unique_index_columns.map { |x| hash[x.to_s] } }
         end
+
+        indexed_hashes = hashes.each_with_object({}) { |hash, obj| obj[unique_index_columns.map { |x| hash[x] }] = hash }
+        indexed_hashes.except!(*processed_record_refs)
+        hashes_for_update = indexed_hashes.values
 
         # We need only skeletal records with timestamp. We can't save the ones without timestamp, because e.g. skeletal
         # precreate would be updating records with default values, that are not correct.
-        pre_filtered = hashes.select { |x| x[:resource_timestamps_max] || x[:resource_counters_max] }
+        pre_filtered = hashes_for_update.select { |x| x[:resource_timestamps_max] || x[:resource_counters_max] }
 
         results = {}
-        # TODO(lsmola) we don't need to process rows that were save by the create -> oncoflict do nothing
         (all_attribute_keys - inventory_collection.base_columns).each do |column_name|
           filtered = pre_filtered.select { |x| x.key?(column_name) }
 
