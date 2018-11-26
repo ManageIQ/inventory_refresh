@@ -70,7 +70,7 @@ describe InventoryRefresh::Persister do
         expect(unconnected_edge.inventory_object_lazy).to be_a(InventoryRefresh::InventoryObjectLazy)
       end
 
-      it "tests unconnected edges are found for lazy_find with key acessor" do
+      it "tests unconnected edges are found for lazy_find with key accessor" do
         FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
         FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
@@ -100,6 +100,104 @@ describe InventoryRefresh::Persister do
         )
 
         persister.container_projects.build(container_project_data(2))
+
+        persister.persist!
+
+        # Assert container_group and container_image are pre-created using the lazy_find data
+        assert_containers_counts(
+          :container_group   => 3,
+          :container_project => 2,
+        )
+
+        expect(persister.container_groups.unconnected_edges.size).to eq(1)
+        unconnected_edge = persister.container_groups.unconnected_edges.first
+        expect(unconnected_edge).to be_a(InventoryRefresh::InventoryCollection::UnconnectedEdge)
+        expect(unconnected_edge.inventory_object.ems_ref).to eq(container_group_data(3)[:ems_ref])
+        expect(unconnected_edge.inventory_object).to be_a(InventoryRefresh::InventoryObject)
+        expect(unconnected_edge.inventory_object_key).to eq(:dns_policy)
+        expect(unconnected_edge.inventory_object_lazy.to_s).to eq(container_project_data(3)[:name])
+        expect(unconnected_edge.inventory_object_lazy).to be_a(InventoryRefresh::InventoryObjectLazy)
+      end
+
+      it "unconnected edges are found for partial objects" do
+        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+
+        persister.container_groups.build_partial(
+          container_group_data(
+            1,
+            :container_project => persister.container_projects.lazy_find(
+              {:name => container_project_data(1)[:name]}, {:ref => :by_name}
+            ),
+          )
+        )
+        persister.container_groups.build_partial(
+          container_group_data(
+            2,
+            :container_project => persister.container_projects.lazy_find(
+              {:name => container_project_data(2)[:name]}, {:ref => :by_name}
+            ),
+          )
+        )
+        persister.container_groups.build_partial(
+          container_group_data(
+            3,
+            :container_project => persister.container_projects.lazy_find(
+              {:name => container_project_data(3)[:name]}, {:ref => :by_name}
+            ),
+          )
+        )
+
+        persister.container_projects.build_partial(container_project_data(2))
+
+        persister.persist!
+
+        # Assert container_group and container_image are pre-created using the lazy_find data
+        assert_containers_counts(
+          :container_group   => 3,
+          :container_project => 2,
+        )
+
+        expect(persister.container_groups.unconnected_edges.size).to eq(1)
+        unconnected_edge = persister.container_groups.unconnected_edges.first
+        expect(unconnected_edge).to be_a(InventoryRefresh::InventoryCollection::UnconnectedEdge)
+        expect(unconnected_edge.inventory_object.ems_ref).to eq(container_group_data(3)[:ems_ref])
+        expect(unconnected_edge.inventory_object).to be_a(InventoryRefresh::InventoryObject)
+        expect(unconnected_edge.inventory_object_key).to eq(:container_project)
+        expect(unconnected_edge.inventory_object_lazy.to_s).to eq(container_project_data(3)[:name])
+        expect(unconnected_edge.inventory_object_lazy).to be_a(InventoryRefresh::InventoryObjectLazy)
+      end
+
+      it "tests unconnected edges are found for lazy_find with key accessor with partial build" do
+        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+
+        persister.container_groups.build_partial(
+          container_group_data(
+            1,
+            :dns_policy => persister.container_projects.lazy_find(
+              {:name => container_project_data(1)[:name]}, {:ref => :by_name, :key => :display_name}
+            ),
+          )
+        )
+        persister.container_groups.build_partial(
+          container_group_data(
+            2,
+            :dns_policy => persister.container_projects.lazy_find(
+              {:name => container_project_data(2)[:name]}, {:ref => :by_name, :key => :display_name}
+            ),
+          )
+        )
+        persister.container_groups.build_partial(
+          container_group_data(
+            3,
+            :dns_policy => persister.container_projects.lazy_find(
+              {:name => container_project_data(3)[:name]}, {:ref => :by_name, :key => :display_name}
+            ),
+          )
+        )
+
+        persister.container_projects.build_partial(container_project_data(2))
 
         persister.persist!
 
