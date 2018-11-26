@@ -18,7 +18,7 @@ describe InventoryRefresh::Persister do
       time_before = Time.now.utc - 20.seconds
       time_after  = Time.now.utc + 20.seconds
 
-      _cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
       _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
       _cg3 = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
       _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
@@ -41,8 +41,8 @@ describe InventoryRefresh::Persister do
       persister.container_groups.build(container_group_data(5).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
       persister.persist!
 
-      # We don't update any records data, but last_seen_at is updated for all records involved
-      expect(persister.container_groups.updated_records).to(match_array([]))
+      # We update just the first record, and last_seen_at is updated for all records involved
+      expect(persister.container_groups.updated_records).to(match_array([{:id => cg1.id}]))
 
       date_field = ContainerGroup.arel_table[:last_seen_at]
       expect(ContainerGroup.where(date_field.gt(time_now)).pluck(:ems_ref)).to(

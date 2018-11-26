@@ -196,9 +196,12 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
           else
-            match_created(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
-          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -394,10 +397,11 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
         end
       end
@@ -420,10 +424,16 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
-          match_updated(persister)
+
           match_deleted(persister)
         end
 
@@ -443,11 +453,18 @@ describe InventoryRefresh::Persister do
               have_attributes(
                 :name                      => "container_group_#{expected_version}",
                 version_col(settings)      => expected_version,
-                versions_max_col(settings) => nil,
-                versions_col(settings)     => {},
+                versions_max_col(settings) => expected_version,
                 :reason                    => expected_version.to_s,
                 :phase                     => "#{expected_version} status",
               )
+            )
+
+            expect(container_group.send(versions_col(settings))).to(
+              match(
+                "phase"      => expected_version,
+                "dns_policy" => expected_version,
+                "reason"     => expected_version,
+                )
             )
           end
 
@@ -457,7 +474,7 @@ describe InventoryRefresh::Persister do
           expect(container_group_created_on).to eq(container_group_current_created_on)
 
           match_created(persister)
-          match_updated(persister)
+          match_updated(persister, :container_groups => ContainerGroup.all)
           match_deleted(persister)
         end
       end
@@ -496,10 +513,11 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -530,7 +548,11 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            match_updated(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
           match_created(persister)
           match_deleted(persister)
@@ -573,10 +595,11 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -609,7 +632,11 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            match_updated(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
           match_created(persister)
           match_deleted(persister)
@@ -636,10 +663,16 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
-          match_updated(persister)
+
           match_deleted(persister)
         end
 
@@ -679,11 +712,7 @@ describe InventoryRefresh::Persister do
           container_group_current_created_on = ContainerGroup.where(:dns_policy => "1").first.created_on
           expect(container_group_created_on).to eq(container_group_current_created_on)
 
-          if i == 0
-            match_updated(persister, :container_groups => ContainerGroup.all)
-          else
-            match_updated(persister)
-          end
+          match_updated(persister, :container_groups => ContainerGroup.all)
           match_created(persister)
           match_deleted(persister)
         end
@@ -701,12 +730,34 @@ describe InventoryRefresh::Persister do
             )
           )
 
+          ContainerGroup.find_each do |container_group|
+            expected_bigger_version = expected_version(settings, container_group, newest_version(settings))
+
+            expect(container_group).to(
+              have_attributes(
+                :name                 => nil,
+                version_col(settings) => nil,
+                :reason               => expected_bigger_version.to_s,
+                :phase                => "#{expected_bigger_version} status",
+              )
+            )
+
+            expect(container_group.send(versions_col(settings))).to(
+              match(
+                "dns_policy" => expected_bigger_version,
+                "phase"      => expected_bigger_version,
+                "reason"     => expected_bigger_version,
+              )
+            )
+          end
+
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -737,7 +788,11 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            match_updated(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
           match_created(persister)
           match_deleted(persister)
@@ -759,10 +814,11 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -832,7 +888,11 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            match_updated(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
+            end
           end
           match_created(persister)
           match_deleted(persister)
@@ -862,10 +922,11 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            match_updated(persister, :container_groups => ContainerGroup.all)
           end
-          match_updated(persister)
           match_deleted(persister)
 
           persister = TestCollector.refresh(
@@ -902,11 +963,7 @@ describe InventoryRefresh::Persister do
             )
           end
 
-          if i == 0
-            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
-          else
-            match_updated(persister)
-          end
+          match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
           match_created(persister)
           match_deleted(persister)
         end
@@ -1057,10 +1114,15 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
+            match_updated(persister)
           else
             match_created(persister)
+            if settings[:upsert_only]
+              match_updated(persister, :container_groups => ContainerGroup.all)
+            else
+              match_updated(persister)
+            end
           end
-          match_updated(persister)
           match_deleted(persister)
 
           persister = TestCollector.refresh(
