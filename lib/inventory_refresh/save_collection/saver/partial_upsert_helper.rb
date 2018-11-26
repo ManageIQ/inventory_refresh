@@ -44,8 +44,6 @@ module InventoryRefresh::SaveCollection
         hashes_for_update = hashes_for_update(hashes, processed_record_refs)
         partial_updates!(hashes_for_update, all_attribute_keys)
 
-        # TODO(lsmola) we need to move here the hash loading ar object etc. otherwise the lazy_find with key will not
-        # be correct
         if inventory_collection.dependees.present?
           # We need to get primary keys of the created objects, but only if there are dependees that would use them
           map_ids_to_inventory_objects(indexed_inventory_objects,
