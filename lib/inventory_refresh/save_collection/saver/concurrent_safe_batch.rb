@@ -1,4 +1,5 @@
 require "inventory_refresh/save_collection/saver/base"
+require "inventory_refresh/save_collection/saver/partial_upsert_helper"
 require "inventory_refresh/save_collection/saver/retention_helper"
 require "active_support/core_ext/module/delegation"
 
@@ -8,6 +9,7 @@ module InventoryRefresh::SaveCollection
       private
 
       # Methods for archiving or deleting non existent records
+      include InventoryRefresh::SaveCollection::Saver::PartialUpsertHelper
       include InventoryRefresh::SaveCollection::Saver::RetentionHelper
 
       delegate :association_to_base_class_mapping,
@@ -327,162 +329,6 @@ module InventoryRefresh::SaveCollection
         result
       end
 
-      # Taking result from update or upsert of the row. The records that were not saved will be turned into skeletal
-      # records and we will save them attribute by attribute.
-      #
-      # @param hash [Hash{String => InventoryObject}>] Hash with indexed data we want to save
-      # @param result [Array<Hash>] Result from the DB containing the data that were actually saved
-      # @param all_unique_columns [Boolean] True if index is consisted from all columns of the unique index. False if
-      #        index is just made from manager_ref turned in DB column names.
-      def skeletonize_ignored_records!(hash, result, all_unique_columns: false)
-        updated = if all_unique_columns
-                    result.map { |x| unique_index_columns_to_s.map { |key| x[key] } }
-                  else
-                    result.map { |x| db_columns_index(x, :pure_sql => true) }
-                  end
-
-        updated.each { |x| hash.delete(x) }
-
-        # Now lets skeletonize all inventory_objects that were not saved by update or upsert. Old rows that can't be
-        # saved are not being sent here. We have only rows that are new, but become old as we send the query (so other
-        # parallel process saved the data in the meantime). Or if some attributes are newer than the whole row
-        # being sent.
-        hash.each_key do |db_index|
-          inventory_collection.skeletal_primary_index.skeletonize_primary_index(hash[db_index].manager_uuid)
-        end
-      end
-
-      # Saves partial records using upsert, taking records from skeletal_primary_index. This is used both for
-      # skeletal precreate as well as for saving partial rows.
-      #
-      # @param all_attribute_keys [Set] Superset of all keys of all records being saved
-      def create_or_update_partial_records(all_attribute_keys)
-        skeletal_attributes_index        = {}
-        skeletal_inventory_objects_index = {}
-
-        inventory_collection.skeletal_primary_index.each_value do |inventory_object|
-          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
-          index      = build_stringified_reference(attributes, unique_index_keys)
-
-          skeletal_attributes_index[index]        = attributes
-          skeletal_inventory_objects_index[index] = inventory_object
-        end
-
-        if supports_remote_data_timestamp?(all_attribute_keys)
-          all_attribute_keys << :resource_timestamps
-          all_attribute_keys << :resource_timestamps_max
-        elsif supports_remote_data_version?(all_attribute_keys)
-          all_attribute_keys << :resource_counters
-          all_attribute_keys << :resource_counters_max
-        end
-
-        indexed_inventory_objects = {}
-        hashes                    = []
-        create_time               = time_now
-
-        # We cannot set the resource_version doing partial update
-        all_attribute_keys -= [resource_version_column]
-
-        skeletal_inventory_objects_index.each do |index, inventory_object|
-          hash = skeletal_attributes_index.delete(index)
-          # Partial create or update must never set a timestamp for the whole row
-          timestamps = if supports_remote_data_timestamp?(all_attribute_keys) && supports_column?(:resource_timestamps_max)
-                         assign_partial_row_version_attributes!(:resource_timestamp,
-                                                                :resource_timestamps,
-                                                                :resource_timestamps_max,
-                                                                hash,
-                                                                all_attribute_keys)
-                       elsif supports_remote_data_version?(all_attribute_keys) && supports_column?(:resource_counters_max)
-                         assign_partial_row_version_attributes!(:resource_counter,
-                                                                :resource_counters,
-                                                                :resource_counters_max,
-                                                                hash,
-                                                                all_attribute_keys)
-                       end
-          # Transform hash to DB format
-          hash = transform_to_hash!(all_attribute_keys, hash)
-
-          assign_attributes_for_create!(hash, create_time)
-
-          next unless assert_referential_integrity(hash)
-
-          hash[:__non_serialized_versions] = timestamps # store non serialized timestamps for the partial updates
-          hashes << hash
-          # Index on Unique Columns values, so we can easily fill in the :id later
-          indexed_inventory_objects[unique_index_columns.map { |x| hash[x] }] = inventory_object
-        end
-
-        return if hashes.blank?
-
-        processed_record_refs = []
-        # First, lets try to create all partial records
-        hashes.each_slice(batch_size_for_persisting) do |batch|
-          result = create_partial!(all_attribute_keys,
-                                   batch,
-                                   :on_conflict => :do_nothing)
-          inventory_collection.store_created_records(result)
-          # Store refs of created records, so we can ignore them for update
-          result.each { |hash| processed_record_refs << unique_index_columns.map { |x| hash[x.to_s] } }
-        end
-
-        indexed_hashes = hashes.each_with_object({}) { |hash, obj| obj[unique_index_columns.map { |x| hash[x] }] = hash }
-        indexed_hashes.except!(*processed_record_refs)
-        hashes_for_update = indexed_hashes.values
-
-        # We need only skeletal records with timestamp. We can't save the ones without timestamp, because e.g. skeletal
-        # precreate would be updating records with default values, that are not correct.
-        pre_filtered = hashes_for_update.select { |x| x[:resource_timestamps_max] || x[:resource_counters_max] }
-
-        results = {}
-        (all_attribute_keys - inventory_collection.base_columns).each do |column_name|
-          filtered = pre_filtered.select { |x| x.key?(column_name) }
-
-          filtered.each_slice(batch_size_for_persisting) do |batch|
-            # We need to set correct timestamps_max for this particular attribute, based on what is in timestamps
-            if supports_remote_data_timestamp?(all_attribute_keys)
-              batch.each { |x| x[:resource_timestamps_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
-            elsif supports_remote_data_version?(all_attribute_keys)
-              batch.each { |x| x[:resource_counters_max] = x[:__non_serialized_versions][column_name] if x[:__non_serialized_versions][column_name] }
-            end
-
-            result = create_partial!((inventory_collection.base_columns + [column_name]).to_set & all_attribute_keys,
-                                     batch,
-                                     :on_conflict => :do_update,
-                                     :column_name => column_name)
-            result.each do |res|
-              results[res["id"]] = res
-            end
-          end
-        end
-
-        inventory_collection.store_updated_records(results.values)
-
-        # TODO(lsmola) we need to move here the hash loading ar object etc. otherwise the lazy_find with key will not
-        # be correct
-        if inventory_collection.dependees.present?
-          # We need to get primary keys of the created objects, but only if there are dependees that would use them
-          map_ids_to_inventory_objects(indexed_inventory_objects,
-                                       all_attribute_keys,
-                                       hashes,
-                                       nil,
-                                       :on_conflict => :do_nothing)
-        end
-      end
-
-      # Batch upserts 1 data column of the row, plus the internal columns
-      #
-      # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
-      # @param hashes [Array<InventoryRefresh::InventoryObject>] Array of InventoryObject objects we will be inserting
-      #        into the DB
-      # @param on_conflict [Symbol, NilClass] defines behavior on conflict with unique index constraint, allowed values
-      #        are :do_update, :do_nothing, nil
-      # @param column_name [Symbol] Name of the data column we will be upserting
-      def create_partial!(all_attribute_keys, hashes, on_conflict: nil, column_name: nil)
-        get_connection.execute(
-          build_insert_query(all_attribute_keys, hashes, :on_conflict => on_conflict, :mode => :partial, :column_name => column_name)
-        )
-      end
-
       # Batch inserts records using attributes_index data. With on_conflict option using :do_update, this method
       # does atomic upsert.
       #
@@ -619,29 +465,6 @@ module InventoryRefresh::SaveCollection
             inventory_object    = indexed_inventory_objects[key]
             inventory_object.id = inserted_record.id if inventory_object
           end
-        end
-      end
-
-      def skeletonize_or_skip_record(record_version, hash_version, record_versions_max, inventory_object)
-        # Skip updating this record, because it is old
-        return true if record_version && hash_version && record_version >= hash_version
-
-        # Some column has bigger version than the whole row, we need to store the row partially
-        if record_versions_max && hash_version && record_versions_max > hash_version
-          inventory_collection.skeletal_primary_index.skeletonize_primary_index(inventory_object.manager_uuid)
-          return true
-        end
-
-        false
-      end
-
-      def assign_partial_row_version_attributes!(full_row_version_attr, partial_row_version_attr,
-                                                 partial_row_version_attr_max, hash, all_attribute_keys)
-        hash[partial_row_version_attr_max] = hash.delete(full_row_version_attr)
-
-        if hash[partial_row_version_attr].present?
-          # Lets clean to only what we save, since when we build the skeletal object, we can set more
-          hash[partial_row_version_attr] = hash[partial_row_version_attr].slice(*all_attribute_keys)
         end
       end
     end
