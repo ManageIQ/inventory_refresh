@@ -46,7 +46,7 @@ module InventoryRefresh
         #          executed as batched SQL queries, instead of sending 1 query per record.
         # @param retention_strategy [Symbol] A retention strategy for this collection. Allowed values are:
         #        - :destroy => Will destroy the inactive records.
-        #        - :archive => Will archive the inactive records by setting :archived_on timestamp.
+        #        - :archive => Will archive the inactive records by setting :archived_at timestamp.
         # @param delete_method [Symbol] A delete method that will be used for deleting of the InventoryObject, if the
         #        object is marked for deletion. A default is :destroy, the instance method must be defined on the
         #        :model_class.
