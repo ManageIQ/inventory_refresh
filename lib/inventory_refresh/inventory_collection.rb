@@ -5,6 +5,7 @@ require "inventory_refresh/inventory_collection/reference"
 require "inventory_refresh/inventory_collection/references_storage"
 require "inventory_refresh/inventory_collection/scanner"
 require "inventory_refresh/inventory_collection/serialization"
+require "inventory_refresh/inventory_collection/unconnected_edge"
 require "inventory_refresh/inventory_collection/helpers/initialize_helper"
 require "inventory_refresh/inventory_collection/helpers/associations_helper"
 require "inventory_refresh/inventory_collection/helpers/questions_helper"
@@ -97,7 +98,7 @@ module InventoryRefresh
                 :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
-                :custom_reconnect_block, :batch_extra_attributes, :references_storage
+                :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges
 
     delegate :<<,
              :build,
@@ -186,6 +187,13 @@ module InventoryRefresh
       init_storages
 
       init_changed_records_stats
+    end
+
+    def store_unconnected_edges(inventory_object, inventory_object_key, inventory_object_lazy)
+      (@unconnected_edges ||= []) <<
+        InventoryRefresh::InventoryCollection::UnconnectedEdge.new(
+          inventory_object, inventory_object_key, inventory_object_lazy
+        )
     end
 
     # Caches what records were created, for later use, e.g. post provision behavior

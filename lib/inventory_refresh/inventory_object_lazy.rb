@@ -42,12 +42,14 @@ module InventoryRefresh
       "InventoryObjectLazy:('#{self}', #{inventory_collection}#{suffix})"
     end
 
+    # @param inventory_object [InventoryRefresh::InventoryObject] InventoryObject object owning this relation
+    # @param inventory_object_key [Symbol] InventoryObject object's attribute pointing to this relation
     # @return [InventoryRefresh::InventoryObject, Object] InventoryRefresh::InventoryObject instance or an attribute
     #         on key
-    def load
+    def load(inventory_object = nil, inventory_object_key = nil)
       transform_nested_secondary_indexes! if transform_nested_lazy_finds && nested_secondary_index?
 
-      key ? load_object_with_key : load_object
+      load_object(inventory_object, inventory_object_key)
     end
 
     # return [Boolean] true if the Lazy object is causing a dependency, Lazy link is always a dependency if no :key
@@ -128,15 +130,15 @@ module InventoryRefresh
       skeletal_primary_index.build(full_reference)
     end
 
+    # @param loaded_object [InventoryRefresh::InventoryObject, NilClass] Loaded object or nil if object wasn't found
     # @return [Object] value found or :key or default value if the value is nil
-    def load_object_with_key
+    def load_object_with_key(loaded_object)
       # TODO(lsmola) Log error if we are accessing path that is present in blacklist or not present in whitelist
-      found = inventory_collection.find(reference)
-      if found.present?
-        if found.try(:data).present?
-          found.data[key] || default
+      if loaded_object.present?
+        if loaded_object.try(:data).present?
+          loaded_object.data[key] || default
         else
-          found.public_send(key) || default
+          loaded_object.public_send(key) || default
         end
       else
         default
@@ -144,8 +146,16 @@ module InventoryRefresh
     end
 
     # @return [InventoryRefresh::InventoryObject, NilClass] InventoryRefresh::InventoryObject instance or nil if not found
-    def load_object
-      inventory_collection.find(reference)
+    def load_object(inventory_object = nil, inventory_object_key = nil)
+      loaded_object = inventory_collection.find(reference)
+
+      if inventory_object && inventory_object_key && !loaded_object && reference.loadable?
+        # Object was not loaded, but the reference is pointing to something, lets return it as edge that should've
+        # been loaded.
+        inventory_object.inventory_collection.store_unconnected_edges(inventory_object, inventory_object_key, self)
+      end
+
+      key ? load_object_with_key(loaded_object) : loaded_object
     end
   end
 end

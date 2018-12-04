@@ -87,7 +87,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys      = Set.new + inventory_collection.batch_extra_attributes
 
         inventory_collection.each do |inventory_object|
-          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys)
+          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           # Interesting fact: not building attributes_index and using only inventory_objects_index doesn't do much
@@ -347,6 +347,9 @@ module InventoryRefresh::SaveCollection
         # saved are not being sent here. We have only rows that are new, but become old as we send the query (so other
         # parallel process saved the data in the meantime). Or if some attributes are newer than the whole row
         # being sent.
+        #
+        # TODO(lsmola) we should have a timestamp check here, so we don't create skeletal objects from old rows, right
+        # now, we create skeletal objects if the timestamps are equal?
         hash.each_key do |db_index|
           inventory_collection.skeletal_primary_index.skeletonize_primary_index(hash[db_index].manager_uuid)
         end
@@ -361,7 +364,7 @@ module InventoryRefresh::SaveCollection
         skeletal_inventory_objects_index = {}
 
         inventory_collection.skeletal_primary_index.each_value do |inventory_object|
-          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys)
+          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           skeletal_attributes_index[index]        = attributes

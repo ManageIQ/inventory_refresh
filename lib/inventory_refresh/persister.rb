@@ -5,7 +5,7 @@ module InventoryRefresh
 
     attr_reader :manager, :target, :collections
 
-    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope
+    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope, :retry_count, :retry_max
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
     # @param target [Object] A refresh Target object
@@ -112,7 +112,13 @@ module InventoryRefresh
       end.compact
 
       {
-        :collections => collections_data
+        :refresh_state_uuid      => refresh_state_uuid,
+        :refresh_state_part_uuid => refresh_state_part_uuid,
+        :retry_count             => retry_count,
+        :retry_max               => retry_max,
+        :total_parts             => total_parts,
+        :sweep_scope             => sweep_scope,
+        :collections             => collections_data,
       }
     end
 
@@ -143,6 +149,8 @@ module InventoryRefresh
 
           persister.refresh_state_uuid      = persister_data['refresh_state_uuid']
           persister.refresh_state_part_uuid = persister_data['refresh_state_part_uuid']
+          persister.retry_count             = persister_data['retry_count']
+          persister.retry_max               = persister_data['retry_max']
           persister.total_parts             = persister_data['total_parts']
           persister.sweep_scope             = persister_data['sweep_scope']
         end
