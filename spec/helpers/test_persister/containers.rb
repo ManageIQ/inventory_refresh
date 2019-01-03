@@ -31,11 +31,6 @@ class TestPersister::Containers < ::TestPersister
   end
 
   def shared_options
-    {
-      :saver_strategy => saver_strategy,
-      :strategy       => strategy,
-      :targeted       => targeted?,
-      :parent         => manager.presence
-    }.merge(options)
+    super.merge(options)
   end
 end

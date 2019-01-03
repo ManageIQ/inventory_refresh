@@ -185,6 +185,10 @@ module InventoryRefresh
       nil
     end
 
+    def saver_strategy
+      :default
+    end
+
     # Persisters for targeted refresh can override to true
     def targeted?
       false
@@ -193,9 +197,10 @@ module InventoryRefresh
     # @return [Hash] kwargs shared for all InventoryCollection objects
     def shared_options
       {
-        :strategy => strategy,
-        :targeted => targeted?,
-        :parent   => manager.presence
+        :saver_strategy => saver_strategy,
+        :strategy       => strategy,
+        :targeted       => targeted?,
+        :parent         => manager.presence
       }
     end
   end
