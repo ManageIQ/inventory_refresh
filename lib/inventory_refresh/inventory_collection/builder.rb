@@ -13,7 +13,8 @@ module InventoryRefresh
            model_class                  name                    parent
            parent_inventory_collections retention_strategy      strategy
            saver_strategy               secondary_refs          targeted
-           targeted_arel                update_only             use_ar_object).to_set
+           targeted_arel                update_only             use_ar_object
+           assert_graph_integrity).to_set
       end
 
       def allowed_properties

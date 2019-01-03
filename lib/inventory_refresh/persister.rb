@@ -194,13 +194,18 @@ module InventoryRefresh
       false
     end
 
+    def assert_graph_integrity?
+      false
+    end
+
     # @return [Hash] kwargs shared for all InventoryCollection objects
     def shared_options
       {
-        :saver_strategy => saver_strategy,
-        :strategy       => strategy,
-        :targeted       => targeted?,
-        :parent         => manager.presence
+        :saver_strategy         => saver_strategy,
+        :strategy               => strategy,
+        :targeted               => targeted?,
+        :parent                 => manager.presence,
+        :assert_graph_integrity => assert_graph_integrity?,
       }
     end
   end
