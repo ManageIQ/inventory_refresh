@@ -20,4 +20,8 @@ class TestPersister < InventoryRefresh::Persister
 
     initialize_inventory_collections
   end
+
+  def assert_graph_integrity?
+    true
+  end
 end
