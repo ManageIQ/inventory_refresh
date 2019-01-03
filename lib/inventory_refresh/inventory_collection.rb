@@ -87,7 +87,8 @@ module InventoryRefresh
                 :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records,
-                :custom_reconnect_block, :batch_extra_attributes, :references_storage
+                :custom_reconnect_block, :batch_extra_attributes, :references_storage,
+                :assert_graph_integrity
 
     delegate :<<,
              :build,
@@ -409,6 +410,8 @@ module InventoryRefresh
     #        db. These extra attributes might be a product of :use_ar_object assignment and we need to specify them
     #        manually, if we want to use a batch saving strategy and we have models that populate attributes as a side
     #        effect.
+    # @param assert_graph_integrity [Boolean] Default false.  If true then extra checks for graph integrity will be
+    #        performed and an exception will be raised if an error is found.
     def initialize(model_class: nil, manager_ref: nil, association: nil, parent: nil, strategy: nil,
                    custom_save_block: nil, delete_method: nil, dependency_attributes: nil,
                    attributes_blacklist: nil, attributes_whitelist: nil, complete: nil, update_only: nil,
@@ -416,7 +419,7 @@ module InventoryRefresh
                    inventory_object_attributes: nil, name: nil, saver_strategy: nil,
                    parent_inventory_collections: nil, manager_uuids: [], all_manager_uuids: nil, targeted_arel: nil,
                    targeted: nil, manager_ref_allowed_nil: nil, secondary_refs: {}, use_ar_object: nil,
-                   custom_reconnect_block: nil, batch_extra_attributes: [])
+                   custom_reconnect_block: nil, batch_extra_attributes: [], assert_graph_integrity: nil)
       @model_class            = model_class
       @manager_ref            = manager_ref || [:ems_ref]
       @secondary_refs         = secondary_refs
@@ -438,6 +441,7 @@ module InventoryRefresh
       @saver_strategy         = process_saver_strategy(saver_strategy)
       @use_ar_object          = use_ar_object || false
       @batch_extra_attributes = batch_extra_attributes
+      @assert_graph_integrity = assert_graph_integrity.nil? ? false : assert_graph_integrity
 
       @manager_ref_allowed_nil = manager_ref_allowed_nil || []
 
