@@ -195,7 +195,7 @@ module InventoryRefresh
           # TODO(lsmola) do we need some production logging too? Maybe the refresh log level could drive this
           # Let' do this really slick development and test env, but disable for production, since the checks are pretty
           # slow.
-          # TODO: return if Rails.env.production?
+          return unless inventory_collection.assert_graph_integrity
 
           if manager_uuid.kind_of?(InventoryRefresh::InventoryCollection::Reference)
             # InventoryRefresh::InventoryCollection::Reference has been already asserted, skip

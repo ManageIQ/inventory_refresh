@@ -98,7 +98,8 @@ module InventoryRefresh
                 :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
-                :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges
+                :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
+                :assert_graph_integrity
 
     delegate :<<,
              :build,
@@ -152,7 +153,8 @@ module InventoryRefresh
                  properties[:check_changed],
                  properties[:update_only],
                  properties[:use_ar_object],
-                 properties[:targeted])
+                 properties[:targeted],
+                 properties[:assert_graph_integrity])
 
       init_strategies(properties[:strategy],
                       properties[:saver_strategy],

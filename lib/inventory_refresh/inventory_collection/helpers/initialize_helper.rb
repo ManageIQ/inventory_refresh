@@ -178,14 +178,16 @@ module InventoryRefresh
         # @param targeted [Boolean] True if the collection is targeted, in that case it will be leveraging :manager_uuids
         #        :parent_inventory_collections and :targeted_arel to save a subgraph of a data.
         def init_flags(complete, create_only, check_changed,
-                       update_only, use_ar_object, targeted)
-          @complete      = complete.nil? ? true : complete
-          @create_only   = create_only.nil? ? false : create_only
-          @check_changed = check_changed.nil? ? true : check_changed
-          @saved         = false
-          @update_only   = update_only.nil? ? false : update_only
-          @use_ar_object = use_ar_object || false
-          @targeted      = !!targeted
+                       update_only, use_ar_object, targeted,
+                       assert_graph_integrity)
+          @complete               = complete.nil? ? true : complete
+          @create_only            = create_only.nil? ? false : create_only
+          @check_changed          = check_changed.nil? ? true : check_changed
+          @saved                  = false
+          @update_only            = update_only.nil? ? false : update_only
+          @use_ar_object          = use_ar_object || false
+          @targeted               = !!targeted
+          @assert_graph_integrity = assert_graph_integrity.nil? ? true : assert_graph_integrity
         end
 
         # @param attributes_blacklist [Array] Attributes we do not want to include into saving. We cannot blacklist an
