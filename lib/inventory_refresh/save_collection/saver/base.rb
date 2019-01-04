@@ -247,7 +247,7 @@ module InventoryRefresh::SaveCollection
           # Change the InventoryCollection's :association or :arel parameter to return distinct results. The :through
           # relations can return the same record multiple times. We don't want to do SELECT DISTINCT by default, since
           # it can be very slow.
-          if false # TODO: Rails.env.production?
+          unless inventory_collection.assert_graph_integrity
             logger.warn("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. "\
                         " The duplicate value is being ignored.")
             return false
@@ -273,7 +273,7 @@ module InventoryRefresh::SaveCollection
           subject = "#{hash} of #{inventory_collection} because of missing foreign key #{x} for "\
                     "#{inventory_collection.parent.class.name}:"\
                     "#{inventory_collection.parent.try(:id)}"
-          if false # TODO: Rails.env.production?
+          unless inventory_collection.assert_graph_integrity
             logger.warn("Referential integrity check violated, ignoring #{subject}")
             return false
           else

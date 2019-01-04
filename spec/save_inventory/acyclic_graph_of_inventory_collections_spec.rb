@@ -655,15 +655,17 @@ describe InventoryRefresh::SaveInventory do
           # Initialize the InventoryCollections
           @data             = {}
           @data[:vms]       = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => ManageIQ::Providers::CloudManager::Vm,
-            :parent      => @ems,
-            :association => :vms
+            :model_class            => ManageIQ::Providers::CloudManager::Vm,
+            :parent                 => @ems,
+            :association            => :vms,
+            :assert_graph_integrity => true,
           )
           @data[:hardwares] = ::InventoryRefresh::InventoryCollection.new(
-            :model_class => Hardware,
-            :parent      => @ems,
-            :association => :hardwares,
-            :manager_ref => %i(vm_or_template virtualization_type)
+            :model_class            => Hardware,
+            :parent                 => @ems,
+            :association            => :hardwares,
+            :manager_ref            => %i(vm_or_template virtualization_type),
+            :assert_graph_integrity => true,
           )
 
           @vm_data_1       = vm_data(1)
