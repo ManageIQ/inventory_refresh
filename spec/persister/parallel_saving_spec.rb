@@ -8,7 +8,7 @@ describe InventoryRefresh::Persister do
   include SpecParsedData
 
   before(:each) do
-    @ems = FactoryGirl.create(:ems_container, :name => "test_ems")
+    @ems = FactoryBot.create(:ems_container, :name => "test_ems")
   end
 
   context "with :retention_strategy => 'archive'" do
@@ -19,12 +19,12 @@ describe InventoryRefresh::Persister do
       time_before = Time.now.utc - 20.seconds
       time_after  = Time.now.utc + 20.seconds
 
-      cg1  = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
-      _cg2 = FactoryGirl.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
-      cg3  = FactoryGirl.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
-      _cg4 = FactoryGirl.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      cg1  = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      cg3  = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
       # This VM was added after we've fetched all possible VMs (e.g. by targeted refresh), so we shouldn't delete it
-      _cg5 = FactoryGirl.create(:container_group, container_group_data(5).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
+      _cg5 = FactoryBot.create(:container_group, container_group_data(5).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
 
       persister.container_groups.all_manager_uuids = [{'ems_ref' => cg1.ems_ref}, {'ems_ref' => cg3.ems_ref}]
       persister.container_groups.all_manager_uuids_timestamp = time_now.to_s
@@ -45,12 +45,12 @@ describe InventoryRefresh::Persister do
       time_before = Time.now.utc - 20.seconds
       time_after  = Time.now.utc + 20.seconds
 
-      cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
-      cg2 = FactoryGirl.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
-      _c11 = FactoryGirl.create(:nested_container, nested_container_data(11).merge(:container_group => cg1, :resource_timestamp => time_now))
-      _c12 = FactoryGirl.create(:nested_container, nested_container_data(12).merge(:container_group => cg1, :resource_timestamp => time_now))
-      _c21 = FactoryGirl.create(:nested_container, nested_container_data(21).merge(:container_group => cg2, :resource_timestamp => time_now))
-      _c22 = FactoryGirl.create(:nested_container, nested_container_data(22).merge(:container_group => cg2, :resource_timestamp => time_now))
+      cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _c11 = FactoryBot.create(:nested_container, nested_container_data(11).merge(:container_group => cg1, :resource_timestamp => time_now))
+      _c12 = FactoryBot.create(:nested_container, nested_container_data(12).merge(:container_group => cg1, :resource_timestamp => time_now))
+      _c21 = FactoryBot.create(:nested_container, nested_container_data(21).merge(:container_group => cg2, :resource_timestamp => time_now))
+      _c22 = FactoryBot.create(:nested_container, nested_container_data(22).merge(:container_group => cg2, :resource_timestamp => time_now))
 
       # We are sending older data, that should not cause any archival, but we should create the non existent old data
       # nested_container_data(13) and archive them. And we are also sending new data.

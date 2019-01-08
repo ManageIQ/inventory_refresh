@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :ext_management_system do
     sequence(:name)      { |n| "ems_#{seq_padded_for_sorting(n)}" }
     guid                 { SecureRandom.uuid }

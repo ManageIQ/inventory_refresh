@@ -18,7 +18,7 @@ describe InventoryRefresh::SaveInventory do
   let(:persister_class) { ::TestPersister }
 
   before do
-    @ems = FactoryGirl.create(:ems_cloud)
+    @ems = FactoryBot.create(:ems_cloud)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
     @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
@@ -97,8 +97,8 @@ describe InventoryRefresh::SaveInventory do
   context 'with existing Vms in the DB' do
     before do
       # Fill DB with test Vms
-      @vm1 = FactoryGirl.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
-      @vm2 = FactoryGirl.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+      @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
+      @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
     end
 
     context 'with VM InventoryCollection with default settings' do
@@ -540,7 +540,7 @@ describe InventoryRefresh::SaveInventory do
 
     context 'with VM InventoryCollection with changed parent and association' do
       it 'deletes missing and creates new VMs with AvailabilityZone parent, ' do
-        availability_zone = FactoryGirl.create(:availability_zone, :ext_management_system => @ems)
+        availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems)
         @vm1.update_attributes(:availability_zone => availability_zone)
         @vm2.update_attributes(:availability_zone => availability_zone)
 
@@ -570,7 +570,7 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it 'deletes missing and creates new VMs with CloudTenant parent' do
-        cloud_tenant = FactoryGirl.create(:cloud_tenant, :ext_management_system => @ems)
+        cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
         @vm1.update_attributes(:cloud_tenant => cloud_tenant)
         @vm2.update_attributes(:cloud_tenant => cloud_tenant)
 
@@ -600,7 +600,7 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it 'affects oly relation to CloudTenant when not providing EMS relation and with CloudTenant parent' do
-        cloud_tenant = FactoryGirl.create(:cloud_tenant, :ext_management_system => @ems)
+        cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
         @vm1.update_attributes(:cloud_tenant => cloud_tenant)
         @vm2.update_attributes(:cloud_tenant => cloud_tenant)
 
@@ -638,7 +638,7 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it 'does not delete the missing VMs with :complete => false and with CloudTenant parent' do
-        cloud_tenant = FactoryGirl.create(:cloud_tenant, :ext_management_system => @ems)
+        cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
         @vm1.update_attributes(:cloud_tenant => cloud_tenant)
         @vm2.update_attributes(:cloud_tenant => cloud_tenant)
 
@@ -684,8 +684,8 @@ describe InventoryRefresh::SaveInventory do
     context "testing reconnect logic with saver_strategy: :#{saver_strategy}" do
       it 'reconnects existing VM' do
         # Fill DB with test Vms
-        @vm1 = FactoryGirl.create(:vm_cloud, vm_data(1).merge(:ext_management_system => nil))
-        @vm2 = FactoryGirl.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+        @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => nil))
+        @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
 
         vms_custom_reconnect_block = lambda do |inventory_collection, inventory_objects_index, attributes_index|
           inventory_objects_index.each_slice(1000) do |batch|

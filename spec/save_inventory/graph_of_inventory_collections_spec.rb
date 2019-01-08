@@ -278,8 +278,8 @@ describe InventoryRefresh::SaveInventory do
 
   let(:persister_class) { ::TestPersister }
   before do
-    @ems         = FactoryGirl.create(:ems_cloud)
-    @ems_network = FactoryGirl.create(:ems_network, :parent_manager => @ems)
+    @ems         = FactoryBot.create(:ems_cloud)
+    @ems_network = FactoryBot.create(:ems_network, :parent_manager => @ems)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
     @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
@@ -955,49 +955,49 @@ describe InventoryRefresh::SaveInventory do
   end
 
   def initialize_mocked_records
-    @orchestration_stack_0_1 = FactoryGirl.create(
+    @orchestration_stack_0_1 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("0_1").merge(
         :ext_management_system => @ems,
         :parent                => nil
       )
     )
-    @orchestration_stack_0_2 = FactoryGirl.create(
+    @orchestration_stack_0_2 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("0_2").merge(
         :ext_management_system => @ems,
         :parent                => nil
       )
     )
-    @orchestration_stack_1_11 = FactoryGirl.create(
+    @orchestration_stack_1_11 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("1_11").merge(
         :ext_management_system => @ems,
         :parent                => @orchestration_stack_0_1
       )
     )
-    @orchestration_stack_1_12 = FactoryGirl.create(
+    @orchestration_stack_1_12 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("1_12").merge(
         :ext_management_system => @ems,
         :parent                => @orchestration_stack_0_1
       )
     )
-    @orchestration_stack_11_21 = FactoryGirl.create(
+    @orchestration_stack_11_21 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("11_21").merge(
         :ext_management_system => @ems,
         :parent                => @orchestration_stack_1_11
       )
     )
-    @orchestration_stack_12_22 = FactoryGirl.create(
+    @orchestration_stack_12_22 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("12_22").merge(
         :ext_management_system => @ems,
         :parent                => @orchestration_stack_1_12
       )
     )
-    @orchestration_stack_12_23 = FactoryGirl.create(
+    @orchestration_stack_12_23 = FactoryBot.create(
       :orchestration_stack_cloud,
       orchestration_stack_data("12_23").merge(
         :ext_management_system => @ems,
@@ -1005,47 +1005,47 @@ describe InventoryRefresh::SaveInventory do
       )
     )
 
-    @orchestration_stack_resource_1_11 = FactoryGirl.create(
+    @orchestration_stack_resource_1_11 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_11").merge(
         :ems_ref => orchestration_stack_data("1_11")[:ems_ref],
         :stack   => @orchestration_stack_0_1,
       )
     )
-    @orchestration_stack_resource_1_11_1 = FactoryGirl.create(
+    @orchestration_stack_resource_1_11_1 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_11_1").merge(
         :stack => @orchestration_stack_0_1,
       )
     )
-    @orchestration_stack_resource_1_12 = FactoryGirl.create(
+    @orchestration_stack_resource_1_12 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_12").merge(
         :ems_ref => orchestration_stack_data("1_12")[:ems_ref],
         :stack   => @orchestration_stack_0_1,
       )
     )
-    @orchestration_stack_resource_1_12_1 = FactoryGirl.create(
+    @orchestration_stack_resource_1_12_1 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_12_1").merge(
         :stack => @orchestration_stack_0_1,
       )
     )
-    @orchestration_stack_resource_11_21 = FactoryGirl.create(
+    @orchestration_stack_resource_11_21 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("11_21").merge(
         :ems_ref => orchestration_stack_data("11_21")[:ems_ref],
         :stack   => @orchestration_stack_1_11,
       )
     )
-    @orchestration_stack_resource_12_22 = FactoryGirl.create(
+    @orchestration_stack_resource_12_22 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("12_22").merge(
         :ems_ref => orchestration_stack_data("12_22")[:ems_ref],
         :stack   => @orchestration_stack_1_12,
       )
     )
-    @orchestration_stack_resource_12_23 = FactoryGirl.create(
+    @orchestration_stack_resource_12_23 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("12_23").merge(
         :ems_ref => orchestration_stack_data("12_23")[:ems_ref],

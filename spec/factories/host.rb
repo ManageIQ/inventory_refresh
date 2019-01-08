@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :host do
     sequence(:name)     { |n| "host_#{seq_padded_for_sorting(n)}" }
     sequence(:hostname) { |n| "host-#{seq_padded_for_sorting(n)}" }

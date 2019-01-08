@@ -10,8 +10,8 @@ describe InventoryRefresh::Persister do
   ######################################################################################################################
   #
   before do
-    @ems = FactoryGirl.create(:ems_cloud,
-                              :network_manager => FactoryGirl.create(:ems_network))
+    @ems = FactoryBot.create(:ems_cloud,
+                              :network_manager => FactoryBot.create(:ems_network))
   end
 
   it "tests we can serialize inventory object with nested lazy references" do
@@ -54,8 +54,8 @@ describe InventoryRefresh::Persister do
 
   def populate_test_data(persister)
     # Add some data into the DB
-    FactoryGirl.create(:vm, vm_data(20))
-    FactoryGirl.create(:vm, vm_data(21))
+    FactoryBot.create(:vm, vm_data(20))
+    FactoryBot.create(:vm, vm_data(21))
 
     @image_data1          = image_data(1)
     @image_hardware_data1 = image_hardware_data(1).merge(
