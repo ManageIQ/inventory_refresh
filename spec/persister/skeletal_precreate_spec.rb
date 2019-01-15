@@ -16,7 +16,7 @@ describe InventoryRefresh::Persister do
   ].each do |settings|
     context "with settings #{settings}" do
       before :each do
-        @ems = FactoryGirl.create(:ems_container)
+        @ems = FactoryBot.create(:ems_container)
       end
 
       let(:persister) { create_containers_persister }
@@ -128,8 +128,8 @@ describe InventoryRefresh::Persister do
       end
 
       it "tests relations are pre-created but batch strategy doesn't mix full and skeletal records together" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
         persister.container_groups.build(
           container_group_data(
@@ -292,7 +292,7 @@ describe InventoryRefresh::Persister do
       end
 
       it "we prec-create object that was already disconnected and the relation is filled but not reconnected" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(
+        FactoryBot.create(:container_project, container_project_data(1).merge(
           :ems_id      => @ems.id,
           :archived_at => Time.now.utc
         ))
@@ -371,14 +371,14 @@ describe InventoryRefresh::Persister do
       end
 
       it "lazy_find with secondary ref doesn't pre-create records but finds them in DB" do
-        container_project = FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_replicator, container_replicator_data(1).merge(
+        container_project = FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_replicator, container_replicator_data(1).merge(
                                                     :ems_id            => @ems.id,
                                                     :container_project => container_project
         ))
         # TODO(lsmola) we miss VCR data for this
-        # FactoryGirl.create(:container_build_pod, container_build_pod_data(1).merge(:ems_id => @ems.id))
+        # FactoryBot.create(:container_build_pod, container_build_pod_data(1).merge(:ems_id => @ems.id))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_name_1", :ref => :by_name)
         lazy_find_container_node    = persister.container_nodes.lazy_find("container_node_name_1", :ref => :by_name)
@@ -436,8 +436,8 @@ describe InventoryRefresh::Persister do
 
       it "lazy_find with secondary ref doesn't pre-create records but finds them in DB, even when disconnected" do
         # TODO(lsmola) we can't find disconnected records using secondary ref now, we should, right?
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id, :archived_at => Time.now.utc))
-        FactoryGirl.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id, :archived_at => Time.now.utc))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id, :archived_at => Time.now.utc))
+        FactoryBot.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id, :archived_at => Time.now.utc))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_name_1", :ref => :by_name)
         lazy_find_container_node    = persister.container_projects.lazy_find("container_node_name_1", :ref => :by_name)
@@ -468,11 +468,11 @@ describe InventoryRefresh::Persister do
         # TODO(lsmola) to reconnect correctly, we need :archived_at => nil, in :builder_params, is that viable? We probably
         # do not want to solve this in general? If yes, we would have to allow this to be settable in parser. E.g.
         # for OpenShift pods watch targeted refresh, we can refresh already disconnected entity
-        FactoryGirl.create(:container_group, container_group_data(1).merge(
+        FactoryBot.create(:container_group, container_group_data(1).merge(
           :ems_id      => @ems.id,
           :archived_at => Time.now.utc
         ))
-        FactoryGirl.create(:container_project, container_project_data(1).merge(
+        FactoryBot.create(:container_project, container_project_data(1).merge(
           :ems_id      => @ems.id,
           :archived_at => Time.now.utc
         ))
@@ -512,7 +512,7 @@ describe InventoryRefresh::Persister do
       end
 
       it "pre-create doesn't shadow local db strategy" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
 

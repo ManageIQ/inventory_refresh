@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :vm_or_template do
     sequence(:name) { |n| "vm_#{seq_padded_for_sorting(n)}" }
     location        "unknown"

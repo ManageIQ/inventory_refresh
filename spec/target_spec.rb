@@ -1,14 +1,14 @@
 describe InventoryRefresh::Target do
   before do
-    @ems = FactoryGirl.create(:ems_cloud)
+    @ems = FactoryBot.create(:ems_cloud)
 
-    @vm_1 = FactoryGirl.create(
+    @vm_1 = FactoryBot.create(
       :vm_cloud,
       :ext_management_system => @ems,
       :ems_ref               => "vm_1"
     )
 
-    @vm_2 = FactoryGirl.create(
+    @vm_2 = FactoryBot.create(
       :vm_cloud,
       :ext_management_system => @ems,
       :ems_ref               => "vm_2"

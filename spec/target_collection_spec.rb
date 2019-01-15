@@ -1,29 +1,29 @@
 describe InventoryRefresh::TargetCollection do
   before do
-    @ems                = FactoryGirl.create(:ems_cloud, :name => "ems_name")
-    @ems_physical_infra = FactoryGirl.create(:ems_physical_infra)
-    @ems_event          = FactoryGirl.create(:ems_event)
+    @ems                = FactoryBot.create(:ems_cloud, :name => "ems_name")
+    @ems_physical_infra = FactoryBot.create(:ems_physical_infra)
+    @ems_event          = FactoryBot.create(:ems_event)
 
-    @vm_1 = FactoryGirl.create(
+    @vm_1 = FactoryBot.create(
       :vm_cloud,
       :ext_management_system => @ems,
       :ems_ref               => "vm_1",
       :name                  => "vm_1_name"
     )
 
-    @vm_2 = FactoryGirl.create(
+    @vm_2 = FactoryBot.create(
       :vm_cloud,
       :ext_management_system => @ems,
       :ems_ref               => "vm_2"
     )
 
-    @host = FactoryGirl.create(
+    @host = FactoryBot.create(
       :host,
       :ext_management_system => @ems,
       :name                  => "host_1"
     )
 
-    @physical_server = FactoryGirl.create(
+    @physical_server = FactoryBot.create(
       :physical_server,
       :ext_management_system => @ems_physical_infra,
       :name                  => "physical_server_1"

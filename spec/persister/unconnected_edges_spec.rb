@@ -16,14 +16,14 @@ describe InventoryRefresh::Persister do
   ].each do |settings|
     context "with settings #{settings}" do
       before :each do
-        @ems = FactoryGirl.create(:ems_container)
+        @ems = FactoryBot.create(:ems_container)
       end
 
       let(:persister) { create_containers_persister }
 
       it "tests unconnected edges are found" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
         persister.container_groups.build(
           container_group_data(
@@ -71,8 +71,8 @@ describe InventoryRefresh::Persister do
       end
 
       it "tests unconnected edges are found for lazy_find with key accessor" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
         persister.container_groups.build(
           container_group_data(
@@ -120,8 +120,8 @@ describe InventoryRefresh::Persister do
       end
 
       it "unconnected edges are found for partial objects" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
         persister.container_groups.build_partial(
           container_group_data(
@@ -169,8 +169,8 @@ describe InventoryRefresh::Persister do
       end
 
       it "tests unconnected edges are found for lazy_find with key accessor with partial build" do
-        FactoryGirl.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
-        FactoryGirl.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
+        FactoryBot.create(:container_project, container_project_data(2).merge(:ems_id => @ems.id))
 
         persister.container_groups.build_partial(
           container_group_data(

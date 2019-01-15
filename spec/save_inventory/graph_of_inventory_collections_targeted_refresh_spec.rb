@@ -12,7 +12,7 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
 
   before do
-    @ems = FactoryGirl.create(:ems_cloud)
+    @ems = FactoryBot.create(:ems_cloud)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
     @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))

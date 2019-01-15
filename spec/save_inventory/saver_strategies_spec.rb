@@ -18,33 +18,33 @@ describe InventoryRefresh::SaveInventory do
   ].each do |options|
     context "with options #{options}" do
       before do
-        @ems = FactoryGirl.create(:ems_cloud,
-                                  :network_manager => FactoryGirl.create(:ems_network))
+        @ems = FactoryBot.create(:ems_cloud,
+                                  :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
         @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
       end
 
       before do
-        @image1 = FactoryGirl.create(:miq_template, image_data(1))
-        @image2 = FactoryGirl.create(:miq_template, image_data(2))
-        @image3 = FactoryGirl.create(:miq_template, image_data(3))
+        @image1 = FactoryBot.create(:miq_template, image_data(1))
+        @image2 = FactoryBot.create(:miq_template, image_data(2))
+        @image3 = FactoryBot.create(:miq_template, image_data(3))
 
-        @image_hardware1 = FactoryGirl.create(
+        @image_hardware1 = FactoryBot.create(
           :hardware,
           image_hardware_data(1).merge(
             :guest_os       => "linux_generic_1",
             :vm_or_template => @image1
           )
         )
-        @image_hardware2 = FactoryGirl.create(
+        @image_hardware2 = FactoryBot.create(
           :hardware,
           image_hardware_data(2).merge(
             :guest_os       => "linux_generic_2",
             :vm_or_template => @image2
           )
         )
-        @image_hardware3 = FactoryGirl.create(
+        @image_hardware3 = FactoryBot.create(
           :hardware,
           image_hardware_data(3).merge(
             :guest_os       => "linux_generic_3",
@@ -52,12 +52,12 @@ describe InventoryRefresh::SaveInventory do
           )
         )
 
-        @key_pair1  = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(1))
-        @key_pair12 = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(12))
-        @key_pair2  = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(2))
-        @key_pair3  = FactoryGirl.create(:auth_key_pair_cloud, key_pair_data(3))
+        @key_pair1  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(1))
+        @key_pair12 = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(12))
+        @key_pair2  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(2))
+        @key_pair3  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(3))
 
-        @vm1 = FactoryGirl.create(
+        @vm1 = FactoryBot.create(
           :vm_cloud,
           vm_data(1).merge(
             :flavor    => @flavor_1,
@@ -65,7 +65,7 @@ describe InventoryRefresh::SaveInventory do
             :location  => 'host_10_10_10_1.com',
           )
         )
-        @vm12 = FactoryGirl.create(
+        @vm12 = FactoryBot.create(
           :vm_cloud,
           vm_data(12).merge(
             :flavor    => @flavor1,
@@ -73,7 +73,7 @@ describe InventoryRefresh::SaveInventory do
             :location  => 'host_10_10_10_12.com',
           )
         )
-        @vm2 = FactoryGirl.create(
+        @vm2 = FactoryBot.create(
           :vm_cloud,
           vm_data(2).merge(
             :flavor    => @flavor2,
@@ -81,28 +81,28 @@ describe InventoryRefresh::SaveInventory do
             :location  => 'host_10_10_10_2.com',
           )
         )
-        @vm4 = FactoryGirl.create(
+        @vm4 = FactoryBot.create(
           :vm_cloud,
           vm_data(4).merge(
             :location => 'default_value_unknown',
           )
         )
 
-        @hardware1 = FactoryGirl.create(
+        @hardware1 = FactoryBot.create(
           :hardware,
           hardware_data(1).merge(
             :guest_os       => @image1.hardware.guest_os,
             :vm_or_template => @vm1
           )
         )
-        @hardware12 = FactoryGirl.create(
+        @hardware12 = FactoryBot.create(
           :hardware,
           hardware_data(12).merge(
             :guest_os       => @image1.hardware.guest_os,
             :vm_or_template => @vm12
           )
         )
-        @hardware2 = FactoryGirl.create(
+        @hardware2 = FactoryBot.create(
           :hardware,
           hardware_data(2).merge(
             :guest_os       => @image2.hardware.guest_os,
@@ -110,28 +110,28 @@ describe InventoryRefresh::SaveInventory do
           )
         )
 
-        @network_port1 = FactoryGirl.create(
+        @network_port1 = FactoryBot.create(
           :network_port,
           network_port_data(1).merge(
             :device => @vm1
           )
         )
 
-        @network_port12 = FactoryGirl.create(
+        @network_port12 = FactoryBot.create(
           :network_port,
           network_port_data(12).merge(
             :device => @vm1
           )
         )
 
-        @network_port2 = FactoryGirl.create(
+        @network_port2 = FactoryBot.create(
           :network_port,
           network_port_data(2).merge(
             :device => @vm2
           )
         )
 
-        @network_port4 = FactoryGirl.create(
+        @network_port4 = FactoryBot.create(
           :network_port,
           network_port_data(4).merge(
             :device => @vm4

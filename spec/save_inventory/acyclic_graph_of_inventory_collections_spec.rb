@@ -68,7 +68,7 @@ describe InventoryRefresh::SaveInventory do
   let(:persister_class) { ::TestPersister }
 
   before do
-    @ems = FactoryGirl.create(:ems_cloud)
+    @ems = FactoryBot.create(:ems_cloud)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
     @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
@@ -373,7 +373,7 @@ describe InventoryRefresh::SaveInventory do
       initialize_mocked_records
 
       expect do
-        FactoryGirl.create(
+        FactoryBot.create(
           :vm_cloud,
           vm_data(1).merge(
             :flavor                => @flavor_1,

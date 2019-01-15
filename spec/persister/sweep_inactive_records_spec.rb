@@ -9,7 +9,7 @@ describe InventoryRefresh::Persister do
   include SpecParsedData
 
   before(:each) do
-    @ems = FactoryGirl.create(:ems_container, :name => "test_ems")
+    @ems = FactoryBot.create(:ems_container, :name => "test_ems")
   end
 
   context "with :retention_strategy => 'archive'" do
@@ -18,14 +18,14 @@ describe InventoryRefresh::Persister do
       time_before = Time.now.utc - 20.seconds
       time_after  = Time.now.utc + 20.seconds
 
-      _cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
-      _cg2 = FactoryGirl.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
-      _cg3 = FactoryGirl.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
-      _cg4 = FactoryGirl.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cg6 = FactoryGirl.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cg7 = FactoryGirl.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cn1 = FactoryGirl.create(:container_node, container_node_data(1).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cn2 = FactoryGirl.create(:container_node, container_node_data(2).merge(:ext_management_system => @ems))
+      _cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
+      _cg3 = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cn1 = FactoryBot.create(:container_node, container_node_data(1).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cn2 = FactoryBot.create(:container_node, container_node_data(2).merge(:ext_management_system => @ems))
 
       refresh_state_uuid = SecureRandom.uuid
       part1_uuid = SecureRandom.uuid
@@ -100,14 +100,14 @@ describe InventoryRefresh::Persister do
       time_before = Time.now.utc - 20.seconds
       time_after  = Time.now.utc + 20.seconds
 
-      _cg1 = FactoryGirl.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
-      _cg2 = FactoryGirl.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
-      _cg3 = FactoryGirl.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
-      _cg4 = FactoryGirl.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cg6 = FactoryGirl.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cg7 = FactoryGirl.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cn1 = FactoryGirl.create(:container_node, container_node_data(1).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-      _cn2 = FactoryGirl.create(:container_node, container_node_data(2).merge(:ext_management_system => @ems))
+      _cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
+      _cg3 = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cn1 = FactoryBot.create(:container_node, container_node_data(1).merge(:ext_management_system => @ems, :last_seen_at => time_before))
+      _cn2 = FactoryBot.create(:container_node, container_node_data(2).merge(:ext_management_system => @ems))
 
       refresh_state_uuid = SecureRandom.uuid
       part1_uuid = SecureRandom.uuid

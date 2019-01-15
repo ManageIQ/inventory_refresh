@@ -12,8 +12,8 @@ describe InventoryRefresh::Persister do
   ######################################################################################################################
   #
   before do
-    @ems = FactoryGirl.create(:ems_cloud,
-                              :network_manager => FactoryGirl.create(:ems_network))
+    @ems = FactoryBot.create(:ems_cloud,
+                              :network_manager => FactoryBot.create(:ems_network))
   end
 
   before do
@@ -30,8 +30,8 @@ describe InventoryRefresh::Persister do
           Vm.destroy_all
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
-          vm1 = FactoryGirl.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
-          vm2 = FactoryGirl.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+          vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
+          vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
 
           persister.vms.build(vm_data(3))
 
@@ -60,44 +60,44 @@ describe InventoryRefresh::Persister do
           Vm.destroy_all
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
-          subscription1 = FactoryGirl.create(:subscription, :ems_ref => "subscription1", :ext_management_system => @ems)
-          subscription2 = FactoryGirl.create(:subscription, :ems_ref => "subscription2", :ext_management_system => @ems)
+          subscription1 = FactoryBot.create(:subscription, :ems_ref => "subscription1", :ext_management_system => @ems)
+          subscription2 = FactoryBot.create(:subscription, :ems_ref => "subscription2", :ext_management_system => @ems)
 
-          region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
-          region2 = FactoryGirl.create(:source_region, :ems_ref => "region2", :ext_management_system => @ems)
-          region3 = FactoryGirl.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
+          region1 = FactoryBot.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
+          region2 = FactoryBot.create(:source_region, :ems_ref => "region2", :ext_management_system => @ems)
+          region3 = FactoryBot.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
 
-          vm1 = FactoryGirl.create(:vm_cloud,
+          vm1 = FactoryBot.create(:vm_cloud,
                                    vm_data(1).merge(
                                      :ext_management_system => @ems,
                                      :subscription          => subscription1,
                                      :source_region         => region1,
                                    ))
-          _vm2 = FactoryGirl.create(:vm_cloud,
+          _vm2 = FactoryBot.create(:vm_cloud,
                                     vm_data(2).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region2,
                                     ))
-          _vm3 = FactoryGirl.create(:vm_cloud,
+          _vm3 = FactoryBot.create(:vm_cloud,
                                     vm_data(3).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region3,
                                     ))
-          _vm4 = FactoryGirl.create(:vm_cloud,
+          _vm4 = FactoryBot.create(:vm_cloud,
                                     vm_data(4).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription2,
                                       :source_region         => region1,
                                     ))
-          _vm5 = FactoryGirl.create(:vm_cloud,
+          _vm5 = FactoryBot.create(:vm_cloud,
                                     vm_data(5).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription1,
                                       :source_region         => region2,
                                     ))
-          _vm6 = FactoryGirl.create(:vm_cloud,
+          _vm6 = FactoryBot.create(:vm_cloud,
                                     vm_data(6).merge(
                                       :ext_management_system => @ems,
                                       :subscription          => subscription1,
@@ -162,7 +162,7 @@ describe InventoryRefresh::Persister do
         end
 
         it "fails if all_manager_uuids_scope have inconsistent keys" do
-          _region1 = FactoryGirl.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
+          _region1 = FactoryBot.create(:source_region, :ems_ref => "region1", :ext_management_system => @ems)
 
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 

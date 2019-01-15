@@ -12,8 +12,8 @@ describe InventoryRefresh::Persister do
   ######################################################################################################################
   #
   before do
-    @ems = FactoryGirl.create(:ems_cloud,
-                              :network_manager => FactoryGirl.create(:ems_network))
+    @ems = FactoryBot.create(:ems_cloud,
+                              :network_manager => FactoryBot.create(:ems_network))
   end
 
   before do
