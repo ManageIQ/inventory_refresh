@@ -262,14 +262,22 @@ module InventoryRefresh::SaveCollection
         records_for_destroy = [] # Cleanup so GC can release it sooner
       end
 
-      def changed?(record, hash, all_attribute_keys)
+      def changed?(_record, _hash, _all_attribute_keys)
         return true unless inventory_collection.check_changed?
 
-        if supports_resource_version?(all_attribute_keys) && supports_column?(resource_version_column)
-          record_resource_version = record_key(record, resource_version_column.to_s)
-
-          return record_resource_version != hash[resource_version_column]
-        end
+        # TODO(lsmola) this check needs to be disabled now, because it doesn't work with lazy_find having secondary
+        # indexes. Examples: we save a pod before we save a project, that means the project lazy_find won't evaluate,
+        # because we load it with secondary index and can't do skeletal precreate. Then when the object is being saved
+        # again, the lazy_find is evaluated, but the resource version is not changed, so the row is not saved.
+        #
+        # To keep this quick .changed? check, we might need to extend this, so the resource_version doesn't save until
+        # all lazy_links of the row are evaluated.
+        #
+        # if supports_resource_version?(all_attribute_keys) && supports_column?(resource_version_column)
+        #   record_resource_version = record_key(record, resource_version_column.to_s)
+        #
+        #   return record_resource_version != hash[resource_version_column]
+        # end
 
         true
       end
