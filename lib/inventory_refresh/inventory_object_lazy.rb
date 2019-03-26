@@ -123,9 +123,12 @@ module InventoryRefresh
       # Full reference must be present
       return if full_reference.blank?
 
-      # To avoid pre-creating invalid records all fields of a primary key must have value
-      # TODO(lsmola) for composite keys, it's still valid to have one of the keys nil, figure out how to allow this
-      return if keys.any? { |x| full_reference[x].blank? }
+      # To avoid pre-creating invalid records all fields of a primary key must have non null value
+      # TODO(lsmola) for composite keys, it's still valid to have one of the keys nil, figure out how to allow this. We
+      # will need to scan the DB for NOT NULL constraint and allow it based on that. So we would move this check to
+      # saving code, but this will require bigger change, since having the column nil means we will have to batch it
+      # smartly, since having nil means we will need to use different unique index for the upsert/update query.
+      return if keys.any? { |x| full_reference[x].nil? }
 
       skeletal_primary_index.build(full_reference)
     end

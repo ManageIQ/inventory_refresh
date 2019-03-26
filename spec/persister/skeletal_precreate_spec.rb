@@ -21,6 +21,49 @@ describe InventoryRefresh::Persister do
 
       let(:persister) { create_containers_persister }
 
+      it "tests tag gets precreated with empty but not null value" do
+        persister = create_containers_persister
+
+        persister.container_groups.build(container_group_data(1))
+        persister.container_group_tags.build(
+          :container_group => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :tag             => persister.tags.lazy_find(:name => "tag_name_1", :value => '')
+        )
+        persister.persist!
+
+        # Assert tags are precreated
+        assert_containers_counts(
+          :container_group      => 1,
+          :container_group_tags => 1,
+          :tags                 => 1,
+        )
+
+        container_group = ContainerGroup.find_by(:ems_ref => container_group_data(1)[:ems_ref])
+        expect(container_group).to(
+          have_attributes(
+            :name    => "container_group_name_1",
+            :ems_id  => @ems.id,
+            :ems_ref => "container_group_ems_ref_1",
+          )
+        )
+        expect(container_group.container_group_tags.count).to eq 1
+        expect(container_group.tags.count).to eq 1
+      end
+
+      it "tests tag doesn't get precreated with null value" do
+        persister = create_containers_persister
+
+        persister.container_groups.build(container_group_data(1))
+        persister.container_group_tags.build(
+          :container_group => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :tag             => persister.tags.lazy_find(:name => "tag_name_1", :value => nil)
+        )
+
+        expect { persister.persist! }.to(
+          raise_error(/Referential integrity check violated for/)
+        )
+      end
+
       it "tests container relations are pre-created and updated by other refresh" do
         persister = create_containers_persister
 
