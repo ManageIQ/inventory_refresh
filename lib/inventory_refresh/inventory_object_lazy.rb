@@ -119,9 +119,8 @@ module InventoryRefresh
       # Pre-create only for strategies that will be persisting data, i.e. are not saved already
       return if saved?
       # We can only do skeletal pre-create for primary index reference, since that is needed to create DB unique index
-      return unless primary?
-      # Full reference must be present
-      return if full_reference.blank?
+      # and full reference must be present
+      return if !primary? || full_reference.blank?
 
       # To avoid pre-creating invalid records all fields of a primary key must have non null value
       # TODO(lsmola) for composite keys, it's still valid to have one of the keys nil, figure out how to allow this. We
