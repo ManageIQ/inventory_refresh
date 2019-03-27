@@ -97,7 +97,7 @@ module InventoryRefresh
 
         # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
         def saving_noop?
-          saving_targeted_parent_collection_noop? || saving_targeted_child_collection_noop? || saving_full_collection_noop?
+          saving_targeted_collection_noop? || saving_full_collection_noop?
         end
 
         # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
@@ -108,14 +108,8 @@ module InventoryRefresh
         private
 
         # @return true if it's a noop parent targeted InventoryCollection
-        def saving_targeted_parent_collection_noop?
-          targeted_noop_condition && parent_inventory_collections.blank? && targeted_scope.primary_references.blank?
-        end
-
-        # @return true if it's a noop child targeted InventoryCollection
-        def saving_targeted_child_collection_noop?
-          targeted_noop_condition && parent_inventory_collections.present? &&
-            parent_inventory_collections.all? { |x| x.targeted_scope.primary_references.blank? }
+        def saving_targeted_collection_noop?
+          targeted_noop_condition && parent_inventory_collections.blank?
         end
 
         # @return true if it's a noop full InventoryCollection refresh
@@ -124,7 +118,7 @@ module InventoryRefresh
         end
 
         def targeted_noop_condition
-          targeted? && custom_save_block.nil? && skeletal_primary_index.blank?
+          targeted? && data.blank? && custom_save_block.nil? && skeletal_primary_index.blank?
         end
       end
     end

@@ -60,7 +60,6 @@ module InventoryRefresh
                :data_collection_finalized=,
                :dependency_attributes,
                :targeted?,
-               :targeted_scope,
                :parent,
                :parent_inventory_collections,
                :parent_inventory_collections=,
@@ -78,11 +77,6 @@ module InventoryRefresh
         # Scan InventoryCollection InventoryObjects and store the results inside of the InventoryCollection
         data.each do |inventory_object|
           scan_inventory_object!(inventory_object)
-
-          if targeted? && parent_inventory_collections.blank?
-            # We want to track what manager_uuids we should query from a db, for the targeted refresh
-            targeted_scope << inventory_object.reference
-          end
         end
 
         # Scan InventoryCollection skeletal data

@@ -95,7 +95,7 @@ module InventoryRefresh
     attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
                 :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
-                :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
+                :inventory_object_attributes, :name, :saver_strategy, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
@@ -163,8 +163,7 @@ module InventoryRefresh
 
       init_references(properties[:manager_ref],
                       properties[:manager_ref_allowed_nil],
-                      properties[:secondary_refs],
-                      properties[:manager_uuids])
+                      properties[:secondary_refs])
 
       init_all_manager_uuids(properties[:all_manager_uuids],
                              properties[:all_manager_uuids_scope],
@@ -482,22 +481,12 @@ module InventoryRefresh
       10_000
     end
 
-    # Returns a list of stringified uuids of all scoped InventoryObjects, which is used for scoping in targeted mode
-    #
-    # @return [Array<String>] list of stringified uuids of all scoped InventoryObjects
-    def manager_uuids
-      # TODO(lsmola) LEGACY: this is still being used by :targetel_arel definitions and it expects array of strings
-      raise "This works only for :manager_ref size 1" if manager_ref.size > 1
-      key = manager_ref.first
-      transform_references_to_hashes(targeted_scope.primary_references).map { |x| x[key] }
-    end
-
     # Builds a multiselection conditions like (table1.a = a1 AND table2.b = b1) OR (table1.a = a2 AND table2.b = b2)
     #
     # @param hashes [Array<Hash>] data we want to use for the query
     # @param keys [Array<Symbol>] keys of attributes involved
     # @return [String] A condition usable in .where of an ActiveRecord relation
-    def build_multi_selection_condition(hashes, keys = manager_ref)
+    def build_multi_selection_condition(hashes, keys = unique_index_keys)
       arel_table = model_class.arel_table
       # We do pure SQL OR, since Arel is nesting every .or into another parentheses, otherwise this would be just
       # inject(:or) instead of to_sql with .join(" OR ")
@@ -507,42 +496,9 @@ module InventoryRefresh
     # @return [ActiveRecord::Relation] A relation that can fetch all data of this InventoryCollection from the DB
     def db_collection_for_comparison
       if targeted?
-        if targeted_arel.respond_to?(:call)
-          targeted_arel.call(self)
-        elsif parent_inventory_collections.present?
-          targeted_arel_default
-        else
-          targeted_iterator_for(targeted_scope.primary_references)
-        end
+        targeted_iterator
       else
         full_collection_for_comparison
-      end
-    end
-
-    # Builds targeted query limiting the results by the :references defined in parent_inventory_collections
-    #
-    # @return [InventoryRefresh::ApplicationRecordIterator] an iterator for default targeted arel
-    def targeted_arel_default
-      if parent_inventory_collections.collect { |x| x.model_class.base_class }.uniq.count > 1
-        raise "Multiple :parent_inventory_collections with different base class are not supported by default. Write "\
-              ":targeted_arel manually, or separate [#{self}] into 2 InventoryCollection objects."
-      end
-      parent_collection = parent_inventory_collections.first
-      references        = parent_inventory_collections.map { |x| x.targeted_scope.primary_references }.reduce({}, :merge!)
-
-      parent_collection.targeted_iterator_for(references, full_collection_for_comparison)
-    end
-
-    # Gets targeted references and transforms them into list of hashes
-    #
-    # @param references [Array, InventoryRefresh::InventoryCollection::TargetedScope] passed references
-    # @return [Array<Hash>] References transformed into the array of hashes
-    def transform_references_to_hashes(references)
-      if references.kind_of?(Array)
-        # Sliced InventoryRefresh::InventoryCollection::TargetedScope
-        references.map { |x| x.second.full_reference }
-      else
-        references.values.map(&:full_reference)
       end
     end
 
@@ -552,18 +508,16 @@ module InventoryRefresh
     # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] passed references
     # @return [String] A condition usable in .where of an ActiveRecord relation
     def targeted_selection_for(references)
-      build_multi_selection_condition(transform_references_to_hashes(references))
+      build_multi_selection_condition(references.map { |x| x.second })
     end
 
     # Returns iterator for the passed references and a query
     #
-    # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] Passed references
     # @param query [ActiveRecord::Relation] relation that can fetch all data of this InventoryCollection from the DB
     # @return [InventoryRefresh::ApplicationRecordIterator] Iterator for the references and query
-    def targeted_iterator_for(references, query = nil)
+    def targeted_iterator(query = nil)
       InventoryRefresh::ApplicationRecordIterator.new(
         :inventory_collection => self,
-        :manager_uuids_set    => references,
         :query                => query
       )
     end

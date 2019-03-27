@@ -45,9 +45,6 @@ module InventoryRefresh
                                            &block)
 
       builder.add_properties(extra_properties) if extra_properties.present?
-
-      builder.add_properties({:manager_uuids => target.try(:references, collection_name) || []}, :if_missing) if targeted?
-
       builder.evaluate_lambdas!(self)
 
       collections[collection_name] = builder.to_inventory_collection
@@ -104,7 +101,6 @@ module InventoryRefresh
     def to_hash
       collections_data = collections.map do |_, collection|
         next if collection.data.blank? &&
-                collection.targeted_scope.primary_references.blank? &&
                 collection.all_manager_uuids.nil? &&
                 collection.skeletal_primary_index.index_data.blank?
 

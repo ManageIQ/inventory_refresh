@@ -29,10 +29,8 @@ describe InventoryRefresh::Persister do
       :vm             => 4,
       :vm_or_template => 5
     }
-    # 1 Vm will be disconnected
-    ems_counts = counts.dup.merge(:vm => 4, :vm_or_template => 4)
 
-    assert_counts(counts, ems_counts)
+    assert_counts(counts, counts)
 
     vm = Vm.find_by(:ems_ref => "vm_ems_ref_1")
     expect(vm.location).to eq("host_10_10_10_1.com")
@@ -48,7 +46,7 @@ describe InventoryRefresh::Persister do
     expect(vm.hardware.model).to eq("test1")
     expect(vm.hardware.manufacturer).to eq("test2")
 
-    expect(Vm.find_by(:ems_ref => "vm_ems_ref_20").ems_id).to be_nil
+    expect(Vm.find_by(:ems_ref => "vm_ems_ref_20").ems_id).not_to be_nil
     expect(Vm.find_by(:ems_ref => "vm_ems_ref_21").ems_id).not_to be_nil
   end
 
@@ -132,8 +130,5 @@ describe InventoryRefresh::Persister do
     hardware = persister.hardwares.build(hardware_data(2).merge(:vm_or_template => vm))
     persister.networks.build(public_network_data(2).merge(:hardware => hardware))
     persister.disks.build(disk_data(2).merge(:hardware => hardware))
-
-    # Add some targeted_scope
-    persister.vms.targeted_scope << vm_data(20)[:ems_ref]
   end
 end
