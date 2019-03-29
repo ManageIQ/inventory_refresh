@@ -165,13 +165,13 @@ describe InventoryRefresh::Persister do
       _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_before
-      ))
-      _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-        :container_group => cg2,
-        :last_seen_at    => time_before
-      ))
+                                                    :container_group => cg1,
+                                                    :last_seen_at    => time_before
+                                                  ))
+      _c2 = FactoryBot.create(:nested_container, nested_container_data(2).merge(
+                                                   :container_group => cg2,
+                                                   :last_seen_at    => time_before
+                                                 ))
 
       ################################################################################################################
       # Refresh first part
@@ -240,7 +240,7 @@ describe InventoryRefresh::Persister do
         nested_container_data(
           1,
           :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
-          )
+        )
       )
 
       persister.persist!
@@ -285,25 +285,25 @@ describe InventoryRefresh::Persister do
       _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_before
-      ))
-      _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_before
-      ))
-      _c3  = FactoryBot.create(:nested_container, nested_container_data(3).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_before
-      ))
-      _c4  = FactoryBot.create(:nested_container, nested_container_data(4).merge(
-        :container_group => cg2,
-        :last_seen_at    => time_before
-      ))
-      _c5  = FactoryBot.create(:nested_container, nested_container_data(5).merge(
-        :container_group => cg3,
-        :last_seen_at    => time_before
-      ))
+                                                    :container_group => cg1,
+                                                    :last_seen_at    => time_before
+                                                  ))
+      _c2 = FactoryBot.create(:nested_container, nested_container_data(2).merge(
+                                                   :container_group => cg1,
+                                                   :last_seen_at    => time_before
+                                                 ))
+      _c3 = FactoryBot.create(:nested_container, nested_container_data(3).merge(
+                                                   :container_group => cg1,
+                                                   :last_seen_at    => time_before
+                                                 ))
+      _c4 = FactoryBot.create(:nested_container, nested_container_data(4).merge(
+                                                   :container_group => cg2,
+                                                   :last_seen_at    => time_before
+                                                 ))
+      _c5 = FactoryBot.create(:nested_container, nested_container_data(5).merge(
+                                                   :container_group => cg3,
+                                                   :last_seen_at    => time_before
+                                                 ))
 
       refresh_state_uuid = SecureRandom.uuid
       part1_uuid         = SecureRandom.uuid
@@ -321,7 +321,7 @@ describe InventoryRefresh::Persister do
         nested_container_data(
           1,
           :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
-          )
+        )
       )
 
       persister.persist!
@@ -336,7 +336,7 @@ describe InventoryRefresh::Persister do
         nested_container_data(
           2,
           :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
-          )
+        )
       )
 
       persister.persist!
@@ -353,7 +353,7 @@ describe InventoryRefresh::Persister do
         ],
         :nested_containers => [
           {:container_group => persister.container_groups.lazy_find("container_group_ems_ref_1")},
-          {:container_group => persister.container_groups.lazy_find("container_group_ems_ref_2")},
+          {:container_group => persister.container_groups.lazy_find("container_group_ems_ref_2")}
         ]
       }
 
@@ -395,68 +395,72 @@ describe InventoryRefresh::Persister do
       _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
       _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_before
-      ))
-      _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_now
-      ))
-      _c3  = FactoryBot.create(:nested_container, nested_container_data(3).merge(
-        :container_group => cg1,
-        :last_seen_at    => time_after
-      ))
-      _c4  = FactoryBot.create(:nested_container, nested_container_data(4).merge(
-        :container_group => cg2,
-        :last_seen_at    => time_now
-      ))
-      _c5  = FactoryBot.create(:nested_container, nested_container_data(5).merge(
-        :container_group => cg3,
-        :last_seen_at    => time_now
-      ))
+                                                    :container_group => cg1,
+                                                    :last_seen_at    => time_before
+                                                  ))
+      _c2 = FactoryBot.create(:nested_container, nested_container_data(2).merge(
+                                                   :container_group => cg1,
+                                                   :last_seen_at    => time_now
+                                                 ))
+      _c3 = FactoryBot.create(:nested_container, nested_container_data(3).merge(
+                                                   :container_group => cg1,
+                                                   :last_seen_at    => time_after
+                                                 ))
+      _c4 = FactoryBot.create(:nested_container, nested_container_data(4).merge(
+                                                   :container_group => cg2,
+                                                   :last_seen_at    => time_now
+                                                 ))
+      _c5 = FactoryBot.create(:nested_container, nested_container_data(5).merge(
+                                                   :container_group => cg3,
+                                                   :last_seen_at    => time_now
+                                                 ))
     end
 
     it "throws error on non existing scope key" do
       persister             = create_persister
       persister.sweep_scope = {
-        :container_groups  => [
+        :container_groups => [
           {:ems_refs => "container_group_ems_ref_1"},
           {:ems_refs => "container_group_ems_ref_2"},
           {:ems_refs => "container_group_ems_ref_3"}
-        ],
+        ]
       }
 
-      expect {
+      expect do
         InventoryRefresh::SaveInventory.sweep_inactive_records(
           persister.manager,
           persister.inventory_collections,
           refresh_state(2, time_now, persister.sweep_scope)
-        ) }.to(
+        )
+      end .to(
         raise_error(
           InventoryRefresh::Exception::SweeperNonExistentScopeKeyFoundError,
-          /contained keys that are not columns: \[:ems_refs\]/)
+          /contained keys that are not columns: \[:ems_refs\]/
+        )
       )
     end
 
     it "throws error on having non uniform keys" do
       persister             = create_persister
       persister.sweep_scope = {
-        :container_groups  => [
+        :container_groups => [
           {:ems_ref => "container_group_ems_ref_1"},
           {:ems_ref => "container_group_ems_ref_2", :name => "container_group_name_1"},
           {:ems_ref => "container_group_ems_ref_3"}
-        ],
+        ]
       }
 
-      expect {
+      expect do
         InventoryRefresh::SaveInventory.sweep_inactive_records(
           persister.manager,
           persister.inventory_collections,
           refresh_state(2, time_now, persister.sweep_scope)
-        ) }.to(
+        )
+      end .to(
         raise_error(
           InventoryRefresh::Exception::SweeperNonUniformScopeKeyFoundError,
-          /Missing keys for a scope were: \[:name\]/)
+          /Missing keys for a scope were: \[:name\]/
+        )
       )
     end
   end

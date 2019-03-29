@@ -214,8 +214,8 @@ module InventoryRefresh
     # @param key [Symbol] attribute name
     # @return true if the attribute is allowed to be saved into the DB
     def self.allowed?(inventory_collection_scope, key)
-      foreign_to_association = inventory_collection_scope.foreign_key_to_association_mapping[key] ||
-        inventory_collection_scope.foreign_type_to_association_mapping[key]
+      foreign_to_association = (inventory_collection_scope.foreign_key_to_association_mapping[key] ||
+        inventory_collection_scope.foreign_type_to_association_mapping[key])
 
       return false if inventory_collection_scope.attributes_blacklist.present? &&
         (inventory_collection_scope.attributes_blacklist.include?(key) ||

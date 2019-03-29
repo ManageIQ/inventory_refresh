@@ -513,7 +513,7 @@ module InventoryRefresh
     # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] passed references
     # @return [String] A condition usable in .where of an ActiveRecord relation
     def targeted_selection_for(references)
-      build_multi_selection_condition(references.map { |x| x.second })
+      build_multi_selection_condition(references.map(&:second))
     end
 
     # Returns iterator for the passed references and a query

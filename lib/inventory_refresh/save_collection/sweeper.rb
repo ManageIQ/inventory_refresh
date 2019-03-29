@@ -12,9 +12,12 @@ module InventoryRefresh::SaveCollection
       # @param _ems [ActiveRecord] Manager owning the inventory_collections
       # @param inventory_collections [Array<InventoryRefresh::InventoryCollection>] Array of InventoryCollection objects
       #        for sweeping
+      # @param sweep_scope [Array<String, Symbol, Hash>] Array of inventory collection names marking sweep. Or for
+      #        targeted sweeping it's array of hashes, where key is inventory collection name pointing to an array of
+      #        identifiers of inventory objects we want to target for sweeping.
       # @param refresh_state [ActiveRecord] Record of :refresh_states
-      def sweep(_ems, inventory_collections, refresh_state)
-        scope_set = build_scope_set(refresh_state.sweep_scope)
+      def sweep(_ems, inventory_collections, sweep_scope, refresh_state)
+        scope_set = build_scope_set(sweep_scope)
 
         inventory_collections.each do |inventory_collection|
           next unless sweep_possible?(inventory_collection, scope_set)
@@ -72,7 +75,7 @@ module InventoryRefresh::SaveCollection
         scan_sweep_scope!(scope)
 
         scope_keys = Set.new
-        conditions = scope.map {|x| InventoryRefresh::InventoryObject.attributes_with_keys(x, inventory_collection, scope_keys)}
+        conditions = scope.map { |x| InventoryRefresh::InventoryObject.attributes_with_keys(x, inventory_collection, scope_keys) }
         assert_conditions!(conditions, scope_keys)
 
         all_entities_query.where(inventory_collection.build_multi_selection_condition(conditions, scope_keys))
