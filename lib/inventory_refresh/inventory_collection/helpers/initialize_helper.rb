@@ -428,6 +428,14 @@ module InventoryRefresh
           strategy_name
         end
 
+        # Saves passed strategy, modifies :data_collection_finalized and :saved attributes for db only strategies
+        #
+        # @param strategy [Symbol] Passed saver strategy
+        # @return [Symbol] Returns back the passed strategy if supported, or raises exception
+        def strategy=(strategy)
+          @strategy = process_strategy(strategy)
+        end
+
         # Processes passed retention strategy
         #
         # @param retention_strategy [Symbol] Passed retention strategy

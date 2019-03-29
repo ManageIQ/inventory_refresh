@@ -310,6 +310,11 @@ module InventoryRefresh
       @base_columns ||= (unique_index_columns + internal_columns + not_null_columns).uniq
     end
 
+    # @return [Array<Symbol>] Array of all column names on the InventoryCollection
+    def all_column_names
+      @all_column_names ||= model_class.columns.map { |x| x.name.to_sym }
+    end
+
     # @param value [Object] Object we want to test
     # @return [Boolean] true is value is kind of InventoryRefresh::InventoryObject
     def inventory_object?(value)

@@ -89,7 +89,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys      = Set.new + inventory_collection.batch_extra_attributes
 
         inventory_collection.each do |inventory_object|
-          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
+          attributes = inventory_object.class.attributes_with_keys(inventory_object.data, inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           # Interesting fact: not building attributes_index and using only inventory_objects_index doesn't do much

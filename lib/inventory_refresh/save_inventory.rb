@@ -31,6 +31,10 @@ module InventoryRefresh
       #        for sweeping
       # @param refresh_state [ActiveRecord] Record of :refresh_states
       def sweep_inactive_records(ems, inventory_collections, refresh_state)
+        inventory_collections.each do |inventory_collection|
+          inventory_collection.strategy = :local_db_find_references
+        end
+
         logger.info("#{log_header(ems)} Sweeping EMS Inventory...")
         InventoryRefresh::SaveCollection::Sweeper.sweep(ems, inventory_collections, refresh_state)
         logger.info("#{log_header(ems)} Sweeping EMS Inventory...Complete")

@@ -59,7 +59,7 @@ module InventoryRefresh::SaveCollection
         skeletal_inventory_objects_index = {}
 
         inventory_collection.skeletal_primary_index.each_value do |inventory_object|
-          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
+          attributes = inventory_object.class.attributes_with_keys(inventory_object.data, inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           skeletal_attributes_index[index]        = attributes
