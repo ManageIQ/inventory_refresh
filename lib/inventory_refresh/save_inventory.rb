@@ -29,14 +29,17 @@ module InventoryRefresh
       # @param ems [ExtManagementSystem] manager owning the inventory_collections
       # @param inventory_collections [Array<InventoryRefresh::InventoryCollection>] array of InventoryCollection objects
       #        for sweeping
+      # @param sweep_scope [Array<String, Symbol, Hash>] Array of inventory collection names marking sweep. Or for
+      #        targeted sweeping it's array of hashes, where key is inventory collection name pointing to an array of
+      #        identifiers of inventory objects we want to target for sweeping.
       # @param refresh_state [ActiveRecord] Record of :refresh_states
-      def sweep_inactive_records(ems, inventory_collections, refresh_state)
+      def sweep_inactive_records(ems, inventory_collections, sweep_scope, refresh_state)
         inventory_collections.each do |inventory_collection|
           inventory_collection.strategy = :local_db_find_references
         end
 
         logger.info("#{log_header(ems)} Sweeping EMS Inventory...")
-        InventoryRefresh::SaveCollection::Sweeper.sweep(ems, inventory_collections, refresh_state)
+        InventoryRefresh::SaveCollection::Sweeper.sweep(ems, inventory_collections, sweep_scope, refresh_state)
         logger.info("#{log_header(ems)} Sweeping EMS Inventory...Complete")
 
         ems

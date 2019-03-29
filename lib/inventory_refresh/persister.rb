@@ -113,7 +113,7 @@ module InventoryRefresh
         :retry_count             => retry_count,
         :retry_max               => retry_max,
         :total_parts             => total_parts,
-        :sweep_scope             => sweep_scope,
+        :sweep_scope             => sweep_scope_to_hash(sweep_scope),
         :collections             => collections_data,
       }
     end
@@ -138,7 +138,7 @@ module InventoryRefresh
         new(manager, target).tap do |persister|
           persister_data['collections'].each do |collection|
             inventory_collection = persister.collections[collection['name'].try(:to_sym)]
-            raise "Unrecognized InventoryCollection name: #{inventory_collection}" if inventory_collection.blank?
+            raise "Unrecognized InventoryCollection name: #{collection['name']}" if inventory_collection.blank?
 
             inventory_collection.from_hash(collection, persister.collections)
           end
@@ -148,8 +148,23 @@ module InventoryRefresh
           persister.retry_count             = persister_data['retry_count']
           persister.retry_max               = persister_data['retry_max']
           persister.total_parts             = persister_data['total_parts']
-          persister.sweep_scope             = persister_data['sweep_scope']
+          persister.sweep_scope             = sweep_scope_from_hash(persister_data['sweep_scope'], persister.collections)
         end
+      end
+
+      private
+
+      def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
+        return sweep_scope unless sweep_scope.kind_of?(Hash)
+
+        sweep_scope.each_with_object({}) do |(k, v), obj|
+          inventory_collection = available_inventory_collections[k.try(:to_sym)]
+          raise "Unrecognized InventoryCollection name: #{k}" if inventory_collection.blank?
+
+          serializer = InventoryRefresh::InventoryCollection::Serialization.new(inventory_collection)
+
+          obj[k] = serializer.sweep_scope_from_hash(v, available_inventory_collections)
+        end.symbolize_keys!
       end
     end
 
@@ -203,6 +218,21 @@ module InventoryRefresh
         :parent                 => manager.presence,
         :assert_graph_integrity => assert_graph_integrity?,
       }
+    end
+
+    private
+
+    def sweep_scope_to_hash(sweep_scope)
+      return sweep_scope unless sweep_scope.kind_of?(Hash)
+
+      sweep_scope.each_with_object({}) do |(k, v), obj|
+        inventory_collection = collections[k.try(:to_sym)]
+        raise "Unrecognized InventoryCollection name: #{k}" if inventory_collection.blank?
+
+        serializer = InventoryRefresh::InventoryCollection::Serialization.new(inventory_collection)
+
+        obj[k] = serializer.sweep_scope_to_hash(v)
+      end
     end
   end
 end

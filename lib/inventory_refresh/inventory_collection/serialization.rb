@@ -38,6 +38,12 @@ module InventoryRefresh
         self.all_manager_uuids = inventory_objects_data['all_manager_uuids']
       end
 
+      def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
+        sweep_scope.map do |s|
+          hash_to_data(s, available_inventory_collections).symbolize_keys!
+        end
+      end
+
       # Serializes InventoryCollection's data storage into Array of Hashes
       #
       # @return [Hash] Serialized InventoryCollection object into Hash
@@ -48,6 +54,10 @@ module InventoryRefresh
           :data              => data.map { |x| data_to_hash(x.data) },
           :partial_data      => skeletal_primary_index.index_data.map { |x| data_to_hash(x.data) },
         }
+      end
+
+      def sweep_scope_to_hash(sweep_scope)
+        sweep_scope.map {|x| data_to_hash(x) }
       end
 
       private

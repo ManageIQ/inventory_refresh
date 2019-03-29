@@ -69,7 +69,7 @@ module InventoryRefresh::SaveCollection
     def apply_targeted_sweep_scope(all_entities_query)
       if sweep_scope.kind_of?(Hash)
         scope = sweep_scope[inventory_collection.name]
-        return all_entities_query if scope.empty?
+        return all_entities_query if scope.nil? || scope.empty?
 
         # Scan the scope to find all references, so we can load them from DB in batches
         scan_sweep_scope!(scope)
