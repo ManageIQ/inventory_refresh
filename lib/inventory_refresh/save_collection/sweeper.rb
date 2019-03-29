@@ -87,8 +87,8 @@ module InventoryRefresh::SaveCollection
 
     def scan_sweep_scope!(scope)
       scope.each do |sc|
-        sc.values.each do |value|
-          return unless loadable?(value)
+        sc.each_value do |value|
+          next unless loadable?(value)
 
           value_inventory_collection = value.inventory_collection
           value_inventory_collection.add_reference(value.reference, :key => value.key)
@@ -98,18 +98,25 @@ module InventoryRefresh::SaveCollection
 
     def assert_conditions!(conditions, scope_keys)
       conditions.each do |cond|
-        unless (diff = (scope_keys - cond.keys.to_set)).empty?
-          raise(InventoryRefresh::Exception::SweeperNonUniformScopeKeyFoundError,
-                "Sweeping scope for #{inventory_collection} contained non uniform keys. All keys for the"\
-                "scope must be the same, it's possible to send multiple sweeps with different key set. Missing keys"\
-                " for a scope were: #{diff.to_a}")
-        end
-
-        unless (diff = (cond.keys.to_set - inventory_collection.all_column_names)).empty?
-          raise(InventoryRefresh::Exception::SweeperNonExistentScopeKeyFoundError,
-                "Sweeping scope for #{inventory_collection} contained keys that are not columns: #{diff.to_a}")
-        end
+        assert_uniform_keys!(cond, scope_keys)
+        assert_non_existent_keys!(cond)
       end
+    end
+
+    def assert_uniform_keys!(cond, scope_keys)
+      return if (diff = (scope_keys - cond.keys.to_set)).empty?
+
+      raise(InventoryRefresh::Exception::SweeperNonUniformScopeKeyFoundError,
+            "Sweeping scope for #{inventory_collection} contained non uniform keys. All keys for the"\
+            "scope must be the same, it's possible to send multiple sweeps with different key set. Missing keys"\
+            " for a scope were: #{diff.to_a}")
+    end
+
+    def assert_non_existent_keys!(cond)
+      return if (diff = (cond.keys.to_set - inventory_collection.all_column_names)).empty?
+
+      raise(InventoryRefresh::Exception::SweeperNonExistentScopeKeyFoundError,
+            "Sweeping scope for #{inventory_collection} contained keys that are not columns: #{diff.to_a}")
     end
 
     def sweep
