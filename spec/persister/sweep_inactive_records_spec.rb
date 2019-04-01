@@ -163,14 +163,20 @@ describe InventoryRefresh::Persister do
           _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-          _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_before
-          ))
-          _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-            :container_group => cg2,
-            :last_seen_at    => time_before
-          ))
+          _c1 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(1).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_before
+            )
+          )
+          _c2 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(2).merge(
+              :container_group => cg2,
+              :last_seen_at    => time_before
+            )
+          )
 
           ################################################################################################################
           # Refresh first part
@@ -277,26 +283,41 @@ describe InventoryRefresh::Persister do
           _cg5 = FactoryBot.create(:container_group, container_group_data(5).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-          _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_before
-          ))
-          _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_before
-          ))
-          _c3  = FactoryBot.create(:nested_container, nested_container_data(3).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_before
-          ))
-          _c4  = FactoryBot.create(:nested_container, nested_container_data(4).merge(
-            :container_group => cg2,
-            :last_seen_at    => time_before
-          ))
-          _c5  = FactoryBot.create(:nested_container, nested_container_data(5).merge(
-            :container_group => cg3,
-            :last_seen_at    => time_before
-          ))
+          _c1 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(1).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_before
+            )
+          )
+          _c2 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(2).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_before
+            )
+          )
+          _c3 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(3).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_before
+            )
+          )
+          _c4 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(4).merge(
+              :container_group => cg2,
+              :last_seen_at    => time_before
+            )
+          )
+          _c5 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(5).merge(
+              :container_group => cg3,
+              :last_seen_at    => time_before
+            )
+          )
 
           refresh_state_uuid = SecureRandom.uuid
           part1_uuid         = SecureRandom.uuid
@@ -383,26 +404,40 @@ describe InventoryRefresh::Persister do
           _cg5 = FactoryBot.create(:container_group, container_group_data(5).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg7 = FactoryBot.create(:container_group, container_group_data(7).merge(:ext_management_system => @ems, :last_seen_at => time_before))
-          _c1  = FactoryBot.create(:nested_container, nested_container_data(1).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_before
-          ))
-          _c2  = FactoryBot.create(:nested_container, nested_container_data(2).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_now
-          ))
-          _c3  = FactoryBot.create(:nested_container, nested_container_data(3).merge(
-            :container_group => cg1,
-            :last_seen_at    => time_after
-          ))
-          _c4  = FactoryBot.create(:nested_container, nested_container_data(4).merge(
-            :container_group => cg2,
-            :last_seen_at    => time_now
-          ))
-          _c5  = FactoryBot.create(:nested_container, nested_container_data(5).merge(
-            :container_group => cg3,
-            :last_seen_at    => time_now
-          ))
+          _c1 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(1).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_before
+            )
+          )
+          _c2 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(2).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_now
+            )
+          )
+          _c3 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(3).merge(
+              :container_group => cg1,
+              :last_seen_at    => time_after
+            )
+          )
+          _c4 = FactoryBot.create(
+            :nested_container, nested_container_data(4).merge(
+                                 :container_group => cg2,
+                                 :last_seen_at    => time_now
+                               )
+          )
+          _c5 = FactoryBot.create(
+            :nested_container,
+            nested_container_data(5).merge(
+              :container_group => cg3,
+              :last_seen_at    => time_now
+            )
+          )
         end
 
         it "throws error on non existing scope key" do
@@ -450,7 +485,7 @@ describe InventoryRefresh::Persister do
         create_containers_persister(:retention_strategy => "archive", :parent_inventory_collections => [])
       end
 
-      def persist(persister, config)
+      def persist(persister, _config)
         # TODO(lsmola) serializing is messing with the timestamp, so the reconnect unconnected edges doesn't work
         # if config[:serialize]
         #   persister.class.from_json(persister.to_json, @ems).persist!

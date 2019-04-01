@@ -57,7 +57,7 @@ module InventoryRefresh
       end
 
       def sweep_scope_to_hash(sweep_scope)
-        sweep_scope.map {|x| data_to_hash(x) }
+        sweep_scope.map { |x| data_to_hash(x) }
       end
 
       private
