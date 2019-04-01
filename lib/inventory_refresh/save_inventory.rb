@@ -38,9 +38,9 @@ module InventoryRefresh
           inventory_collection.strategy = :local_db_find_references
         end
 
-        logger.info("#{log_header(ems)} Sweeping EMS Inventory...")
+        logger.info("#{log_header(ems)} Sweeping EMS Inventory with scope #{sweep_scope} and date #{refresh_state.created_at} ...")
         InventoryRefresh::SaveCollection::Sweeper.sweep(ems, inventory_collections, sweep_scope, refresh_state)
-        logger.info("#{log_header(ems)} Sweeping EMS Inventory...Complete")
+        logger.info("#{log_header(ems)} Sweeping EMS Inventory with scope #{sweep_scope} and date #{refresh_state.created_at}...Complete")
 
         ems
       end
