@@ -132,7 +132,6 @@ module InventoryRefresh
       # @param persister_data [Hash] serialized Persister object in hash
       # @return [ManageIQ::Providers::Inventory::Persister] Persister object built from serialized data
       def from_hash(persister_data, manager, target = nil)
-        # TODO(lsmola) we need to pass serialized targeted scope here
         target ||= InventoryRefresh::TargetCollection.new(:manager => manager)
 
         new(manager, target).tap do |persister|
@@ -154,7 +153,27 @@ module InventoryRefresh
 
       private
 
+      def assert_sweep_scope!(sweep_scope)
+        return unless sweep_scope
+
+        allowed_format_message = "Allowed format of sweep scope is Array<String> or Hash{String => Hash}, got #{sweep_scope}"
+
+        if sweep_scope.kind_of?(Array)
+          return if sweep_scope.all? { |x| x.kind_of?(String) || x.kind_of?(Symbol) }
+
+          raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
+        elsif sweep_scope.kind_of?(Hash)
+          return if sweep_scope.values.all? { |x| x.kind_of?(Array) }
+
+          raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
+        else
+          raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
+        end
+      end
+
       def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
+        assert_sweep_scope!(sweep_scope)
+
         return sweep_scope unless sweep_scope.kind_of?(Hash)
 
         sweep_scope.each_with_object({}) do |(k, v), obj|
