@@ -130,7 +130,7 @@ module InventoryRefresh
 
       def supports_building_inventory_collection?
         # Don't try to introspect ICs with custom query or saving code
-        return if arel.present? || custom_save_block.present?
+        return if !arel.nil? || custom_save_block.present?
         # We support :parent_inventory_collections only for targeted mode, where all ICs are present
         return unless targeted?
 
