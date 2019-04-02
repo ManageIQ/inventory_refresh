@@ -3,9 +3,7 @@ require "active_support/core_ext/module/delegation"
 module InventoryRefresh
   class InventoryCollection
     class Serialization
-      delegate :all_manager_uuids,
-               :all_manager_uuids=,
-               :build,
+      delegate :build,
                :data,
                :inventory_object_lazy?,
                :inventory_object?,
@@ -34,8 +32,6 @@ module InventoryRefresh
         (inventory_objects_data['partial_data'] || []).each do |inventory_object_data|
           skeletal_primary_index.build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
         end
-
-        self.all_manager_uuids = inventory_objects_data['all_manager_uuids']
       end
 
       def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
@@ -50,7 +46,6 @@ module InventoryRefresh
       def to_hash
         {
           :name              => name,
-          :all_manager_uuids => all_manager_uuids,
           :data              => data.map { |x| data_to_hash(x.data) },
           :partial_data      => skeletal_primary_index.index_data.map { |x| data_to_hash(x.data) },
         }
