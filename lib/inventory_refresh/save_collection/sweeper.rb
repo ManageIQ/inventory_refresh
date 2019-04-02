@@ -22,7 +22,7 @@ module InventoryRefresh::SaveCollection
         inventory_collections.each do |inventory_collection|
           next unless sweep_possible?(inventory_collection, scope_set)
 
-          new(inventory_collection, refresh_state).sweep
+          new(inventory_collection, refresh_state, sweep_scope).sweep
         end
       end
 
@@ -39,8 +39,10 @@ module InventoryRefresh::SaveCollection
         return [] unless sweep_scope
 
         if sweep_scope.kind_of?(Array)
+          # TODO(lsmola) raise exception if the items are not of type string/symbol
           sweep_scope.map(&:to_sym).to_set
         elsif sweep_scope.kind_of?(Hash)
+          # TODO(lsmola) raise exception if the items are not of type Hash
           sweep_scope.keys.map(&:to_sym).to_set
         else
           []
@@ -56,11 +58,11 @@ module InventoryRefresh::SaveCollection
              :inventory_object?,
              :to => :inventory_collection
 
-    def initialize(inventory_collection, refresh_state)
+    def initialize(inventory_collection, refresh_state, sweep_scope)
       @inventory_collection = inventory_collection
 
       @refresh_state = refresh_state
-      @sweep_scope   = refresh_state.sweep_scope
+      @sweep_scope   = sweep_scope
 
       @model_class = inventory_collection.model_class
       @primary_key = @model_class.primary_key
