@@ -166,9 +166,9 @@ module InventoryRefresh
           return if sweep_scope.values.all? { |x| x.kind_of?(Array) }
 
           raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
-        else
-          raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
         end
+
+        raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
       end
 
       def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
