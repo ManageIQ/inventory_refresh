@@ -38,14 +38,21 @@ module InventoryRefresh::SaveCollection
       def build_scope_set(sweep_scope)
         return [] unless sweep_scope
 
+        allowed_format_message = "Allowed format of sweep scope is Array<String> or Hash{String => Hash}, got #{sweep_scope}"
         if sweep_scope.kind_of?(Array)
-          # TODO(lsmola) raise exception if the items are not of type string/symbol
+          unless sweep_scope.all? { |x| x.kind_of?(String) ||  x.kind_of?(Symbol)}
+            raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
+          end
+
           sweep_scope.map(&:to_sym).to_set
         elsif sweep_scope.kind_of?(Hash)
-          # TODO(lsmola) raise exception if the items are not of type Hash
+          unless sweep_scope.values.all? { |x| x.kind_of?(Array) }
+            raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
+          end
+
           sweep_scope.keys.map(&:to_sym).to_set
         else
-          []
+          raise InventoryRefresh::Exception::SweeperScopeBadFormat, allowed_format_message
         end
       end
     end
