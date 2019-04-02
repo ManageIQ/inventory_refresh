@@ -33,9 +33,7 @@ class TestPersister::Cloud < ::TestPersister
 
   # Cloud InventoryCollection
   def add_key_pairs
-    add_collection(:key_pairs, cloud) do |builder|
-      builder.add_properties(:manager_uuids => name_references(:key_pairs))
-    end
+    add_collection(:key_pairs, cloud)
   end
 
   # Cloud InventoryCollection
@@ -56,7 +54,6 @@ class TestPersister::Cloud < ::TestPersister
   def add_network_ports
     add_collection(:network_ports, network) do |builder|
       builder.add_properties(
-        :manager_uuids  => references(:vms) + references(:network_ports) + references(:load_balancers),
         :parent         => manager.network_manager,
         :secondary_refs => {:by_device => [:device], :by_device_and_name => %i(device name)}
       )

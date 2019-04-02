@@ -95,11 +95,12 @@ module InventoryRefresh
     # Transforms InventoryObject object data into hash format with keys that are column names and resolves correct
     # values of the foreign keys (even the polymorphic ones)
     #
+    # @param data [Array<Object>] Array of objects that we want to map to DB table columns
     # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] parent InventoryCollection object
     # @param all_attribute_keys [Array<Symbol>] Attribute keys we will modify based on object's data
     # @param inventory_object [InventoryRefresh::InventoryObject] InventoryObject object owning these attributes
     # @return [Hash] Data in DB format
-    def attributes_with_keys(inventory_collection_scope = nil, all_attribute_keys = [], inventory_object = nil)
+    def self.attributes_with_keys(data, inventory_collection_scope = nil, all_attribute_keys = [], inventory_object = nil)
       # We should explicitly pass a scope, since the inventory_object can be mapped to more InventoryCollections with
       # different blacklist and whitelist. The generic code always passes a scope.
       inventory_collection_scope ||= inventory_collection
@@ -206,6 +207,36 @@ module InventoryRefresh
       end
     end
 
+    # Return true if the attribute is allowed to be saved into the DB
+    #
+    # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] InventoryCollection object owning the
+    #        attribute
+    # @param key [Symbol] attribute name
+    # @return true if the attribute is allowed to be saved into the DB
+    def self.allowed?(inventory_collection_scope, key)
+      foreign_to_association = (inventory_collection_scope.foreign_key_to_association_mapping[key] ||
+        inventory_collection_scope.foreign_type_to_association_mapping[key])
+
+      return false if inventory_collection_scope.attributes_blacklist.present? &&
+        (inventory_collection_scope.attributes_blacklist.include?(key) ||
+          (foreign_to_association && inventory_collection_scope.attributes_blacklist.include?(foreign_to_association)))
+
+      return false if inventory_collection_scope.attributes_whitelist.present? &&
+        (!inventory_collection_scope.attributes_whitelist.include?(key) &&
+          (!foreign_to_association || (foreign_to_association && inventory_collection_scope.attributes_whitelist.include?(foreign_to_association))))
+
+      true
+    end
+
+    # Return true if the object is loadable, which we determine by a list of loadable classes.
+    #
+    # @param value [Object] object we test
+    # @return true if the object is loadable
+    def self.loadable?(value)
+      value.kind_of?(::InventoryRefresh::InventoryObjectLazy) || value.kind_of?(::InventoryRefresh::InventoryObject) ||
+        value.kind_of?(::InventoryRefresh::ApplicationRecordReference)
+    end
+
     private
 
     # Assigns value based on the version attributes. If versions are specified, it asigns attribute only if it's
@@ -283,18 +314,7 @@ module InventoryRefresh
     # @param key [Symbol] attribute name
     # @return true if the attribute is allowed to be saved into the DB
     def allowed?(inventory_collection_scope, key)
-      foreign_to_association = inventory_collection_scope.foreign_key_to_association_mapping[key] ||
-                               inventory_collection_scope.foreign_type_to_association_mapping[key]
-
-      return false if inventory_collection_scope.attributes_blacklist.present? &&
-                      (inventory_collection_scope.attributes_blacklist.include?(key) ||
-                        (foreign_to_association && inventory_collection_scope.attributes_blacklist.include?(foreign_to_association)))
-
-      return false if inventory_collection_scope.attributes_whitelist.present? &&
-                      (!inventory_collection_scope.attributes_whitelist.include?(key) &&
-                        (!foreign_to_association || (foreign_to_association && inventory_collection_scope.attributes_whitelist.include?(foreign_to_association))))
-
-      true
+      self.class.allowed?(inventory_collection_scope, key)
     end
 
     # Return true if the object is loadable, which we determine by a list of loadable classes.
@@ -302,8 +322,7 @@ module InventoryRefresh
     # @param value [Object] object we test
     # @return true if the object is loadable
     def loadable?(value)
-      value.kind_of?(::InventoryRefresh::InventoryObjectLazy) || value.kind_of?(::InventoryRefresh::InventoryObject) ||
-        value.kind_of?(::InventoryRefresh::ApplicationRecordReference)
+      self.class.loadable?(value)
     end
   end
 end

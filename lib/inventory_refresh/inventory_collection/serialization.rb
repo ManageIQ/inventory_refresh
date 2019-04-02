@@ -6,7 +6,6 @@ module InventoryRefresh
       delegate :all_manager_uuids,
                :all_manager_uuids=,
                :build,
-               :targeted_scope,
                :data,
                :inventory_object_lazy?,
                :inventory_object?,
@@ -28,8 +27,6 @@ module InventoryRefresh
       # @param available_inventory_collections [Array<InventoryRefresh::InventoryCollection>] List of available
       #        InventoryCollection objects
       def from_hash(inventory_objects_data, available_inventory_collections)
-        targeted_scope.merge!(inventory_objects_data["manager_uuids"].map(&:symbolize_keys!)) if inventory_objects_data["manager_uuids"]
-
         (inventory_objects_data['data'] || []).each do |inventory_object_data|
           build(hash_to_data(inventory_object_data, available_inventory_collections).symbolize_keys!)
         end
@@ -41,18 +38,26 @@ module InventoryRefresh
         self.all_manager_uuids = inventory_objects_data['all_manager_uuids']
       end
 
+      def sweep_scope_from_hash(sweep_scope, available_inventory_collections)
+        sweep_scope.map do |s|
+          hash_to_data(s, available_inventory_collections).symbolize_keys!
+        end
+      end
+
       # Serializes InventoryCollection's data storage into Array of Hashes
       #
       # @return [Hash] Serialized InventoryCollection object into Hash
       def to_hash
         {
           :name              => name,
-          # TODO(lsmola) we do not support nested references here, should we?
-          :manager_uuids     => targeted_scope.primary_references.values.map(&:full_reference),
           :all_manager_uuids => all_manager_uuids,
           :data              => data.map { |x| data_to_hash(x.data) },
           :partial_data      => skeletal_primary_index.index_data.map { |x| data_to_hash(x.data) },
         }
+      end
+
+      def sweep_scope_to_hash(sweep_scope)
+        sweep_scope.map { |x| data_to_hash(x) }
       end
 
       private

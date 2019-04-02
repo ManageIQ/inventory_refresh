@@ -9,7 +9,7 @@ module InventoryRefresh
            complete                     create_only             custom_save_block
            custom_reconnect_block       default_values          delete_method
            dependency_attributes        check_changed           inventory_object_attributes
-           manager_ref                  manager_ref_allowed_nil manager_uuids
+           manager_ref                  manager_ref_allowed_nil
            model_class                  name                    parent
            parent_inventory_collections retention_strategy      strategy
            saver_strategy               secondary_refs          targeted
