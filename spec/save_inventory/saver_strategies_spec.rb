@@ -12,9 +12,8 @@ describe InventoryRefresh::SaveInventory do
   ######################################################################################################################
 
   [
-    {:saver_strategy => :default},
-    {:saver_strategy => :batch, :use_ar_object => true},
-    {:saver_strategy => :batch, :use_ar_object => false},
+    {:use_ar_object => true},
+    {:use_ar_object => false},
   ].each do |options|
     context "with options #{options}" do
       before do
@@ -52,16 +51,10 @@ describe InventoryRefresh::SaveInventory do
           )
         )
 
-        @key_pair1  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(1))
-        @key_pair12 = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(12))
-        @key_pair2  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(2))
-        @key_pair3  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(3))
-
         @vm1 = FactoryBot.create(
           :vm_cloud,
           vm_data(1).merge(
             :flavor    => @flavor_1,
-            :key_pairs => [@key_pair1],
             :location  => 'host_10_10_10_1.com',
           )
         )
@@ -69,7 +62,6 @@ describe InventoryRefresh::SaveInventory do
           :vm_cloud,
           vm_data(12).merge(
             :flavor    => @flavor1,
-            :key_pairs => [@key_pair1, @key_pair12],
             :location  => 'host_10_10_10_12.com',
           )
         )
@@ -77,7 +69,6 @@ describe InventoryRefresh::SaveInventory do
           :vm_cloud,
           vm_data(2).merge(
             :flavor    => @flavor2,
-            :key_pairs => [@key_pair2],
             :location  => 'host_10_10_10_2.com',
           )
         )
@@ -142,8 +133,6 @@ describe InventoryRefresh::SaveInventory do
       it "saves records correctly with complex interconnection" do
         # Setup InventoryCollections
         miq_templates_init_data(inventory_collection_options(options))
-
-        key_pairs_init_data(inventory_collection_options(options))
 
         vms_init_data(inventory_collection_options(options))
 
@@ -259,10 +248,6 @@ describe InventoryRefresh::SaveInventory do
         expect(@persister.miq_templates.deleted_records).to match_array(record_stats([@image1]))
         expect(@persister.miq_templates.updated_records).to match_array(record_stats([@image2, @image3]))
 
-        expect(@persister.key_pairs.created_records).to match_array(record_stats([]))
-        expect(@persister.key_pairs.deleted_records).to match_array(record_stats([@key_pair1, @key_pair12, @key_pair2, @key_pair3]))
-        expect(@persister.key_pairs.updated_records).to match_array(record_stats([]))
-
         # Check the changed timestamps
         expect(@vm3.created_on).to be > time_before_refresh
         expect(@vm3.updated_on).to be > time_before_refresh
@@ -273,7 +258,7 @@ describe InventoryRefresh::SaveInventory do
         expect(@vm2.updated_on).to be > time_before_refresh
 
         # Check DB data
-        expect(@network_port1.device).to eq nil
+        expect(@network_port1.device).to eq @vm1
         expect(@network_port12.device).to eq @vm31
         expect(@vm31.hardware).not_to be_nil
         expect(@network_port3.device).to eq @vm3
@@ -283,13 +268,13 @@ describe InventoryRefresh::SaveInventory do
           {
             :id       => @vm1.id,
             :ems_ref  => "vm_ems_ref_1",
-            :ems_id   => nil,
+            :ems_id   => @ems.id,
             :name     => "vm_name_1",
             :location => "host_10_10_10_1.com"
           }, {
             :id       => @vm12.id,
             :ems_ref  => "vm_ems_ref_12",
-            :ems_id   => nil,
+            :ems_id   => @ems.id,
             :name     => "vm_name_12",
             :location => "host_10_10_10_12.com"
           }, {
@@ -301,7 +286,7 @@ describe InventoryRefresh::SaveInventory do
           }, {
             :id       => @vm4.id,
             :ems_ref  => "vm_ems_ref_4",
-            :ems_id   => nil,
+            :ems_id   => @ems.id,
             :name     => "vm_name_4",
             :location => "default_value_unknown"
           }, {
@@ -322,6 +307,8 @@ describe InventoryRefresh::SaveInventory do
         assert_all_records_match_hashes(
           [Hardware.all],
           {:vm_or_template_id => @image1.id, :guest_os => "linux_generic_1"},
+          {:vm_or_template_id => @image2.id, :guest_os => "linux_generic_2"},
+          {:vm_or_template_id => @image3.id, :guest_os => "linux_generic_3"},
           {:vm_or_template_id => @vm1.id, :guest_os => "linux_generic_1"},
           {:vm_or_template_id => @vm2.id, :guest_os => nil},
           {:vm_or_template_id => @vm12.id, :guest_os => "linux_generic_1"},
@@ -330,14 +317,14 @@ describe InventoryRefresh::SaveInventory do
         )
 
         assert_all_records_match_hashes(
-          [NetworkPort.all],
+          [NetworkPort.active],
           {
             :id          => @network_port1.id,
             :ems_id      => @ems.network_manager.id,
-            :name        => "default_name",
+            :name        => "vm_name_1",
             :mac_address => "network_port_mac_1",
-            :device_id   => nil,
-            :device_type => nil
+            :device_id   => @vm1.id,
+            :device_type => "VmOrTemplate"
           }, {
             :id          => @network_port12.id,
             :ems_id      => @ems.network_manager.id,
@@ -360,7 +347,7 @@ describe InventoryRefresh::SaveInventory do
           {
             :id       => @image1.id,
             :ems_ref  => "image_ems_ref_1",
-            :ems_id   => nil,
+            :ems_id   => @ems.id,
             :name     => "image_name_1",
             :location => "image_location_1"
           }, {
@@ -377,8 +364,6 @@ describe InventoryRefresh::SaveInventory do
             :location => "image_location_3"
           }
         )
-
-        expect(::ManageIQ::Providers::CloudManager::AuthKeyPair.all).to eq([])
       end
     end
   end

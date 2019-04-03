@@ -12,7 +12,6 @@ class TestPersister::Cloud < ::TestPersister
       end
     end
 
-    add_key_pairs
     add_flavors
 
     %i(source_regions
@@ -30,11 +29,6 @@ class TestPersister::Cloud < ::TestPersister
   end
 
   private
-
-  # Cloud InventoryCollection
-  def add_key_pairs
-    add_collection(:key_pairs, cloud)
-  end
 
   # Cloud InventoryCollection
   def add_orchestration_stacks_resources
@@ -70,10 +64,6 @@ class TestPersister::Cloud < ::TestPersister
 
   def parent
     manager.presence
-  end
-
-  def saver_strategy
-    :default # TODO(lsmola) turn everything to concurrent_safe_batch
   end
 
   def shared_options
