@@ -518,7 +518,6 @@ module InventoryRefresh
     def full_collection_for_comparison
       return arel unless arel.nil?
       rel = parent.send(association)
-      rel = rel.active if rel && supports_column?(:archived_at) && retention_strategy == :archive
       rel
     end
 
