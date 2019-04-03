@@ -11,8 +11,7 @@ class TestBuilder::CloudManager < TestBuilder
 
   def orchestration_stacks_resources
     add_properties(
-      :model_class                  => ::OrchestrationStackResource,
-      :parent_inventory_collections => %i(orchestration_stacks)
+      :model_class => ::OrchestrationStackResource,
     )
   end
 end

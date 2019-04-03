@@ -29,6 +29,6 @@ class TestPersister::Containers < ::TestPersister
   end
 
   def shared_options
-    super.merge(options).merge(:retention_strategy => "archive", :parent_inventory_collections => [])
+    super.merge(options).merge(:retention_strategy => "archive")
   end
 end
