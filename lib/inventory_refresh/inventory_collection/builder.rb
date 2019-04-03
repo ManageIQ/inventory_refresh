@@ -7,12 +7,12 @@ module InventoryRefresh
         %i(arel                         association
            attributes_blacklist         attributes_whitelist    batch_extra_attributes
            complete                     create_only             custom_save_block
-           custom_reconnect_block       default_values          delete_method
+           custom_reconnect_block       default_values
            dependency_attributes        check_changed           inventory_object_attributes
            manager_ref                  manager_ref_allowed_nil
            model_class                  name                    parent
            parent_inventory_collections retention_strategy      strategy
-           saver_strategy               secondary_refs          targeted
+           secondary_refs          targeted
            targeted_arel                update_only             use_ar_object
            assert_graph_integrity).to_set
       end

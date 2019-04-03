@@ -52,7 +52,7 @@ module InventoryRefresh
 
         # @return [Boolean] true if we are using a saver strategy that allows saving in parallel processes
         def parallel_safe?
-          @parallel_safe_cache ||= %i(concurrent_safe concurrent_safe_batch).include?(saver_strategy)
+          true
         end
 
         # @return [Boolean] true if the model_class supports STI
