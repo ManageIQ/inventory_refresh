@@ -74,10 +74,6 @@ module InventoryRefresh
     # @return [Set] A set of InventoryCollection objects that depends on this InventoryCollection object.
     attr_accessor :dependees
 
-    # @return [Array<Symbol>] @see #parent_inventory_collections documentation of InventoryCollection.new's initialize_ic_relations()
-    #   parameters
-    attr_accessor :parent_inventory_collections
-
     attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
                 :internal_attributes, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
@@ -149,8 +145,7 @@ module InventoryRefresh
                       properties[:manager_ref_allowed_nil],
                       properties[:secondary_refs])
 
-      init_ic_relations(properties[:dependency_attributes],
-                        properties[:parent_inventory_collections])
+      init_ic_relations(properties[:dependency_attributes])
 
       init_arels(properties[:arel],
                  properties[:targeted_arel])

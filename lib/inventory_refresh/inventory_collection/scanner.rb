@@ -60,8 +60,6 @@ module InventoryRefresh
                :dependency_attributes,
                :targeted?,
                :parent,
-               :parent_inventory_collections,
-               :parent_inventory_collections=,
                :references,
                :transitive_dependency_attributes,
                :to => :inventory_collection
@@ -83,68 +81,11 @@ module InventoryRefresh
           scan_inventory_object!(inventory_object)
         end
 
-        build_parent_inventory_collections!
-
         # Mark InventoryCollection as finalized aka. scanned
         self.data_collection_finalized = true
       end
 
       private
-
-      def build_parent_inventory_collections!
-        if parent_inventory_collections.nil?
-          build_parent_inventory_collection!
-        else
-          # We can't figure out what immediate parent is, we'll add parent_inventory_collections as dependencies
-          parent_inventory_collections.each { |ic_name| add_parent_inventory_collection_dependency!(ic_name) }
-        end
-
-        return if parent_inventory_collections.blank?
-
-        # Transform InventoryCollection object names to actual objects
-        self.parent_inventory_collections = parent_inventory_collections.map { |x| load_inventory_collection_by_name(x) }
-      end
-
-      def build_parent_inventory_collection!
-        return unless supports_building_inventory_collection?
-
-        if association.present? && parent.present? && associations_hash[association].present?
-          # Add immediate parent IC as dependency
-          add_parent_inventory_collection_dependency!(associations_hash[association])
-          # Add root IC in parent_inventory_collections
-          self.parent_inventory_collections = [find_parent_inventory_collection(associations_hash, inventory_collection.association)]
-        end
-      end
-
-      def supports_building_inventory_collection?
-        # Don't try to introspect ICs with custom query or saving code
-        return if !arel.nil? || custom_save_block.present?
-        # We support :parent_inventory_collections only for targeted mode, where all ICs are present
-        return unless targeted?
-
-        true
-      end
-
-      def add_parent_inventory_collection_dependency!(ic_name)
-        ic = load_inventory_collection_by_name(ic_name)
-        (dependency_attributes[:__parent_inventory_collections] ||= Set.new) << ic if ic
-      end
-
-      def find_parent_inventory_collection(hash, name)
-        if hash[name]
-          find_parent_inventory_collection(hash, hash[name])
-        else
-          name
-        end
-      end
-
-      def load_inventory_collection_by_name(name)
-        ic = indexed_inventory_collections[name]
-        if ic.nil?
-          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}" if targeted?
-        end
-        ic
-      end
 
       def scan_inventory_object!(inventory_object)
         inventory_object.data.each do |key, value|
