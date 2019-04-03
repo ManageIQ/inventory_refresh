@@ -3,64 +3,14 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "authentications", id: :bigserial, force: :cascade do |t|
-    t.string   "name"
-    t.string   "authtype"
-    t.string   "userid"
-    t.string   "password"
-    t.bigint   "resource_id"
-    t.string   "resource_type"
-    t.datetime "created_on"
-    t.datetime "updated_on"
-    t.datetime "last_valid_on"
-    t.datetime "last_invalid_on"
-    t.datetime "credentials_changed_on"
-    t.string   "status"
-    t.string   "status_details"
-    t.string   "type"
-    t.text     "auth_key"
-    t.string   "fingerprint"
-    t.string   "service_account"
-    t.boolean  "challenge"
-    t.boolean  "login"
-    t.text     "public_key"
-    t.text     "htpassd_users",                             default: [], array: true
-    t.text     "ldap_id",                                   default: [], array: true
-    t.text     "ldap_email",                                default: [], array: true
-    t.text     "ldap_name",                                 default: [], array: true
-    t.text     "ldap_preferred_user_name",                  default: [], array: true
-    t.string   "ldap_bind_dn"
-    t.boolean  "ldap_insecure"
-    t.string   "ldap_url"
-    t.string   "request_header_challenge_url"
-    t.string   "request_header_login_url"
-    t.text     "request_header_headers",                    default: [], array: true
-    t.text     "request_header_preferred_username_headers", default: [], array: true
-    t.text     "request_header_name_headers",               default: [], array: true
-    t.text     "request_header_email_headers",              default: [], array: true
-    t.string   "open_id_sub_claim"
-    t.string   "open_id_user_info"
-    t.string   "open_id_authorization_endpoint"
-    t.string   "open_id_token_endpoint"
-    t.text     "open_id_extra_scopes",                      default: [], array: true
-    t.text     "open_id_extra_authorize_parameters"
-    t.text     "certificate_authority"
-    t.string   "google_hosted_domain"
-    t.text     "github_organizations",                      default: [], array: true
-    t.string   "rhsm_sku"
-    t.string   "rhsm_pool_id"
-    t.string   "rhsm_server"
-    t.string   "manager_ref"
-    t.text     "options"
-    t.index ["resource_id", "resource_type"], name: "index_authentications_on_resource_id_and_resource_type", using: :btree
-    t.index ["type"], name: "index_authentications_on_type", using: :btree
-  end
-
   create_table "availability_zones", id: :bigserial, force: :cascade do |t|
     t.bigint "ems_id"
     t.string "name"
     t.string "ems_ref"
     t.string "type"
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_availability_zones_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_availability_zones_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_availability_zones_on_ems_id", using: :btree
     t.index ["type"], name: "index_availability_zones_on_type", using: :btree
   end
@@ -75,6 +25,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "updated_at"
     t.string   "type"
     t.bigint   "parent_id"
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_cloud_tenants_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_cloud_tenants_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["type"], name: "index_cloud_tenants_on_type", using: :btree
   end
 
@@ -88,6 +41,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "config_xml"
     t.string   "autostart"
     t.bigint   "host_id"
+    t.bigint   "genealogy_parent_id"
     t.datetime "last_sync_on"
     t.datetime "created_on", null: false
     t.datetime "updated_on", null: false
@@ -373,6 +327,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint  "root_disk_size"
     t.bigint  "swap_disk_size"
     t.boolean "publicly_available"
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_flavors_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_flavors_on_ems_id_and_ems_ref", unique: true, using: :btree
+    t.index ["ems_id", "name"], name: "index_flavors_on_ems_id_and_name", unique: true, using: :btree
     t.index ["ems_id"], name: "index_flavors_on_ems_id", using: :btree
     t.index ["type"], name: "index_flavors_on_type", using: :btree
   end
@@ -414,17 +372,15 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.boolean  "maintenance"
     t.string   "maintenance_reason"
     t.bigint   "physical_server_id"
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_hosts_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_hosts_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["availability_zone_id"], name: "index_hosts_on_availability_zone_id", using: :btree
     t.index ["ems_id"], name: "index_hosts_on_ems_id", using: :btree
     t.index ["guid"], name: "index_hosts_on_guid", unique: true, using: :btree
     t.index ["hostname"], name: "index_hosts_on_hostname", using: :btree
     t.index ["ipaddress"], name: "index_hosts_on_ipaddress", using: :btree
     t.index ["type"], name: "index_hosts_on_type", using: :btree
-  end
-
-  create_table "key_pairs_vms", id: :bigserial, force: :cascade do |t|
-    t.bigint "authentication_id"
-    t.bigint "vm_id"
   end
 
   create_table "networks", id: :bigserial, force: :cascade do |t|
@@ -488,6 +444,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.text     "ems_ref"
     t.datetime "start_time"
     t.datetime "finish_time"
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_stacks_res_on_archived_at", using: :btree
+    t.index ["stack_id", "ems_ref"], name: "index_stacks_res_on_stack_id_and_ems_ref", unique: true, using: :btree
     t.index ["stack_id"], name: "index_orchestration_stack_resources_on_stack_id", using: :btree
   end
 
@@ -516,6 +475,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "configuration_script_base_id"
     t.integer  "verbosity"
     t.text     "hosts",                        array: true
+    t.datetime "archived_at"
+    t.bigint "parent_id"
+    t.index ["archived_at"], name: "index_stacks_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_stacks_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index "ancestry varchar_pattern_ops", name: "index_orchestration_stacks_on_ancestry_vpo", using: :btree
     t.index ["ancestry"], name: "index_orchestration_stacks_on_ancestry", using: :btree
     t.index ["orchestration_template_id"], name: "index_orchestration_stacks_on_orchestration_template_id", using: :btree
@@ -546,32 +509,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "ems_compliance_name"
     t.string   "ems_compliance_status"
     t.bigint   "physical_chassis_id"
-  end
 
-  create_table "services", id: :bigserial, force: :cascade do |t|
-    t.string   "name"
-    t.string   "description"
-    t.string   "guid"
-    t.string   "type"
-    t.bigint   "service_template_id"
-    t.text     "options"
-    t.boolean  "display"
-    t.datetime "created_at",           null: false
-    t.datetime "updated_at",           null: false
-    t.bigint   "evm_owner_id"
-    t.bigint   "miq_group_id"
-    t.boolean  "retired"
-    t.datetime "retires_on"
-    t.bigint   "retirement_warn"
-    t.datetime "retirement_last_warn"
-    t.string   "retirement_state"
-    t.string   "retirement_requester"
-    t.bigint   "tenant_id"
-    t.string   "ancestry"
-    t.string   "initiator",                         comment: "Entity that initiated the service creation"
-    t.index "ancestry varchar_pattern_ops", name: "index_services_on_ancestry_vpo", using: :btree
-    t.index ["ancestry"], name: "index_services_on_ancestry", using: :btree
-    t.index ["type"], name: "index_services_on_type", using: :btree
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_physical_servers_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_physical_servers_on_ems_id_and_ems_ref", unique: true, using: :btree
   end
 
   create_table "container_groups", id: :bigserial, force: :cascade do |t|
