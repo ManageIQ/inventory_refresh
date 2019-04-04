@@ -14,15 +14,6 @@ module SpecParsedData
     }.merge(data)
   end
 
-  def key_pair_data(i, data = {})
-    {
-      :type          => ManageIQ::Providers::CloudManager::AuthKeyPair.name,
-      :resource_id   => @ems.id,
-      :resource_type => "ExtManagementSystem",
-      :name          => "key_pair_name_#{i}",
-    }.merge(data)
-  end
-
   def image_data(i, data = {})
     {
       :type               => ManageIQ::Providers::CloudManager::Template.name,

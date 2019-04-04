@@ -92,7 +92,6 @@ describe InventoryRefresh::Persister do
     @vm_data1 = vm_data(1).merge(
       :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
       :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
-      :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
       :location         => persister.networks.lazy_find(
         {:hardware => lazy_find_hardware, :description => "public"},
         {:key     => :hostname,

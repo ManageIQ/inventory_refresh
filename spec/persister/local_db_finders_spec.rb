@@ -50,21 +50,18 @@ describe InventoryRefresh::Persister do
       @vm_data101 = vm_data(101).merge(
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
-        :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
         :location         => lazy_find_network1,
       )
 
       @vm_data102 = vm_data(102).merge(
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
-        :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
         :location         => lazy_find_network2,
       )
 
       @vm_data160 = vm_data(160).merge(
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
-        :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
         :location         => lazy_find_network60,
       )
 
@@ -100,22 +97,22 @@ describe InventoryRefresh::Persister do
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index)).to be_nil
 
       network1 = persister.networks.lazy_find(:hardware => lazy_find_hardware1, :description => "public").load
+      # Lazy find does skeletal precreate, not local db find
+      expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index)).to be_nil
+
       # Assert all references are one by one
-      expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public))
-      )
       network2 = persister.networks.find(:hardware => lazy_find_hardware2, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
+        match_array(%w(vm_ems_ref_2__public))
       )
       network60 = persister.networks.find(:hardware => lazy_find_hardware60, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
+        match_array(%w(vm_ems_ref_2__public))
       )
 
-      # TODO(lsmola) known weakness, manager_uuid is wrong, but index is correct. So this doesn't affect a functionality
+      expect(network1.manager_uuid).to eq "vm_ems_ref_1__public"
+      # Known weakness, manager_uuid is wrong, but index is correct. So this doesn't affect a functionality
       # now, but it can be confusing
-      expect(network1.manager_uuid).to eq "__public"
       expect(network2.manager_uuid).to eq "__public"
       expect(network60).to be_nil
     end

@@ -13,11 +13,11 @@ describe InventoryRefresh::SaveInventory do
   # Testing SaveInventory for directed acyclic graph (DAG) of the InventoryCollection dependencies, testing that
   # relations are saved correctly for a testing set of InventoryCollections whose dependencies look like:
   #
-  #               +--------------+     +--------------+
-  #               |              +----->              |
-  #               |   KeyPair    |     |      VM      <------------+
-  #               |              |  +-->              |            |
-  #               +--------------+  |  +-------^------+            |
+  #                                    +--------------+
+  #                                    |              |
+  #                                    |      VM      <------------+
+  #                                 +-->              |            |
+  #                                 +-------^------+            |
   #                                 |          |                   |
   #                                 |          |                   |
   #               +--------------+  |  +-------+------+     +------+-------+
@@ -84,7 +84,6 @@ describe InventoryRefresh::SaveInventory do
       {
         :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
         :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
-        :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
         :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
         :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
         :networks      => [@public_network_data_1, @public_network_data_12,
@@ -129,7 +128,6 @@ describe InventoryRefresh::SaveInventory do
       {
         :vms           => [@vm_data_1, @vm_data_12, @vm_data_2, @vm_data_4],
         :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
-        :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2, @key_pair_data_3],
         :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
         :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
         :networks      => [@public_network_data_1, @public_network_data_12,
@@ -184,8 +182,6 @@ describe InventoryRefresh::SaveInventory do
                            @vm_data_4.merge(:name => "vm_name_4_changed"),
                            vm_data(5)],
         :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
-        :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                           @key_pair_data_3],
         :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
         :disks         => [@disk_data_1, @disk_data_12, @disk_data_13, @disk_data_2],
         :networks      => [@public_network_data_1, @public_network_data_12,
@@ -240,9 +236,6 @@ describe InventoryRefresh::SaveInventory do
       # Fill the mocked data in the DB
       initialize_mocked_records
 
-      # Assert that the mocked data in the DB are correct
-      assert_full_inventory_collections_graph
-
       assert_all_records_match_hashes(
         [Vm.all, @ems.vms],
         {
@@ -274,8 +267,6 @@ describe InventoryRefresh::SaveInventory do
                            @vm_data_4.merge(:name => "vm_name_4_changed"),
                            vm_data(5)],
         :miq_templates => [@image_data_1, @image_data_2, @image_data_3],
-        :key_pairs     => [@key_pair_data_1, @key_pair_data_12, @key_pair_data_2,
-                           @key_pair_data_3],
         :hardwares     => [@hardware_data_1, @hardware_data_2, @hardware_data_12],
         :disks         => [@disk_data_1.merge(:device_type => "nvme_ssd_1"),
                            @disk_data_12.merge(:device_type => "nvme_ssd_12"),
@@ -364,9 +355,6 @@ describe InventoryRefresh::SaveInventory do
       expect(vm1.flavor.id).to eq(@flavor1.id)
       expect(vm12.flavor.id).to eq(@flavor1.id)
       expect(vm2.flavor.id).to eq(@flavor2.id)
-      expect(vm1.key_pairs.pluck(:id)).to match_array([@key_pair1.id])
-      expect(vm12.key_pairs.pluck(:id)).to match_array([@key_pair1.id, @key_pair12.id])
-      expect(vm2.key_pairs.pluck(:id)).to match_array([@key_pair2.id])
     end
 
     it "db unique indexes prevent duplicates from being created" do
@@ -377,7 +365,6 @@ describe InventoryRefresh::SaveInventory do
           :vm_cloud,
           vm_data(1).merge(
             :flavor                => @flavor_1,
-            :key_pairs             => [@key_pair1],
             :location              => 'host_10_10_10_1.com',
             :ext_management_system => @ems,
           )
@@ -396,7 +383,7 @@ describe InventoryRefresh::SaveInventory do
       end
       @persister.add_collection(:hardwares) do |builder|
         builder.add_properties(
-          :manager_ref                  => %i(virtualization_type),
+          :manager_ref                  => %i(vm_or_template),
           :parent_inventory_collections => %i(vms)
         )
       end
@@ -422,8 +409,8 @@ describe InventoryRefresh::SaveInventory do
       InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
 
       # Assert saved data
-      hardware1 = Hardware.find_by!(:virtualization_type => "virtualization_type_1")
-      expect(hardware1.vm_or_template).to eq(nil)
+      hardware1 = Hardware.find_by(:virtualization_type => "virtualization_type_1")
+      expect(hardware1).to eq(nil)
     end
 
     it "has a relation using find and loading data in a right order" do
@@ -525,34 +512,14 @@ describe InventoryRefresh::SaveInventory do
     expect(vm2.hardware.disks.collect(&:device_name)).to match_array(["disk_name_2"])
     expect(vm2.hardware.networks.collect(&:ipaddress)).to match_array(["10.10.10.2"])
 
-    expect(vm4.hardware).to eq(nil)
-
-    key_pair1  = ManageIQ::Providers::CloudManager::AuthKeyPair.find_by(:name => "key_pair_name_1")
-    key_pair12 = ManageIQ::Providers::CloudManager::AuthKeyPair.find_by(:name => "key_pair_name_12")
-    key_pair2  = ManageIQ::Providers::CloudManager::AuthKeyPair.find_by(:name => "key_pair_name_2")
-    key_pair3  = ManageIQ::Providers::CloudManager::AuthKeyPair.find_by(:name => "key_pair_name_3")
-
-    expect(vm1.key_pairs).to match_array([key_pair1])
-    expect(vm12.key_pairs).to match_array([key_pair1, key_pair12])
-    expect(vm2.key_pairs).to match_array([key_pair2])
-    expect(vm4.key_pairs).to match_array(nil)
-
-    expect(key_pair1.vms).to match_array([vm1, vm12])
-    expect(key_pair12.vms).to match_array([vm12])
-    expect(key_pair2.vms).to match_array([vm2])
-    expect(key_pair3.vms).to match_array(nil)
+    # skeletaly precreated hardware
+    expect(vm4.hardware.virtualization_type).to eq(nil)
   end
 
   def initialize_data_and_inventory_collections
     # Initialize the InventoryCollections
     @persister.add_collection(:vms) do |builder|
       builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
-    end
-    @persister.add_collection(:key_pairs) do |builder|
-      builder.add_properties(
-        :model_class => ManageIQ::Providers::CloudManager::AuthKeyPair,
-        :manager_ref => %i(name)
-      )
     end
     @persister.add_collection(:miq_templates) do |builder|
       builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Template)
@@ -591,11 +558,6 @@ describe InventoryRefresh::SaveInventory do
     @image_data_2 = image_data(2)
     @image_data_3 = image_data(3)
 
-    @key_pair_data_1  = key_pair_data(1)
-    @key_pair_data_12 = key_pair_data(12)
-    @key_pair_data_2  = key_pair_data(2)
-    @key_pair_data_3  = key_pair_data(3)
-
     lazy_find_vm_1       = @persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
     lazy_find_hardware_1 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_1)
     lazy_find_vm_2       = @persister.vms.lazy_find(:ems_ref => vm_data(2)[:ems_ref])
@@ -605,7 +567,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_1 = vm_data(1).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(1)[:name]),
-      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                   {:key     => :hostname,
                                                    :default => 'default_value_unknown'}),
@@ -613,9 +574,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_12 = vm_data(12).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(1)[:name]),
-      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name]),
-                     @persister.key_pairs.lazy_find(key_pair_data(1)[:name]),
-                     @persister.key_pairs.lazy_find(key_pair_data(12)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                   {:key     => :hostname,
                                                    :default => 'default_value_unknown'}),
@@ -623,7 +581,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_2 = vm_data(2).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(2)[:name]),
-      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
                                                   {:key     => :hostname,
                                                    :default => 'default_value_unknown'}),
@@ -631,7 +588,6 @@ describe InventoryRefresh::SaveInventory do
 
     @vm_data_4 = vm_data(4).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(4)[:name]),
-      :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(4)[:name])].compact,
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
                                                   {:key     => :hostname,
                                                    :default => 'default_value_unknown'}),

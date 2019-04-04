@@ -725,6 +725,8 @@ describe InventoryRefresh::SaveInventory do
   end
 
   def assert_full_inventory_collections_graph
+    # Orchestration stack 0_0 is created as a skeletal record
+    orchestration_stack_0_0   = OrchestrationStack.find_by(:ems_ref => "stack_ems_ref_0_0")
     orchestration_stack_0_1   = OrchestrationStack.find_by(:ems_ref => "stack_ems_ref_0_1")
     orchestration_stack_0_2   = OrchestrationStack.find_by(:ems_ref => "stack_ems_ref_0_2")
     orchestration_stack_1_11  = OrchestrationStack.find_by(:ems_ref => "stack_ems_ref_1_11")
@@ -755,8 +757,8 @@ describe InventoryRefresh::SaveInventory do
       :ems_ref => "stack_ems_ref_12_23"
     )
 
-    expect(orchestration_stack_0_1.parent).to eq(nil)
-    expect(orchestration_stack_0_2.parent).to eq(nil)
+    expect(orchestration_stack_0_1.parent).to eq(orchestration_stack_0_0)
+    expect(orchestration_stack_0_2.parent).to eq(orchestration_stack_0_0)
     expect(orchestration_stack_1_11.parent).to eq(orchestration_stack_0_1)
     expect(orchestration_stack_1_12.parent).to eq(orchestration_stack_0_1)
     expect(orchestration_stack_11_21.parent).to eq(orchestration_stack_1_11)

@@ -35,26 +35,14 @@ module InventoryRefresh
         #         - :local_db_find_missing_references => InventoryObject objects of the InventoryCollection will be saved to
         #                                                the DB. Then if we reference an object that is not present, it will
         #                                                load them from the db using :local_db_find_references strategy.
-        # @param saver_strategy [Symbol] A strategy that will be used for InventoryCollection persisting into the DB.
-        #        Allowed saver strategies are:
-        #        - :default => Using Rails saving methods, this way is not safe to run in multiple workers concurrently,
-        #          since it will lead to non consistent data.
-        #        - :batch => Using batch SQL queries, this way is not safe to run in multiple workers
-        #          concurrently, since it will lead to non consistent data.
-        #        - :concurrent_safe_batch => It uses atomic upsert to avoid data duplication and it uses timestamp based
-        #          atomic checks to avoid new data being overwritten by the the old data. The upsert/update queries are
-        #          executed as batched SQL queries, instead of sending 1 query per record.
         # @param retention_strategy [Symbol] A retention strategy for this collection. Allowed values are:
         #        - :destroy => Will destroy the inactive records.
         #        - :archive => Will archive the inactive records by setting :archived_at timestamp.
-        # @param delete_method [Symbol] A delete method that will be used for deleting of the InventoryObject, if the
-        #        object is marked for deletion. A default is :destroy, the instance method must be defined on the
-        #        :model_class.
-        def init_strategies(strategy, saver_strategy, retention_strategy, delete_method)
-          @saver_strategy     = process_saver_strategy(saver_strategy)
+        def init_strategies(strategy, retention_strategy)
+          @saver_strategy     = :concurrent_safe_batch
           @strategy           = process_strategy(strategy)
+          # TODO(lsmola) why don't we just set this strategy based on :archived_at column? Lets do that
           @retention_strategy = process_retention_strategy(retention_strategy)
-          @delete_method      = delete_method || :destroy
         end
 
         # @param manager_ref [Array] Array of Symbols, that are keys of the InventoryObject's data, inserted into this
@@ -359,23 +347,6 @@ module InventoryRefresh
           @deleted_records = []
         end
 
-        # Processes passed saver strategy
-        #
-        # @param saver_strategy [Symbol] Passed saver strategy
-        # @return [Symbol] Returns back the passed strategy if supported, or raises exception
-        def process_saver_strategy(saver_strategy)
-          return :default unless saver_strategy
-
-          saver_strategy = saver_strategy.to_sym
-          case saver_strategy
-          when :default, :batch, :concurrent_safe_batch
-            saver_strategy
-          else
-            raise "Unknown InventoryCollection saver strategy: :#{saver_strategy}, allowed strategies are "\
-              ":default, :batch and :concurrent_safe_batch"
-          end
-        end
-
         # Processes passed strategy, modifies :data_collection_finalized and :saved attributes for db only strategies
         #
         # @param strategy_name [Symbol] Passed saver strategy
@@ -414,7 +385,13 @@ module InventoryRefresh
         # @param retention_strategy [Symbol] Passed retention strategy
         # @return [Symbol] Returns back the passed strategy if supported, or raises exception
         def process_retention_strategy(retention_strategy)
-          return unless retention_strategy
+          unless retention_strategy
+            if supports_column?(:archived_at)
+              return :archive
+            else
+              return :destroy
+            end
+          end
 
           retention_strategy = retention_strategy.to_sym
           case retention_strategy
