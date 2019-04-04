@@ -92,17 +92,12 @@ module InventoryRefresh
         # @return [Boolean] true if processing of this InventoryCollection object would lead to no operations.
         def noop?
           # If this InventoryCollection doesn't do anything. it can easily happen for targeted/batched strategies.
-          saving_noop? && delete_complement_noop?
+          saving_noop?
         end
 
         # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
         def saving_noop?
           saving_targeted_collection_noop? || saving_full_collection_noop?
-        end
-
-        # @return true if processing InventoryCollection will not lead to deleting the complement of passed ids
-        def delete_complement_noop?
-          all_manager_uuids.nil?
         end
 
         private
