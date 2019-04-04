@@ -214,11 +214,6 @@ module InventoryRefresh
       nil
     end
 
-    # Persisters for targeted refresh can override to true
-    def targeted?
-      false
-    end
-
     def assert_graph_integrity?
       false
     end
@@ -227,7 +222,6 @@ module InventoryRefresh
     def shared_options
       {
         :strategy               => strategy,
-        :targeted               => targeted?,
         :parent                 => manager.presence,
         :assert_graph_integrity => assert_graph_integrity?,
       }

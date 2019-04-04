@@ -78,7 +78,7 @@ module InventoryRefresh
                 :internal_attributes, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
                 :inventory_object_attributes, :name, :saver_strategy, :default_values,
-                :targeted, :manager_ref_allowed_nil, :use_ar_object,
+                :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
                 :assert_graph_integrity
@@ -135,7 +135,6 @@ module InventoryRefresh
                  properties[:check_changed],
                  properties[:update_only],
                  properties[:use_ar_object],
-                 properties[:targeted],
                  properties[:assert_graph_integrity])
 
       init_strategies(properties[:strategy],
@@ -313,7 +312,7 @@ module InventoryRefresh
 
     # Convert manager_ref list of attributes to list of DB columns
     #
-    # @return [Array<String>] true is processing of this InventoryCollection will be in targeted mode
+    # @return [Array<String>] Converted manager_ref list of attributes to list of DB columns
     def manager_ref_to_cols
       # TODO(lsmola) this should contain the polymorphic _type, otherwise the IC with polymorphic unique key will get
       # conflicts
@@ -471,13 +470,11 @@ module InventoryRefresh
       hashes.map { |hash| "(#{keys.map { |key| arel_table[key].eq(hash[key]) }.inject(:and).to_sql})" }.join(" OR ")
     end
 
-    # @return [ActiveRecord::Relation] A relation that can fetch all data of this InventoryCollection from the DB
+    # Returns iterator for the passed references and a query
+    #
+    # @return [InventoryRefresh::ApplicationRecordIterator] Iterator for the references and query
     def db_collection_for_comparison
-      if targeted?
-        targeted_iterator
-      else
-        full_collection_for_comparison
-      end
+      InventoryRefresh::ApplicationRecordIterator.new(:inventory_collection => self)
     end
 
     # Builds a multiselection conditions like (table1.a = a1 AND table2.b = b1) OR (table1.a = a2 AND table2.b = b2)
@@ -487,17 +484,6 @@ module InventoryRefresh
     # @return [String] A condition usable in .where of an ActiveRecord relation
     def targeted_selection_for(references)
       build_multi_selection_condition(references.map(&:second))
-    end
-
-    # Returns iterator for the passed references and a query
-    #
-    # @param query [ActiveRecord::Relation] relation that can fetch all data of this InventoryCollection from the DB
-    # @return [InventoryRefresh::ApplicationRecordIterator] Iterator for the references and query
-    def targeted_iterator(query = nil)
-      InventoryRefresh::ApplicationRecordIterator.new(
-        :inventory_collection => self,
-        :query                => query
-      )
     end
 
     # Builds an ActiveRecord::Relation that can fetch all the references from the DB
