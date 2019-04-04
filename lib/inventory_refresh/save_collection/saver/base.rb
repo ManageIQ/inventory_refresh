@@ -12,8 +12,8 @@ module InventoryRefresh::SaveCollection
       # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we will be saving
       def initialize(inventory_collection)
         @inventory_collection = inventory_collection
-        # TODO(lsmola) do I need to reload every time? Also it should be enough to clear the associations.
-        inventory_collection.parent.reload if inventory_collection.parent
+        # # TODO(lsmola) do I need to reload every time? Also it should be enough to clear the associations.
+        # inventory_collection.parent.reload if inventory_collection.parent
         @association = inventory_collection.db_collection_for_comparison
 
         # Private attrs
