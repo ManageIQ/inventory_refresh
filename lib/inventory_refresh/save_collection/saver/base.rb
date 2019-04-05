@@ -29,7 +29,7 @@ module InventoryRefresh::SaveCollection
         @batch_size_for_persisting = inventory_collection.batch_size_pure_sql
         @batch_size                = inventory_collection.use_ar_object? ? @batch_size_for_persisting : inventory_collection.batch_size
 
-        @record_key_method   = :ar_record_key # inventory_collection.use_ar_object? ? :ar_record_key : :pure_sql_record_key
+        @record_key_method   = inventory_collection.pure_sql_record_fetching? ? :pure_sql_record_key : :ar_record_key
         @select_keys_indexes = @select_keys.each_with_object({}).with_index { |(key, obj), index| obj[key.to_s] = index }
         @pg_types            = @model_class.attribute_names.each_with_object({}) do |key, obj|
           obj[key.to_sym] = inventory_collection.model_class.columns_hash[key]

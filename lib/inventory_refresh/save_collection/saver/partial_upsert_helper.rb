@@ -201,6 +201,18 @@ module InventoryRefresh::SaveCollection
       end
 
       def skeletonize_or_skip_record(record_version, hash_version, record_versions_max, inventory_object)
+        # The hash version is string, the record_version and record_versions_max will be time object, ruby will
+        # automatically cast it, so we can compare them
+        if record_version.kind_of?(String)
+          record_version = Time.use_zone('UTC') { Time.zone.parse(record_version) }.to_s
+          record_versions_max = Time.use_zone('UTC') { Time.zone.parse(record_versions_max) }.to_s if record_versions_max
+        elsif record_version.kind_of?(Time)
+          record_version = record_version.to_s
+          record_versions_max = record_versions_max.to_s if record_versions_max
+        end
+
+        hash_version = hash_version.to_s if hash_version.kind_of?(Time)
+
         # Skip updating this record, because it is old
         return true if record_version && hash_version && record_version >= hash_version
 

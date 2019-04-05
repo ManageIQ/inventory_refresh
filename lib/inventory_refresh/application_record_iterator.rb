@@ -2,19 +2,11 @@ module InventoryRefresh
   class ApplicationRecordIterator
     attr_reader :inventory_collection, :manager_uuids_set, :iterator, :query
 
-    # An iterator that can fetch batches of the AR objects based on a set of manager refs, or just mimics AR relation
-    # when given an iterator. Or given query, acts as iterator by selecting batches.
+    # An iterator that can fetch batches of the AR objects based on a set of attribute_indexes
     #
     # @param inventory_collection [InventoryRefresh::InventoryCollection] Inventory collection owning the iterator
-    # @param manager_uuids_set [Array<InventoryRefresh::InventoryCollection::Reference>] Array of references we want to
-    #        fetch from the DB
-    # @param iterator [Proc] Block based iterator
-    # @query query [ActiveRecord::Relation] Existing query we want to use for querying the db
-    def initialize(inventory_collection: nil, manager_uuids_set: nil, iterator: nil, query: nil)
+    def initialize(inventory_collection: nil)
       @inventory_collection = inventory_collection
-      @manager_uuids_set    = manager_uuids_set
-      @iterator             = iterator
-      @query                = query
     end
 
     # Iterator that mimics find_in_batches of ActiveRecord::Relation. This iterator serves for making more optimized query
@@ -25,20 +17,11 @@ module InventoryRefresh
     # and relation.where(:id => 500ids)
     #
     # @param batch_size [Integer] A batch size we want to fetch from DB
+    # @param attributes_index [Hash{String => Hash}] Indexed hash with data we will be saving
     # @yield Code processing the batches
     def find_in_batches(batch_size: 1000, attributes_index: {})
-      if iterator
-        iterator.call do |batch|
-          yield(batch)
-        end
-      elsif query
-        attributes_index.each_slice(batch_size) do |batch|
-          yield(query.where(inventory_collection.targeted_selection_for(batch)))
-        end
-      else
-        attributes_index.each_slice(batch_size) do |batch|
-          yield(inventory_collection.db_collection_for_comparison_for(batch))
-        end
+      attributes_index.each_slice(batch_size) do |batch|
+        yield(inventory_collection.db_collection_for_comparison_for(batch))
       end
     end
 
