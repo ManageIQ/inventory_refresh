@@ -46,42 +46,6 @@ module InventoryRefresh::SaveCollection
         record[select_keys_indexes[key]]
       end
 
-      # Returns iterator or relation based on settings
-      #
-      # @param association [Symbol] An existing association on manager
-      # @return [ActiveRecord::Relation, InventoryRefresh::ApplicationRecordIterator] iterator or relation based on settings
-      def batch_iterator(association)
-        if pure_sql_records_fetching
-          # Building fast iterator doing pure SQL query and therefore avoiding redundant creation of AR objects. The
-          # iterator responds to find_in_batches, so it acts like the AR relation. For targeted refresh, the association
-          # can already be ApplicationRecordIterator, so we will skip that.
-          # TODO(lsmola) Since everything is targeted now, we want to probably delete this branch and make iterator to
-          # do pure SQL queries, if there will be no .check_changed?
-          pure_sql_iterator = lambda do |&block|
-            primary_key_offset = nil
-            loop do
-              relation    = association.select(*select_keys)
-                                       .reorder("#{primary_key} ASC")
-                                       .limit(batch_size)
-              # Using rails way of comparing primary key instead of offset
-              relation    = relation.where(arel_primary_key.gt(primary_key_offset)) if primary_key_offset
-              records     = get_connection.query(relation.to_sql)
-              last_record = records.last
-              block.call(records)
-
-              break if records.size < batch_size
-              primary_key_offset = record_key(last_record, primary_key)
-            end
-          end
-
-          InventoryRefresh::ApplicationRecordIterator.new(:iterator => pure_sql_iterator)
-        else
-          # Normal Rails ActiveRecord::Relation where we can call find_in_batches or
-          # InventoryRefresh::ApplicationRecordIterator passed from targeted refresh
-          association
-        end
-      end
-
       # Saves the InventoryCollection
       #
       # @param association [Symbol] An existing association on manager
@@ -105,7 +69,7 @@ module InventoryRefresh::SaveCollection
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
         unless inventory_collection.create_only?
-          update_or_destroy_records!(batch_iterator(association), inventory_objects_index, attributes_index, all_attribute_keys)
+          update_or_destroy_records!(association, inventory_objects_index, attributes_index, all_attribute_keys)
         end
 
         unless inventory_collection.create_only?

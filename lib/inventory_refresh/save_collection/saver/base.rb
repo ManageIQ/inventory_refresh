@@ -26,15 +26,10 @@ module InventoryRefresh::SaveCollection
         @unique_db_primary_keys = Set.new
         @unique_db_indexes      = Set.new
 
-        # Right now ApplicationRecordIterator in association is used for targeted refresh. Given the small amount of
-        # records flowing through there, we probably don't need to optimize that association to fetch a pure SQL.
-        # TODO(lsmola) since we save everything through targeted mode, we want to optimize this
-        @pure_sql_records_fetching = !inventory_collection.use_ar_object? && !@association.kind_of?(InventoryRefresh::ApplicationRecordIterator)
-
         @batch_size_for_persisting = inventory_collection.batch_size_pure_sql
+        @batch_size                = inventory_collection.use_ar_object? ? @batch_size_for_persisting : inventory_collection.batch_size
 
-        @batch_size          = @pure_sql_records_fetching ? @batch_size_for_persisting : inventory_collection.batch_size
-        @record_key_method   = @pure_sql_records_fetching ? :pure_sql_record_key : :ar_record_key
+        @record_key_method   = :ar_record_key # inventory_collection.use_ar_object? ? :ar_record_key : :pure_sql_record_key
         @select_keys_indexes = @select_keys.each_with_object({}).with_index { |(key, obj), index| obj[key.to_s] = index }
         @pg_types            = @model_class.attribute_names.each_with_object({}) do |key, obj|
           obj[key.to_sym] = inventory_collection.model_class.columns_hash[key]
@@ -120,7 +115,7 @@ module InventoryRefresh::SaveCollection
       private
 
       attr_reader :unique_index_keys, :unique_index_keys_to_s, :select_keys, :unique_db_primary_keys, :unique_db_indexes,
-                  :primary_key, :arel_primary_key, :record_key_method, :pure_sql_records_fetching, :select_keys_indexes,
+                  :primary_key, :arel_primary_key, :record_key_method, :select_keys_indexes,
                   :batch_size, :batch_size_for_persisting, :model_class, :serializable_keys, :deserializable_keys, :pg_types, :table_name,
                   :q_table_name
 
