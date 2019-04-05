@@ -12,7 +12,7 @@ module InventoryRefresh
            manager_ref                  manager_ref_allowed_nil
            model_class                  name                    parent
            retention_strategy           strategy
-           secondary_refs               targeted
+           secondary_refs
            update_only                  use_ar_object
            assert_graph_integrity).to_set
       end

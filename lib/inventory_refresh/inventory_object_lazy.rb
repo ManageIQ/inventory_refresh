@@ -100,7 +100,7 @@ module InventoryRefresh
 
     private
 
-    delegate :parallel_safe?, :saved?, :saver_strategy, :skeletal_primary_index, :targeted?, :to => :inventory_collection
+    delegate :parallel_safe?, :saved?, :saver_strategy, :skeletal_primary_index, :to => :inventory_collection
     delegate :nested_secondary_index?, :primary?, :full_reference, :keys, :primary?, :to => :reference
 
     attr_writer :reference

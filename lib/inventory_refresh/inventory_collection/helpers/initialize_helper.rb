@@ -92,17 +92,13 @@ module InventoryRefresh
         # @param use_ar_object [Boolean] True or False. Whether we need to initialize AR object as part of the saving
         #        it's needed if the model have special setters, serialize of columns, etc. This setting is relevant only
         #        for the batch saver strategy.
-        # @param targeted [Boolean] True if the collection is targeted, going forward, everything will be targeted
-        def init_flags(complete, create_only, check_changed,
-                       update_only, use_ar_object, targeted,
-                       assert_graph_integrity)
+        def init_flags(complete, create_only, check_changed, update_only, use_ar_object, assert_graph_integrity)
           @complete               = complete.nil? ? true : complete
           @create_only            = create_only.nil? ? false : create_only
           @check_changed          = check_changed.nil? ? true : check_changed
           @saved                  = false
           @update_only            = update_only.nil? ? false : update_only
           @use_ar_object          = use_ar_object || false
-          @targeted               = !!targeted
           @assert_graph_integrity = assert_graph_integrity.nil? ? true : assert_graph_integrity
         end
 
@@ -163,14 +159,16 @@ module InventoryRefresh
         #        doing create/update/delete.
         #
         #        Example:
-        #        for a targeted refresh, we want to delete/update/create only a list of vms specified with a list of
-        #        ems_refs:
-        #            :arel => manager.vms.where(:ems_ref => manager_refs)
-        #        Then we want to do the same for the hardwares of only those vms:
-        #             :arel => manager.hardwares.joins(:vm_or_template).where(
-        #               'vms' => {:ems_ref => manager_refs}
-        #             )
-        #        And etc. for the other Vm related records.
+        #          add_collection(:cross_link_vms) do |builder|
+        #            builder.add_properties(
+        #              :arel        => Vm.where(:tenant => manager.tenant),
+        #              :association => nil,
+        #              :model_class => Vm,
+        #              :name        => :cross_link_vms,
+        #              :manager_ref => [:uid_ems],
+        #              :strategy    => :local_db_find_references,
+        #            )
+        #          end
         def init_arels(arel)
           @arel = arel
         end

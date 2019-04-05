@@ -28,6 +28,7 @@ module InventoryRefresh::SaveCollection
 
         # Right now ApplicationRecordIterator in association is used for targeted refresh. Given the small amount of
         # records flowing through there, we probably don't need to optimize that association to fetch a pure SQL.
+        # TODO(lsmola) since we save everything through targeted mode, we want to optimize this
         @pure_sql_records_fetching = !inventory_collection.use_ar_object? && !@association.kind_of?(InventoryRefresh::ApplicationRecordIterator)
 
         @batch_size_for_persisting = inventory_collection.batch_size_pure_sql
@@ -73,9 +74,6 @@ module InventoryRefresh::SaveCollection
 
       # Saves the InventoryCollection
       def save_inventory_collection!
-        # If we have a targeted InventoryCollection that wouldn't do anything, quickly skip it
-        return if inventory_collection.noop?
-
         # Create/Update/Archive/Delete records based on InventoryCollection data and scope
         save!(association)
       end
@@ -130,7 +128,7 @@ module InventoryRefresh::SaveCollection
 
       # @return [String] a string for logging purposes
       def inventory_collection_details
-        "strategy: #{inventory_collection.strategy}, saver_strategy: #{inventory_collection.saver_strategy}, targeted: #{inventory_collection.targeted?}"
+        "strategy: #{inventory_collection.strategy}, saver_strategy: #{inventory_collection.saver_strategy}"
       end
 
       # Check if relation provided is distinct, i.e. the relation should not return the same primary key value twice.

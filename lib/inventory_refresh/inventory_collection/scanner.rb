@@ -41,7 +41,6 @@ module InventoryRefresh
       # Boolean helpers the scanner uses from the :inventory_collection
       delegate :inventory_object_lazy?,
                :inventory_object?,
-               :targeted?,
                :to => :inventory_collection
 
       # Methods the scanner uses from the :inventory_collection
@@ -58,7 +57,6 @@ module InventoryRefresh
                :custom_save_block,
                :data_collection_finalized=,
                :dependency_attributes,
-               :targeted?,
                :parent,
                :references,
                :transitive_dependency_attributes,
