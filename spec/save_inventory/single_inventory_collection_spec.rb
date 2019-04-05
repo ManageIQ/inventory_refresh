@@ -84,6 +84,7 @@ describe InventoryRefresh::SaveInventory do
 
       # Invoke the InventoryCollections saving
       InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+      @ems.reload
 
       # Assert that saved data have the updated values, checking id to make sure the original records are updated
       assert_all_records_match_hashes(
