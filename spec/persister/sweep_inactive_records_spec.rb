@@ -15,12 +15,13 @@ describe InventoryRefresh::Persister do
     context "with config #{config}" do
       context "with :retention_strategy => 'archive'" do
         it "automatically fills :last_seen_at timestamp for refreshed entities and archives them in last step" do
-          time_now    = Time.now.utc
-          time_before = Time.now.utc - 20.seconds
-          time_after  = Time.now.utc + 20.seconds
+          time_now         = Time.now.utc
+          time_before      = Time.now.utc - 20.seconds
+          time_more_before = Time.now.utc - 40.seconds
+          time_after       = Time.now.utc + 20.seconds
 
           cg1  = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
-          _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
+          cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_more_before))
           _cg3 = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
           _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :last_seen_at => time_before))
           _cg6 = FactoryBot.create(:container_group, container_group_data(6).merge(:ext_management_system => @ems, :last_seen_at => time_before))
@@ -40,10 +41,10 @@ describe InventoryRefresh::Persister do
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           # We update just the first record, and last_seen_at is updated for all records involved
-          expect(persister.container_groups.updated_records).to(match_array([{:id => cg1.id}]))
+          expect(persister.container_groups.updated_records).to(match_array([{:id => cg2.id}]))
 
           date_field = ContainerGroup.arel_table[:last_seen_at]
           expect(ContainerGroup.where(date_field.gt(time_now)).pluck(:ems_ref)).to(
@@ -61,7 +62,7 @@ describe InventoryRefresh::Persister do
           persister.refresh_state_part_uuid = part2_uuid
 
           persister.container_groups.build(container_group_data(6).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           date_field = ContainerGroup.arel_table[:last_seen_at]
           expect(ContainerGroup.where(date_field.gt(time_now)).pluck(:ems_ref)).to(
@@ -121,7 +122,7 @@ describe InventoryRefresh::Persister do
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           # Refresh second part and mark :last_seen_at
           persister                         = create_containers_persister(:retention_strategy => "archive")
@@ -129,7 +130,7 @@ describe InventoryRefresh::Persister do
           persister.refresh_state_part_uuid = part2_uuid
 
           persister.container_groups.build(container_group_data(6).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
           persister.sweep_scope = ["container_groups"]
@@ -192,7 +193,7 @@ describe InventoryRefresh::Persister do
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           ################################################################################################################
           # Refresh second part
@@ -201,7 +202,7 @@ describe InventoryRefresh::Persister do
           persister.refresh_state_part_uuid = part2_uuid
 
           persister.container_groups.build(container_group_data(6).merge(:resource_timestamp => time_before))
-          persist(persister, config)
+          persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step. Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on
@@ -245,7 +246,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persist(persister, config)
+          persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step.
@@ -338,7 +339,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persist(persister, config)
+          persister = persist(persister, config)
 
           ################################################################################################################
           # Refresh second part
@@ -353,7 +354,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persist(persister, config)
+          persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step. Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on
@@ -485,14 +486,14 @@ describe InventoryRefresh::Persister do
         create_containers_persister(:retention_strategy => "archive")
       end
 
-      def persist(persister, _config)
-        # TODO(lsmola) serializing is messing with the timestamp, so the reconnect unconnected edges doesn't work
-        # if config[:serialize]
-        #   persister.class.from_json(persister.to_json, @ems).persist!
-        # else
-        #   persister.persist!
-        # end
-        persister.persist!
+      def persist(persister, config)
+        if config[:serialize]
+          persister = persister.class.from_json(persister.to_json, @ems)
+          persister.persist!
+        else
+          persister.persist!
+        end
+        persister
       end
 
       def sweep(persister, time, config)
