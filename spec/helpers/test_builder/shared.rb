@@ -56,23 +56,20 @@ class TestBuilder
 
       def hardwares
         add_properties(
-          :manager_ref                  => %i(vm_or_template),
-          :parent_inventory_collections => %i(vms miq_templates),
-          :use_ar_object                => true, # TODO(lsmola) just because of default value on cpu_sockets, this can be fixed by separating instances_hardwares and images_hardwares
+          :manager_ref   => %i(vm_or_template),
+          :use_ar_object => true, # TODO(lsmola) just because of default value on cpu_sockets, this can be fixed by separating instances_hardwares and images_hardwares
         )
       end
 
       def networks
         add_properties(
           :manager_ref                  => %i(hardware description),
-          :parent_inventory_collections => %i(vms)
         )
       end
 
       def disks
         add_properties(
-          :manager_ref                  => %i(hardware device_name),
-          :parent_inventory_collections => %i(vms)
+          :manager_ref => %i(hardware device_name),
         )
       end
 
