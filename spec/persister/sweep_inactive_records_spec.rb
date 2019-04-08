@@ -75,7 +75,6 @@ describe InventoryRefresh::Persister do
           )
 
           # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
-          # Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on column
           persister.sweep_scope = ["container_groups", "container_nodes"]
           sweep(persister, time_now, config)
 
