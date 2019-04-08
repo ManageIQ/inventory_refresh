@@ -18,7 +18,7 @@ describe InventoryRefresh::Persister do
           time_now         = Time.now.utc
           time_before      = Time.now.utc - 20.seconds
           time_more_before = Time.now.utc - 40.seconds
-          time_after       = Time.now.utc + 20.seconds
+          _time_after       = Time.now.utc + 20.seconds
 
           cg1  = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
           cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_more_before))
@@ -121,7 +121,7 @@ describe InventoryRefresh::Persister do
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           # Refresh second part and mark :last_seen_at
           persister                         = create_containers_persister(:retention_strategy => "archive")
@@ -192,7 +192,7 @@ describe InventoryRefresh::Persister do
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           ################################################################################################################
           # Refresh second part
@@ -201,7 +201,7 @@ describe InventoryRefresh::Persister do
           persister.refresh_state_part_uuid = part2_uuid
 
           persister.container_groups.build(container_group_data(6).merge(:resource_timestamp => time_before))
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step. Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on
@@ -245,7 +245,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step.
@@ -338,7 +338,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           ################################################################################################################
           # Refresh second part
@@ -353,7 +353,7 @@ describe InventoryRefresh::Persister do
             )
           )
 
-          persister = persist(persister, config)
+          _persister = persist(persister, config)
 
           ################################################################################################################
           # Sweeping step. Send persister with total_parts = XY, that will cause sweeping all tables having :last_seen_on
@@ -488,10 +488,9 @@ describe InventoryRefresh::Persister do
       def persist(persister, config)
         if config[:serialize]
           persister = persister.class.from_json(persister.to_json, @ems)
-          persister.persist!
-        else
-          persister.persist!
         end
+        persister.persist!
+
         persister
       end
 
