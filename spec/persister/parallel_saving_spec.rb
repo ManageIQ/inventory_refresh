@@ -12,18 +12,34 @@ describe InventoryRefresh::Persister do
   end
 
   [{
-    :upsert_only            => true,
-    :parallel_saving_column => "resource_counter",
-  }, {
-    :upsert_only            => false,
-    :parallel_saving_column => "resource_counter",
-  }, {
-    :upsert_only            => true,
-    :parallel_saving_column => "resource_timestamp",
-  }, {
-    :upsert_only            => false,
-    :parallel_saving_column => "resource_timestamp",
-  },].each do |settings|
+     :upsert_only            => true,
+     :parallel_saving_column => "resource_counter",
+   }, {
+     :upsert_only            => false,
+     :parallel_saving_column => "resource_counter",
+   }, {
+     :upsert_only            => true,
+     :parallel_saving_column => "resource_timestamp",
+   }, {
+     :upsert_only            => false,
+     :parallel_saving_column => "resource_timestamp",
+   }, {
+     :upsert_only            => true,
+     :parallel_saving_column => "resource_timestamp",
+     :use_ar_object          => true,
+   }, {
+     :upsert_only            => false,
+     :parallel_saving_column => "resource_timestamp",
+     :use_ar_object          => true,
+   }, {
+     :upsert_only            => true,
+     :parallel_saving_column => "resource_timestamp",
+     :use_ar_object          => false,
+   }, {
+     :upsert_only            => false,
+     :parallel_saving_column => "resource_timestamp",
+     :use_ar_object          => false,
+   }].each do |settings|
     context "with settings #{settings}" do
       before(:each) do
         if settings[:upsert_only]
