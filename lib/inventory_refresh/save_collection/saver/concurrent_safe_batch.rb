@@ -69,7 +69,7 @@ module InventoryRefresh::SaveCollection
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
         unless inventory_collection.create_only?
-          update_or_destroy_records!(association, inventory_objects_index, attributes_index, all_attribute_keys)
+          load_and_update_records!(association, inventory_objects_index, attributes_index, all_attribute_keys)
         end
 
         unless inventory_collection.create_only?
@@ -128,8 +128,7 @@ module InventoryRefresh::SaveCollection
         get_connection.execute(query)
       end
 
-      # Batch updates existing records that are in the DB using attributes_index. And delete the ones that were not
-      # present in inventory_objects_index.
+      # Batch updates existing records that are in the DB using attributes_index.
       #
       # @param records_batch_iterator [ActiveRecord::Relation, InventoryRefresh::ApplicationRecordIterator] iterator or
       #        relation, both responding to :find_in_batches method
@@ -137,9 +136,8 @@ module InventoryRefresh::SaveCollection
       # @param attributes_index [Hash{String => Hash}] Hash of data hashes with only keys that are column names of the
       #        models's table
       # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
-      def update_or_destroy_records!(records_batch_iterator, inventory_objects_index, attributes_index, all_attribute_keys)
-        hashes_for_update   = []
-        records_for_destroy = []
+      def load_and_update_records!(records_batch_iterator, inventory_objects_index, attributes_index, all_attribute_keys)
+        hashes_for_update         = []
         indexed_inventory_objects = {}
 
         records_batch_iterator.find_in_batches(:batch_size => batch_size, :attributes_index => attributes_index) do |batch|
@@ -155,13 +153,7 @@ module InventoryRefresh::SaveCollection
             inventory_object = inventory_objects_index.delete(index)
             hash             = attributes_index[index]
 
-            if inventory_object.nil?
-              # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
-              # delete it from the DB.
-              if inventory_collection.delete_allowed?
-                records_for_destroy << record
-              end
-            else
+            if inventory_object
               # Record was found in the DB and sent for saving, we will be updating the DB.
               inventory_object.id = primary_key_value
               next unless assert_referential_integrity(hash)
@@ -211,21 +203,11 @@ module InventoryRefresh::SaveCollection
             hashes_for_update = []
             indexed_inventory_objects = {}
           end
-
-          # Destroy in batches
-          if records_for_destroy.size >= batch_size_for_persisting
-            destroy_records!(records_for_destroy)
-            records_for_destroy = []
-          end
         end
 
         # Update the last batch
         update_records!(all_attribute_keys, hashes_for_update, indexed_inventory_objects)
         hashes_for_update = [] # Cleanup so GC can release it sooner
-
-        # Destroy the last batch
-        destroy_records!(records_for_destroy)
-        records_for_destroy = [] # Cleanup so GC can release it sooner
       end
 
       def changed?(_record, _hash, _all_attribute_keys)
