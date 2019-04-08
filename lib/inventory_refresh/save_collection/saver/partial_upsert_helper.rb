@@ -200,29 +200,24 @@ module InventoryRefresh::SaveCollection
         )
       end
 
-      def skeletonize_or_skip_record(record_version, hash_version, record_versions_max, inventory_object)
+      def comparable_timestamp(timestamp)
         # Lets cast all timestamps to to_f, rounding the time comparing precision to miliseconds, that should be
         # enough, since we are the ones setting the record version in collector. Otherwise we will have hard time with
         # doing equality, since the value changes going through DB (DB. cuts it at 5 decimal places)
-        if record_version.kind_of?(String)
-          record_version = Time.use_zone('UTC') { Time.zone.parse(record_version) }.to_f.round(3)
-        elsif record_version.kind_of?(Time)
-          record_version = record_version.in_time_zone('UTC').to_f.round(3)
-        end
 
-        if record_versions_max
-          if record_versions_max.kind_of?(String)
-            record_versions_max = Time.use_zone('UTC') { Time.zone.parse(record_versions_max) }.to_f.round(3)
-          elsif record_versions_max.kind_of?(Time)
-            record_versions_max = record_versions_max.in_time_zone('UTC').to_f.round(3)
-          end
+        if timestamp.kind_of?(String)
+          Time.use_zone('UTC') { Time.zone.parse(timestamp) }.to_f.round(3)
+        elsif timestamp.kind_of?(Time)
+          timestamp.in_time_zone('UTC').to_f.round(3)
+        else
+          timestamp
         end
+      end
 
-        if hash_version.kind_of?(String)
-          hash_version = Time.use_zone('UTC') { Time.zone.parse(hash_version) }.to_f.round(3)
-        elsif hash_version.kind_of?(Time)
-          hash_version = hash_version.in_time_zone('UTC').to_f.round(3)
-        end
+      def skeletonize_or_skip_record(record_version, hash_version, record_versions_max, inventory_object)
+        record_version      = comparable_timestamp(record_version)
+        record_versions_max = comparable_timestamp(record_versions_max) if record_versions_max
+        hash_version        = comparable_timestamp(hash_version)
 
         # Skip updating this record, because it is old
         return true if record_version && hash_version && record_version >= hash_version
