@@ -1,4 +1,4 @@
----
+dist: xenial
 sudo: false
 language: ruby
 cache: bundler
@@ -6,7 +6,7 @@ rvm:
 - 2.5.7
 - 2.6.5
 addons:
-  postgresql: '9.5'
+  postgresql: '10'
 env:
   global:
   - CC_TEST_REPORTER_ID=1ef1a3a3d007395b11083d634a6fdac1e3d979b6428c39d2cd8d58556cdd68f7
@@ -14,12 +14,10 @@ before_install:
 - gem install bundler -v 2.0.1
 - psql -c "CREATE USER root SUPERUSER PASSWORD 'smartvm';" -U postgres
 before_script:
-# Code Climate
-- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+  > ./cc-test-reporter
 - chmod +x ./cc-test-reporter
 - "./cc-test-reporter before-build"
-# inventory_refresh
 - bundle exec rake spec:setup
 after_script:
-# Code Climate
 - "./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT"
