@@ -264,11 +264,6 @@ module InventoryRefresh::SaveCollection
       def update_records!(all_attribute_keys, hashes, indexed_inventory_objects)
         return if hashes.blank?
 
-        unless inventory_collection.parallel_safe?
-          # We need to update the stored records before we save it, since hashes are modified
-          inventory_collection.store_updated_records(hashes)
-        end
-
         query = build_update_query(all_attribute_keys, hashes)
         result = get_connection.execute(query)
 
@@ -323,24 +318,19 @@ module InventoryRefresh::SaveCollection
           build_insert_query(all_attribute_keys, hashes, :on_conflict => on_conflict, :mode => :full)
         )
 
-        if inventory_collection.parallel_safe?
-          # We've done upsert, so records were either created or updated. We can recognize that by checking if
-          # created and updated timestamps are the same
-          created_attr = "created_on" if inventory_collection.supports_column?(:created_on)
-          created_attr ||= "created_at" if inventory_collection.supports_column?(:created_at)
-          updated_attr = "updated_on" if inventory_collection.supports_column?(:updated_on)
-          updated_attr ||= "updated_at" if inventory_collection.supports_column?(:updated_at)
+        # We've done upsert, so records were either created or updated. We can recognize that by checking if
+        # created and updated timestamps are the same
+        created_attr = "created_on" if inventory_collection.supports_column?(:created_on)
+        created_attr ||= "created_at" if inventory_collection.supports_column?(:created_at)
+        updated_attr = "updated_on" if inventory_collection.supports_column?(:updated_on)
+        updated_attr ||= "updated_at" if inventory_collection.supports_column?(:updated_at)
 
-          if created_attr && updated_attr
-            created, updated = result.to_a.partition { |x| x[created_attr] == x[updated_attr] }
-            inventory_collection.store_created_records(created)
-            inventory_collection.store_updated_records(updated)
-          else
-            # The record doesn't have both created and updated attrs, so we'll take all as created
-            inventory_collection.store_created_records(result)
-          end
+        if created_attr && updated_attr
+          created, updated = result.to_a.partition { |x| x[created_attr] == x[updated_attr] }
+          inventory_collection.store_created_records(created)
+          inventory_collection.store_updated_records(updated)
         else
-          # We've done just insert, so all records were created
+          # The record doesn't have both created and updated attrs, so we'll take all as created
           inventory_collection.store_created_records(result)
         end
 
@@ -353,9 +343,7 @@ module InventoryRefresh::SaveCollection
                                        :on_conflict => on_conflict)
         end
 
-        if inventory_collection.parallel_safe?
-          skeletonize_ignored_records!(indexed_inventory_objects, result, :all_unique_columns => true)
-        end
+        skeletonize_ignored_records!(indexed_inventory_objects, result, :all_unique_columns => true)
       end
 
       # Stores primary_key values of created records into associated InventoryObject objects.
