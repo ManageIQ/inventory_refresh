@@ -100,7 +100,7 @@ module InventoryRefresh
 
     private
 
-    delegate :parallel_safe?, :saved?, :saver_strategy, :skeletal_primary_index, :to => :inventory_collection
+    delegate :saved?, :saver_strategy, :skeletal_primary_index, :to => :inventory_collection
     delegate :nested_secondary_index?, :primary?, :full_reference, :keys, :primary?, :to => :reference
 
     attr_writer :reference
@@ -112,10 +112,6 @@ module InventoryRefresh
     #
     # @return [InventoryRefresh::InventoryObject, NilClass] Returns pre-created InventoryObject or nil
     def skeletal_precreate!
-      # We can do skeletal pre-create only for strategies using unique indexes. Since this can build records out of
-      # the given :arel scope, we will always attempt to create the recod, so we need unique index to avoid duplication
-      # of records.
-      return unless parallel_safe?
       # Pre-create only for strategies that will be persisting data, i.e. are not saved already
       return if saved?
       # We can only do skeletal pre-create for primary index reference, since that is needed to create DB unique index

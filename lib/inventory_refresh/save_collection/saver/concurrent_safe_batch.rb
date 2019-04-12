@@ -78,15 +78,11 @@ module InventoryRefresh::SaveCollection
 
         # Records that were not found in the DB but sent for saving, we will be creating these in the DB.
         if inventory_collection.create_allowed?
-          on_conflict = inventory_collection.parallel_safe? ? :do_update : nil
-
           inventory_objects_index.each_slice(batch_size_for_persisting) do |batch|
-            create_records!(all_attribute_keys, batch, attributes_index, :on_conflict => on_conflict)
+            create_records!(all_attribute_keys, batch, attributes_index, :on_conflict => :do_update)
           end
 
-          if inventory_collection.parallel_safe?
-            create_or_update_partial_records(all_attribute_keys)
-          end
+          create_or_update_partial_records(all_attribute_keys)
         end
 
         logger.debug("Marking :last_seen_at of #{inventory_collection} of size #{inventory_collection.size}...")
@@ -115,7 +111,7 @@ module InventoryRefresh::SaveCollection
       end
 
       def mark_last_seen_at(attributes_index)
-        return unless supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
+        return unless supports_column?(:last_seen_at)
         return if attributes_index.blank?
 
         all_attribute_keys = [:last_seen_at]
@@ -159,8 +155,7 @@ module InventoryRefresh::SaveCollection
               next unless assert_referential_integrity(hash)
               next unless changed?(record, hash, all_attribute_keys)
 
-              if inventory_collection.parallel_safe? &&
-                 (supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys))
+              if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
 
                 version_attr, max_version_attr = if supports_remote_data_timestamp?(all_attribute_keys)
                                                    [:resource_timestamp, :resource_timestamps_max]
@@ -267,12 +262,10 @@ module InventoryRefresh::SaveCollection
         query = build_update_query(all_attribute_keys, hashes)
         result = get_connection.execute(query)
 
-        if inventory_collection.parallel_safe?
-          # We will check for timestamp clashes of full row update and we will fallback to skeletal update
-          inventory_collection.store_updated_records(result)
+        # We will check for timestamp clashes of full row update and we will fallback to skeletal update
+        inventory_collection.store_updated_records(result)
 
-          skeletonize_ignored_records!(indexed_inventory_objects, result)
-        end
+        skeletonize_ignored_records!(indexed_inventory_objects, result)
 
         result
       end
