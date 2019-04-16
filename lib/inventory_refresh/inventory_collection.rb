@@ -486,12 +486,30 @@ module InventoryRefresh
       build_multi_selection_condition(references.map(&:second))
     end
 
+    def select_keys
+      @select_keys ||= [@model_class.primary_key] + manager_ref_to_cols.map(&:to_s) + internal_columns.map(&:to_s)
+    end
+
+    # @return [ActiveRecord::ConnectionAdapters::AbstractAdapter] ActiveRecord connection
+    def get_connection
+      ActiveRecord::Base.connection
+    end
+
+    def pure_sql_record_fetching?
+      !use_ar_object?
+    end
+
     # Builds an ActiveRecord::Relation that can fetch all the references from the DB
     #
     # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] passed references
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def db_collection_for_comparison_for(references)
-      full_collection_for_comparison.where(targeted_selection_for(references))
+      query = full_collection_for_comparison.where(targeted_selection_for(references))
+      if pure_sql_record_fetching?
+        return get_connection.query(query.select(*select_keys).to_sql)
+      end
+
+      query
     end
 
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
