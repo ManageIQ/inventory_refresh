@@ -95,7 +95,7 @@ class TestCollector
     end
 
     def new_persister(ems, settings)
-      TestPersister::Containers.new(ems, ems, :use_ar_object => settings[:use_ar_object])
+      TestPersister::Containers.new(ems, :use_ar_object => settings[:use_ar_object])
     end
 
     def version_col(settings)

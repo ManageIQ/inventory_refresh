@@ -1,7 +1,7 @@
 describe InventoryRefresh::Persister do
   before :each do
     @ems = create_manager
-    @persister = described_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
+    @persister = described_class.new(@ems)
   end
 
   def create_manager

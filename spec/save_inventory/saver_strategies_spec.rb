@@ -21,7 +21,7 @@ describe InventoryRefresh::SaveInventory do
                                   :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
+        @persister = persister_class.new(@ems)
       end
 
       before do
