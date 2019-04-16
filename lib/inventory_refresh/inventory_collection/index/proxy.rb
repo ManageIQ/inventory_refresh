@@ -64,14 +64,6 @@ module InventoryRefresh
           end
         end
 
-        def reindex_secondary_indexes!
-          data_indexes.each do |ref, index|
-            next if ref == primary_index_ref
-
-            index.reindex!
-          end
-        end
-
         def primary_index
           data_index(primary_index_ref)
         end

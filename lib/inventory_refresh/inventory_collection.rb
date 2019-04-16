@@ -112,7 +112,6 @@ module InventoryRefresh
              :lazy_find_by,
              :named_ref,
              :primary_index,
-             :reindex_secondary_indexes!,
              :skeletal_primary_index,
              :to => :index_proxy
 
