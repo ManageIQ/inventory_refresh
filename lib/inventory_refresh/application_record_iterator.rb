@@ -1,6 +1,6 @@
 module InventoryRefresh
   class ApplicationRecordIterator
-    attr_reader :inventory_collection, :manager_uuids_set, :iterator, :query
+    attr_reader :inventory_collection
 
     # An iterator that can fetch batches of the AR objects based on a set of attribute_indexes
     #
