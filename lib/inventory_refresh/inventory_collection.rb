@@ -568,11 +568,5 @@ module InventoryRefresh
         :id => identity
       }
     end
-
-    # TODO: Not used!
-    # @return [Array<Symbol>] all association attributes and foreign keys of the model class
-    def association_attributes
-      model_class.reflect_on_all_associations.map { |x| [x.name, x.foreign_key] }.flatten.compact.map(&:to_sym)
-    end
   end
 end
