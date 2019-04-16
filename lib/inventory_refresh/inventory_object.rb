@@ -42,59 +42,6 @@ module InventoryRefresh
     # Transforms InventoryObject object data into hash format with keys that are column names and resolves correct
     # values of the foreign keys (even the polymorphic ones)
     #
-    # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] parent InventoryCollection object
-    # @return [Hash] Data in DB format
-    def attributes(inventory_collection_scope = nil)
-      # We should explicitly pass a scope, since the inventory_object can be mapped to more InventoryCollections with
-      # different blacklist and whitelist. The generic code always passes a scope.
-      inventory_collection_scope ||= inventory_collection
-
-      attributes_for_saving = {}
-      # First transform the values
-      data.each do |key, value|
-        if !allowed?(inventory_collection_scope, key)
-          next
-        elsif value.kind_of?(Array) && value.any? { |x| loadable?(x) }
-          # Lets fill also the original data, so other InventoryObject referring to this attribute gets the right
-          # result
-          data[key] = value.compact.map(&:load).compact
-          # We can use built in _ids methods to assign array of ids into has_many relations. So e.g. the :key_pairs=
-          # relation setter will become :key_pair_ids=
-          attributes_for_saving[(key.to_s.singularize + "_ids").to_sym] = data[key].map(&:id).compact.uniq
-        elsif loadable?(value) || inventory_collection_scope.association_to_foreign_key_mapping[key]
-          # Lets fill also the original data, so other InventoryObject referring to this attribute gets the right
-          # result
-          data[key] = value.load if value.respond_to?(:load)
-          if (foreign_key = inventory_collection_scope.association_to_foreign_key_mapping[key])
-            # We have an association to fill, lets fill also the :key, cause some other InventoryObject can refer to it
-            record_id                                 = data[key].try(:id)
-            attributes_for_saving[foreign_key.to_sym] = record_id
-
-            if (foreign_type = inventory_collection_scope.association_to_foreign_type_mapping[key])
-              # If we have a polymorphic association, we need to also fill a base class name, but we want to nullify it
-              # if record_id is missing
-              base_class = data[key].try(:base_class_name) || data[key].class.try(:base_class).try(:name)
-              attributes_for_saving[foreign_type.to_sym] = record_id ? base_class : nil
-            end
-          elsif data[key].kind_of?(::InventoryRefresh::InventoryObject)
-            # We have an association to fill but not an Activerecord association, so e.g. Ancestry, lets just load
-            # it here. This way of storing ancestry is ineffective in DB call count, but RAM friendly
-            attributes_for_saving[key.to_sym] = data[key].base_class_name.constantize.find_by(:id => data[key].id)
-          else
-            # We have a normal attribute to fill
-            attributes_for_saving[key.to_sym] = data[key]
-          end
-        else
-          attributes_for_saving[key.to_sym] = value
-        end
-      end
-
-      attributes_for_saving
-    end
-
-    # Transforms InventoryObject object data into hash format with keys that are column names and resolves correct
-    # values of the foreign keys (even the polymorphic ones)
-    #
     # @param data [Array<Object>] Array of objects that we want to map to DB table columns
     # @param inventory_collection_scope [InventoryRefresh::InventoryCollection] parent InventoryCollection object
     # @param all_attribute_keys [Array<Symbol>] Attribute keys we will modify based on object's data
