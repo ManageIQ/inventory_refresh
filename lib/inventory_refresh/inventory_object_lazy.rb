@@ -30,7 +30,6 @@ module InventoryRefresh
 
     # @return [String] stringified reference
     def to_s
-      # TODO(lsmola) do we need this method?
       stringified_reference
     end
 
@@ -71,10 +70,6 @@ module InventoryRefresh
 
     # @return [Boolean] true if the key is an association on inventory_collection_scope model class
     def association?(key)
-      # TODO(lsmola) remove this if there will be better dependency scan, probably with transitive dependencies filled
-      # in a second pass, then we can get rid of this hardcoded symbols. Right now we are not able to introspect these.
-      return true if [:parent, :genealogy_parent].include?(key)
-
       inventory_collection.dependency_attributes.key?(key) ||
         !inventory_collection.association_to_foreign_key_mapping[key].nil?
     end
