@@ -447,13 +447,11 @@ module InventoryRefresh
 
     # @return [Integer] default batch size for talking to the DB
     def batch_size
-      # TODO(lsmola) mode to the settings
       1000
     end
 
     # @return [Integer] default batch size for talking to the DB if not using ApplicationRecord objects
     def batch_size_pure_sql
-      # TODO(lsmola) mode to the settings
       10_000
     end
 
