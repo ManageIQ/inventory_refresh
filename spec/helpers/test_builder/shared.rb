@@ -57,7 +57,7 @@ class TestBuilder
       def hardwares
         add_properties(
           :manager_ref   => %i(vm_or_template),
-          :use_ar_object => true, # TODO(lsmola) just because of default value on cpu_sockets, this can be fixed by separating instances_hardwares and images_hardwares
+          :use_ar_object => true,
         )
       end
 
