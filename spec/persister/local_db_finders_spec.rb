@@ -303,8 +303,8 @@ describe InventoryRefresh::Persister do
       expect(stack_resource_1_11_1.manager_uuid).to eq "stack_resource_physical_resource_1_11_1"
       expect(stack_resource_1_11_2.manager_uuid).to eq "stack_resource_physical_resource_1_11_2"
       expect(stack_resource_1_11_3).to be_nil
-      # TODO(lsmola) should we preload the relation even before the scanner found it it's referenced?
-      # :key pointing to relation is not loaded when scanner is not invoked
+      # :key pointing to relation is not loaded when scanner is not invoked, which is ok, since collector is
+      # disconnected from this now
       expect(stack_1_12).to be_nil
     end
   end

@@ -107,10 +107,6 @@ module InventoryRefresh
         hash.transform_values do |value|
           if value.kind_of?(Hash) && value['inventory_collection_name']
             hash_to_lazy_relation(value, available_inventory_collections, depth)
-          elsif value.kind_of?(Array) && value.first.kind_of?(Hash) && value.first['inventory_collection_name']
-            # TODO(lsmola) do we need to compact it sooner? What if first element is nil? On the other hand, we want to
-            # deprecate this Vm HABTM assignment because it's not effective
-            value.compact.map { |x| hash_to_lazy_relation(x, available_inventory_collections, depth) }
           else
             value
           end
@@ -128,8 +124,6 @@ module InventoryRefresh
         data.transform_values do |value|
           if inventory_object_lazy?(value) || inventory_object?(value)
             lazy_relation_to_hash(value, depth)
-          elsif value.kind_of?(Array) && (inventory_object_lazy?(value.compact.first) || inventory_object?(value.compact.first))
-            value.compact.map { |x| lazy_relation_to_hash(x, depth) }
           else
             value
           end
