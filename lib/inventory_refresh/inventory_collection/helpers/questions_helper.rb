@@ -50,11 +50,6 @@ module InventoryRefresh
           dependencies.all?(&:saved?)
         end
 
-        # @return [Boolean] true if we are using a saver strategy that allows saving in parallel processes
-        def parallel_safe?
-          true
-        end
-
         # @return [Boolean] true if the model_class supports STI
         def supports_sti?
           @supports_sti_cache = model_class.column_names.include?("type") if @supports_sti_cache.nil?
