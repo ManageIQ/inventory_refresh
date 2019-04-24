@@ -8,7 +8,7 @@ describe InventoryRefresh::Persister do
   include SpecParsedData
 
   before(:each) do
-    @ems = FactoryBot.create(:ems_container, :name => "test_ems")
+    @ems = FactoryBot.create(:ems_container)
   end
 
   [{
@@ -56,7 +56,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -102,7 +102,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => bigger_newest_version,
             )
           )
@@ -145,7 +145,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_name         => @ems.name,
+              :ems_id           => @ems.id,
               :version          => bigger_newest_version,
               :resource_version => "same_version",
             )
@@ -204,7 +204,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_name         => @ems.name,
+              :ems_id           => @ems.id,
               :version          => bigger_newest_version,
               :resource_version => "different_version_#{i}",
             )
@@ -246,7 +246,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -296,7 +296,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -324,7 +324,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -367,7 +367,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -408,7 +408,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -447,7 +447,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings         => settings,
-              :ems_name         => @ems.name,
+              :ems_id           => @ems.id,
               :version          => newest_version(settings),
               :resource_version => "same_version",
             )
@@ -490,7 +490,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_name         => @ems.name,
+              :ems_id           => @ems.id,
               :version          => newest_version(settings),
               :resource_version => "same_version",
             )
@@ -535,7 +535,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -563,7 +563,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => bigger_newest_version,
             )
           )
@@ -608,7 +608,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => newest_version(settings),
             )
           )
@@ -648,7 +648,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => bigger_newest_version,
             )
           )
@@ -690,7 +690,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_name => @ems.name,
+              :ems_id   => @ems.id,
               :version  => bigger_newest_version,
             )
           )
@@ -708,7 +708,7 @@ describe InventoryRefresh::Persister do
         2.times do |i|
           persister = TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_name    => @ems.name,
+            :ems_id      => @ems.id,
             :version     => newest_version(settings),
             :index_start => 0,
             :batch_size  => 2
@@ -716,7 +716,7 @@ describe InventoryRefresh::Persister do
 
           TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_name    => @ems.name,
+            :ems_id      => @ems.id,
             :version     => even_bigger_newest_version,
             :persister   => persister,
             :index_start => 1,
@@ -788,13 +788,13 @@ describe InventoryRefresh::Persister do
         2.times do |i|
           persister = TestCollector.generate_batches_of_partial_container_group_data(
             :settings => settings,
-            :ems_name => @ems.name,
+            :ems_id   => @ems.id,
             :version  => newest_version(settings),
           )
 
           TestCollector.generate_batches_of_different_partial_container_group_data(
             :settings    => settings,
-            :ems_name    => @ems.name,
+            :ems_id      => @ems.id,
             :version     => bigger_newest_version,
             :persister   => persister,
             :index_start => 1,
@@ -815,7 +815,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_different_partial_container_group_data(
               :settings    => settings,
-              :ems_name    => @ems.name,
+              :ems_id      => @ems.id,
               :version     => bigger_newest_version,
               :index_start => 0,
               :batch_size  => 2
@@ -857,13 +857,13 @@ describe InventoryRefresh::Persister do
 
         persister = TestCollector.generate_batches_of_partial_container_group_data(
           :settings => settings,
-          :ems_name => @ems.name,
+          :ems_id   => @ems.id,
           :version  => bigger_newest_version,
         )
 
         TestCollector.generate_batches_of_different_partial_container_group_data(
           :settings    => settings,
-          :ems_name    => @ems.name,
+          :ems_id      => @ems.id,
           :version     => newest_version(settings),
           :persister   => persister,
           :index_start => 1,
@@ -923,7 +923,7 @@ describe InventoryRefresh::Persister do
         persister = TestCollector.refresh(
           TestCollector.generate_batches_of_different_partial_container_group_data(
             :settings    => settings,
-            :ems_name    => @ems.name,
+            :ems_id      => @ems.id,
             :version     => newest_version(settings),
             :index_start => 0,
             :batch_size  => 2
@@ -965,13 +965,13 @@ describe InventoryRefresh::Persister do
         2.times do |i|
           persister = TestCollector.generate_batches_of_full_container_group_data(
             :settings => settings,
-            :ems_name => @ems.name,
+            :ems_id   => @ems.id,
             :version  => bigger_newest_version,
           )
 
           TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_name    => @ems.name,
+            :ems_id      => @ems.id,
             :version     => newest_version(settings),
             :persister   => persister,
             :index_start => 1,
@@ -1011,7 +1011,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings    => settings,
-              :ems_name    => @ems.name,
+              :ems_id      => @ems.id,
               :version     => newest_version(settings),
               :index_start => 0,
               :batch_size  => 2

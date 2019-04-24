@@ -14,7 +14,7 @@ module InventoryRefresh::SaveCollection
         return if skip?(inventory_collection)
 
         logger.debug("----- BEGIN ----- Saving collection #{inventory_collection} of size #{inventory_collection.size} to"\
-                     " the database, for the manager: '#{ems.name}'...")
+                     " the database, for the manager: '#{ems.id}'...")
 
         if inventory_collection.custom_save_block.present?
           logger.debug("Saving collection #{inventory_collection} using a custom save block")
@@ -22,7 +22,7 @@ module InventoryRefresh::SaveCollection
         else
           save_inventory(inventory_collection)
         end
-        logger.debug("----- END ----- Saving collection #{inventory_collection}, for the manager: '#{ems.name}'...Complete")
+        logger.debug("----- END ----- Saving collection #{inventory_collection}, for the manager: '#{ems.id}'...Complete")
         inventory_collection.saved = true
       end
 
