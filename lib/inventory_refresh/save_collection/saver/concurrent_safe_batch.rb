@@ -153,7 +153,23 @@ module InventoryRefresh::SaveCollection
               # Record was found in the DB and sent for saving, we will be updating the DB.
               inventory_object.id = primary_key_value
               next unless assert_referential_integrity(hash)
-              next unless changed?(record, hash, all_attribute_keys)
+
+              hash_for_update = if inventory_collection.use_ar_object?
+                                  record.assign_attributes(hash.except(:id))
+                                  next unless changed?(record)
+
+                                  values_for_database!(all_attribute_keys,
+                                                       record.attributes.symbolize_keys)
+                                elsif serializable_keys?
+                                  # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
+                                  # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
+                                  values_for_database!(all_attribute_keys,
+                                                       hash)
+                                else
+                                  # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
+                                  # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
+                                  hash
+                                end
 
               if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
 
@@ -169,20 +185,6 @@ module InventoryRefresh::SaveCollection
                                                    inventory_object)
               end
 
-              hash_for_update = if inventory_collection.use_ar_object?
-                                  record.assign_attributes(hash.except(:id))
-                                  values_for_database!(all_attribute_keys,
-                                                       record.attributes.symbolize_keys)
-                                elsif serializable_keys?
-                                  # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
-                                  # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
-                                  values_for_database!(all_attribute_keys,
-                                                       hash)
-                                else
-                                  # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
-                                  # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
-                                  hash
-                                end
               assign_attributes_for_update!(hash_for_update, update_time)
 
               hash_for_update[:id] = primary_key_value
@@ -205,22 +207,13 @@ module InventoryRefresh::SaveCollection
         hashes_for_update = [] # Cleanup so GC can release it sooner
       end
 
-      def changed?(_record, _hash, _all_attribute_keys)
+      def changed?(record)
         return true unless inventory_collection.check_changed?
 
-        # TODO(lsmola) this check needs to be disabled now, because it doesn't work with lazy_find having secondary
-        # indexes. Examples: we save a pod before we save a project, that means the project lazy_find won't evaluate,
-        # because we load it with secondary index and can't do skeletal precreate. Then when the object is being saved
-        # again, the lazy_find is evaluated, but the resource version is not changed, so the row is not saved.
-        #
-        # To keep this quick .changed? check, we might need to extend this, so the resource_version doesn't save until
-        # all lazy_links of the row are evaluated.
-        #
-        # if supports_resource_version?(all_attribute_keys) && supports_column?(resource_version_column)
-        #   record_resource_version = record_key(record, resource_version_column.to_s)
-        #
-        #   return record_resource_version != hash[resource_version_column]
-        # end
+        # Skip if nothing changed
+        return false if record.changed_attributes.empty?
+        # Skip if we only changed the resource_timestamp, but data stays the same
+        return false if record.changed_attributes.keys == ["resource_timestamp"]
 
         true
       end
