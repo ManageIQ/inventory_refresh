@@ -154,12 +154,26 @@ module InventoryRefresh::SaveCollection
               inventory_object.id = primary_key_value
               next unless assert_referential_integrity(hash)
 
+              record_version = nil
+              record_version_max = nil
+              if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
+
+                version_attr, max_version_attr = if supports_remote_data_timestamp?(all_attribute_keys)
+                                                   [:resource_timestamp, :resource_timestamps_max]
+                                                 elsif supports_remote_data_version?(all_attribute_keys)
+                                                   [:resource_counter, :resource_counters_max]
+                                                 end
+
+                record_version = record_key(record, version_attr.to_s)
+                record_version_max = record_key(record, max_version_attr.to_s)
+              end
+
               hash_for_update = if inventory_collection.use_ar_object?
                                   record.assign_attributes(hash.except(:id))
                                   next unless changed?(record)
 
                                   values_for_database!(all_attribute_keys,
-                                                       record.attributes.symbolize_keys)
+                                                       hash)
                                 elsif serializable_keys?
                                   # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
                                   # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
@@ -172,16 +186,9 @@ module InventoryRefresh::SaveCollection
                                 end
 
               if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
-
-                version_attr, max_version_attr = if supports_remote_data_timestamp?(all_attribute_keys)
-                                                   [:resource_timestamp, :resource_timestamps_max]
-                                                 elsif supports_remote_data_version?(all_attribute_keys)
-                                                   [:resource_counter, :resource_counters_max]
-                                                 end
-
-                next if skeletonize_or_skip_record(record_key(record, version_attr.to_s),
+                next if skeletonize_or_skip_record(record_version,
                                                    hash[version_attr],
-                                                   record_key(record, max_version_attr.to_s),
+                                                   record_version_max,
                                                    inventory_object)
               end
 
@@ -278,11 +285,7 @@ module InventoryRefresh::SaveCollection
         hashes                    = []
         create_time               = time_now
         batch.each do |index, inventory_object|
-          hash = if inventory_collection.use_ar_object?
-                   record = inventory_collection.model_class.new(attributes_index[index])
-                   values_for_database!(all_attribute_keys,
-                                        record.attributes.symbolize_keys)
-                 elsif serializable_keys?
+          hash = if serializable_keys?
                    values_for_database!(all_attribute_keys,
                                         attributes_index[index])
                  else
