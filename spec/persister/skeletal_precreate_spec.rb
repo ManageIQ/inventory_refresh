@@ -299,7 +299,7 @@ describe InventoryRefresh::Persister do
           container_data(
             1,
             :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
-          )
+          ).merge(:command => "rm -rf /tmp")
         )
 
         persister.persist!
