@@ -75,7 +75,7 @@ module InventoryRefresh
     attr_accessor :dependees
 
     attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
-                :internal_attributes, :dependency_attributes, :manager_ref, :create_only,
+                :internal_attributes, :dependency_attributes, :manager_ref, :secondary_refs, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
                 :inventory_object_attributes, :name, :saver_strategy, :default_values,
                 :manager_ref_allowed_nil, :use_ar_object,
