@@ -68,7 +68,7 @@ describe InventoryRefresh::SaveInventory do
   let(:persister_class) { ::TestPersister }
 
   before do
-    @ems = FactoryBot.create(:ems_cloud)
+    @ems = FactoryBot.create(:ems_cloud, :network_manager => FactoryBot.create(:ems_network))
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
     @persister = persister_class.new(@ems)
@@ -516,13 +516,21 @@ describe InventoryRefresh::SaveInventory do
     expect(vm4.hardware.virtualization_type).to eq(nil)
   end
 
+  def add_default_values(builder)
+    builder.add_default_values(
+      :ems_id => ->(persister) { persister.manager.id }
+    )
+  end
+
   def initialize_data_and_inventory_collections
     # Initialize the InventoryCollections
     @persister.add_collection(:vms) do |builder|
       builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Vm)
+      add_default_values(builder)
     end
     @persister.add_collection(:miq_templates) do |builder|
       builder.add_properties(:model_class => ManageIQ::Providers::CloudManager::Template)
+      add_default_values(builder)
     end
     @persister.add_collection(:hardwares) do |builder|
       builder.add_properties(
@@ -544,6 +552,7 @@ describe InventoryRefresh::SaveInventory do
         :model_class => ManageIQ::Providers::CloudManager::Flavor,
         :manager_ref => %i(name)
       )
+      add_default_values(builder)
     end
 
     # Get parsed data with the lazy_relations

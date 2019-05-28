@@ -33,7 +33,7 @@ describe InventoryRefresh::Persister do
       @persister.add_collection(:vms)
 
       expect(@persister.vms.not_null_columns).to(
-        match_array(%i(created_on updated_on ems_ref))
+        match_array(%i(created_on updated_on ems_ref ems_id))
       )
 
       expect(@persister.vms.base_columns).to(
