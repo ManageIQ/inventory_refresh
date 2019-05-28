@@ -541,7 +541,7 @@ describe InventoryRefresh::SaveInventory do
     context 'with VM InventoryCollection with changed parent and association' do
       it 'deletes missing and creates new VMs with AvailabilityZone parent, ' do
         time_now = Time.now.utc
-        availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems)
+        availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems, :ems_ref => "us-east-1")
         @vm1.update_attributes(:availability_zone => availability_zone)
         @vm2.update_attributes(:availability_zone => availability_zone)
 
@@ -586,8 +586,7 @@ describe InventoryRefresh::SaveInventory do
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
         %w(1 3).each do |i|
           @persister.vms.build(vm_data(i).merge(:name                  => "vm_changed_name_#{i}",
-                                                :cloud_tenant          => cloud_tenant,
-                                                :ext_management_system => @ems))
+                                                :cloud_tenant          => cloud_tenant))
         end
 
         # Invoke the InventoryCollections saving
@@ -619,9 +618,9 @@ describe InventoryRefresh::SaveInventory do
         @persister.vms.build(vm_data(1).merge(:name         => "vm_changed_name_1",
                                               :cloud_tenant => cloud_tenant))
 
-        @persister.vms.build(vm_data(3).merge(:name                  => "vm_changed_name_3",
-                                              :cloud_tenant          => cloud_tenant,
-                                              :ext_management_system => nil))
+        @persister.vms.build(vm_data(3).merge(:name         => "vm_changed_name_3",
+                                              :cloud_tenant => cloud_tenant,
+                                              :ems_id       => FactoryBot.create(:ems_cloud).id))
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
@@ -646,8 +645,8 @@ describe InventoryRefresh::SaveInventory do
 
 
   it 'reconnects existing VM' do
-    # Fill DB with test Vms
-    @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => nil))
+    # Fill DB with test Vms, it should not touch VMs of other ems, but this is just example
+    @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => FactoryBot.create(:ems_cloud)))
     @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
 
     vms_custom_reconnect_block = lambda do |inventory_collection, inventory_objects_index, attributes_index|

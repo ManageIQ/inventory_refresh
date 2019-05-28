@@ -59,8 +59,9 @@ module SpecParsedData
 
   def flavor_data(i, data = {})
     {
-      :name   => "t#{i}.nano",
-      :ems_id => @ems.id,
+      :name    => "t#{i}.nano",
+      :ems_ref => "t#{i}.nano",
+      :ems_id  => @ems.id,
     }.merge(data)
   end
 
