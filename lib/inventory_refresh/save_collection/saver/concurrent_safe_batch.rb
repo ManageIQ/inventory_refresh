@@ -217,6 +217,8 @@ module InventoryRefresh::SaveCollection
       def changed?(record)
         return true unless inventory_collection.check_changed?
 
+        # If object was archived before, pass it to update so it can be unarchived
+        return true if record.respond_to?(:archived_at) && record.archived_at
         # Skip if nothing changed
         return false if record.changed_attributes.empty?
         # Skip if we only changed the resource_timestamp, but data stays the same
