@@ -342,13 +342,25 @@ module InventoryRefresh
     #
     # @return [Array<Symbol>] attributes that are needed for saving of the record
     def fixed_attributes
+      not_null_attributes = []
+
       if model_class
+        # Attrs having presence validator
         presence_validators = model_class.validators.detect { |x| x.kind_of?(ActiveRecord::Validations::PresenceValidator) }
+        not_null_attributes += presence_validators.attributes if presence_validators.present?
+
+        # Column names having NOT NULL constraint
+        non_null_constraints = model_class.columns_hash.values.reject(&:null).map(&:name) - [model_class.primary_key]
+        not_null_attributes += non_null_constraints.map(&:to_sym)
+
+        # Column names having NOT NULL constraint transformed to relation names
+        not_null_attributes += non_null_constraints.map {|x| foreign_key_to_association_mapping[x]}.compact
       end
       # Attributes that has to be always on the entity, so attributes making unique index of the record + attributes
       # that have presence validation
+
       fixed_attributes = manager_ref
-      fixed_attributes += presence_validators.attributes if presence_validators.present?
+      fixed_attributes += not_null_attributes.uniq
       fixed_attributes
     end
 
