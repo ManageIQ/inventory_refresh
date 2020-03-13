@@ -86,6 +86,7 @@ module InventoryRefresh
 
     # Persists InventoryCollection objects into the DB
     def persist!
+      link_data_to_refresh_state_part
       InventoryRefresh::SaveInventory.save_inventory(manager, inventory_collections)
     end
 
@@ -240,6 +241,19 @@ module InventoryRefresh
         serializer = InventoryRefresh::InventoryCollection::Serialization.new(inventory_collection)
 
         obj[k] = serializer.sweep_scope_to_hash(v)
+      end
+    end
+
+    #
+    def link_data_to_refresh_state_part
+      refresh_state_part = RefreshStatePart.where(:uuid => refresh_state_part_uuid).first
+      if refresh_state_part.present?
+        ics = inventory_collections.select { |ic| ic.data.present? }
+        ics.each do |ic|
+          ic.data.each do |inventory_object|
+            inventory_object.data[:refresh_state_part_id] = refresh_state_part.id
+          end
+        end
       end
     end
   end
