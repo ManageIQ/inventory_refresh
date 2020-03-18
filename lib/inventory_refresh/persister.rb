@@ -5,13 +5,15 @@ module InventoryRefresh
 
     attr_reader :manager, :collections
 
-    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope, :retry_count, :retry_max
+    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :refresh_time_tracking, :total_parts, :sweep_scope, :retry_count, :retry_max
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
     def initialize(manager)
       @manager = manager
 
       @collections = {}
+
+      self.refresh_time_tracking = {:persister_started_at => Time.now.utc.to_datetime.to_s}
 
       initialize_inventory_collections
     end
@@ -107,6 +109,7 @@ module InventoryRefresh
       {
         :refresh_state_uuid      => refresh_state_uuid,
         :refresh_state_part_uuid => refresh_state_part_uuid,
+        :refresh_time_tracking   => refresh_time_tracking,
         :retry_count             => retry_count,
         :retry_max               => retry_max,
         :total_parts             => total_parts,
@@ -143,6 +146,15 @@ module InventoryRefresh
           persister.retry_max               = persister_data['retry_max']
           persister.total_parts             = persister_data['total_parts']
           persister.sweep_scope             = sweep_scope_from_hash(persister_data['sweep_scope'], persister.collections)
+          %i[
+            refresh_state_part_collected_at
+            refresh_state_part_sent_at
+            refresh_state_started_at
+            refresh_state_sent_at
+            ingress_api_sent_at
+          ].each do |timestamp_name|
+            persister.refresh_time_tracking[timestamp_name] = persister_data[timestamp_name.to_s]
+          end
         end
       end
 
