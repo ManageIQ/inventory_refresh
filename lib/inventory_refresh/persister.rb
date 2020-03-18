@@ -5,13 +5,18 @@ module InventoryRefresh
 
     attr_reader :manager, :collections
 
-    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope, :retry_count, :retry_max
+    attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :refresh_time_tracking, :total_parts, :sweep_scope, :retry_count, :retry_max
+    attr_accessor :persister_started_at, :persister_finished_at,
+                  :refresh_state_part_collected_at, :refresh_state_part_sent_at,
+                  :refresh_state_started_at, :refresh_state_sent_at, :ingress_api_sent_at
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
     def initialize(manager)
       @manager = manager
 
       @collections = {}
+
+      self.persister_started_at = Time.now.utc.to_datetime.to_s
 
       initialize_inventory_collections
     end
@@ -105,13 +110,19 @@ module InventoryRefresh
       end.compact
 
       {
-        :refresh_state_uuid      => refresh_state_uuid,
-        :refresh_state_part_uuid => refresh_state_part_uuid,
-        :retry_count             => retry_count,
-        :retry_max               => retry_max,
-        :total_parts             => total_parts,
-        :sweep_scope             => sweep_scope_to_hash(sweep_scope),
-        :collections             => collections_data,
+        :refresh_state_uuid              => refresh_state_uuid,
+        :refresh_state_part_uuid         => refresh_state_part_uuid,
+        :refresh_state_part_collected_at => refresh_state_part_collected_at,
+        :refresh_state_part_sent_at      => refresh_state_part_sent_at,
+        :refresh_state_started_at        => refresh_state_started_at,
+        :refresh_state_sent_at           => refresh_state_sent_at,
+        :ingress_api_sent_at             => ingress_api_sent_at,
+        :refresh_time_tracking           => refresh_time_tracking,
+        :retry_count                     => retry_count,
+        :retry_max                       => retry_max,
+        :total_parts                     => total_parts,
+        :sweep_scope                     => sweep_scope_to_hash(sweep_scope),
+        :collections                     => collections_data,
       }
     end
 
@@ -137,12 +148,17 @@ module InventoryRefresh
             inventory_collection.from_hash(collection, persister.collections)
           end
 
-          persister.refresh_state_uuid      = persister_data['refresh_state_uuid']
-          persister.refresh_state_part_uuid = persister_data['refresh_state_part_uuid']
-          persister.retry_count             = persister_data['retry_count']
-          persister.retry_max               = persister_data['retry_max']
-          persister.total_parts             = persister_data['total_parts']
-          persister.sweep_scope             = sweep_scope_from_hash(persister_data['sweep_scope'], persister.collections)
+          persister.refresh_state_uuid              = persister_data['refresh_state_uuid']
+          persister.refresh_state_part_uuid         = persister_data['refresh_state_part_uuid']
+          persister.refresh_state_part_collected_at = persister_data['refresh_state_part_collected_at']
+          persister.refresh_state_part_sent_at      = persister_data['refresh_state_part_sent_at']
+          persister.refresh_state_started_at        = persister_data['refresh_state_started_at']
+          persister.refresh_state_sent_at           = persister_data['refresh_state_sent_at']
+          persister.ingress_api_sent_at             = persister_data['ingress_api_sent_at']
+          persister.retry_count                     = persister_data['retry_count']
+          persister.retry_max                       = persister_data['retry_max']
+          persister.total_parts                     = persister_data['total_parts']
+          persister.sweep_scope                     = sweep_scope_from_hash(persister_data['sweep_scope'], persister.collections)
         end
       end
 
