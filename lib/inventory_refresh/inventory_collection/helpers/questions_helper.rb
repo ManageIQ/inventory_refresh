@@ -52,7 +52,7 @@ module InventoryRefresh
 
         # @return [Boolean] true if the model_class supports STI
         def supports_sti?
-          @supports_sti_cache = model_class.column_names.include?("type") if @supports_sti_cache.nil?
+          @supports_sti_cache = model_class&.column_names.to_a.include?("type") if @supports_sti_cache.nil?
           @supports_sti_cache
         end
 
@@ -62,7 +62,7 @@ module InventoryRefresh
           @supported_cols_cache ||= {}
           return @supported_cols_cache[column_name.to_sym] unless @supported_cols_cache[column_name.to_sym].nil?
 
-          include_col = model_class.column_names.include?(column_name.to_s)
+          include_col = model_class&.column_names.to_a.include?(column_name.to_s)
           if %w(created_on created_at updated_on updated_at).include?(column_name.to_s)
             include_col &&= ActiveRecord::Base.record_timestamps
           end
