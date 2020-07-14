@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "activerecord", "~> 5.0"
-  spec.add_dependency "more_core_extensions", "~> 3.5"
+  spec.add_dependency "more_core_extensions", ">=3.5", "< 5"
   spec.add_dependency "pg", "> 0"
 
   spec.add_development_dependency "ancestry"
