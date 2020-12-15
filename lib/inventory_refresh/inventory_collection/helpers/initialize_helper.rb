@@ -289,7 +289,7 @@ module InventoryRefresh
         #                hash = inventory_object.attributes # Loads possible dependencies into saveable hash
         #                obj = SomeModel.find_by(:attr => hash[:attr]) # Note: doing find_by for many models produces N+1
         #                                                              # queries, avoid this, this is just a simple example :-)
-        #                obj.update_attributes(hash) if obj
+        #                obj.update(hash) if obj
         #                obj ||= SomeModel.create(hash)
         #                inventory_object.id = obj.id # If this InventoryObject is referenced elsewhere, we need to store its
         #                                               primary key back to the InventoryObject
