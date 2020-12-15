@@ -233,7 +233,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "size"
     t.bigint   "free_space"
     t.bigint   "size_on_disk"
-    t.boolean  "present",            default: true
+    t.boolean  "connected",          default: true
     t.boolean  "start_connected",    default: true
     t.boolean  "auto_detect"
     t.datetime "created_on"

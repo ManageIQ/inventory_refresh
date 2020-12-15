@@ -6,6 +6,7 @@ end
 require "bundler/setup"
 require "inventory_refresh"
 require "active_record"
+require "active_support/all"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

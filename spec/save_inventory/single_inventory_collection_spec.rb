@@ -541,8 +541,8 @@ describe InventoryRefresh::SaveInventory do
     context 'with VM InventoryCollection with changed parent and association' do
       it 'deletes missing and creates new VMs with AvailabilityZone parent, ' do
         availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems)
-        @vm1.update_attributes(:availability_zone => availability_zone)
-        @vm2.update_attributes(:availability_zone => availability_zone)
+        @vm1.update(:availability_zone => availability_zone)
+        @vm2.update(:availability_zone => availability_zone)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -571,8 +571,8 @@ describe InventoryRefresh::SaveInventory do
 
       it 'deletes missing and creates new VMs with CloudTenant parent' do
         cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
-        @vm1.update_attributes(:cloud_tenant => cloud_tenant)
-        @vm2.update_attributes(:cloud_tenant => cloud_tenant)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -601,8 +601,8 @@ describe InventoryRefresh::SaveInventory do
 
       it 'affects oly relation to CloudTenant when not providing EMS relation and with CloudTenant parent' do
         cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
-        @vm1.update_attributes(:cloud_tenant => cloud_tenant)
-        @vm2.update_attributes(:cloud_tenant => cloud_tenant)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -639,8 +639,8 @@ describe InventoryRefresh::SaveInventory do
 
       it 'does not delete the missing VMs with :complete => false and with CloudTenant parent' do
         cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
-        @vm1.update_attributes(:cloud_tenant => cloud_tenant)
-        @vm2.update_attributes(:cloud_tenant => cloud_tenant)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
