@@ -75,8 +75,10 @@ describe InventoryRefresh::Persister do
           container_image_data(
             1,
             :container_image_registry => persister.container_image_registries.lazy_find(
-              :host => "container_image_registry_host_1",
-              :port => "container_image_registry_name_1"
+              {
+                :host => "container_image_registry_host_1",
+                :port => "container_image_registry_name_1"
+              }
             )
           )
         )
@@ -343,9 +345,7 @@ describe InventoryRefresh::Persister do
               {
                 :container_project => lazy_find_container_project,
                 :name              => "container_replicator_name_1"
-              }, {
-                :ref => :by_container_project_and_name
-              }
+              }, :ref => :by_container_project_and_name
             ),
           )
         )
@@ -392,13 +392,13 @@ describe InventoryRefresh::Persister do
               {
                 :container_project => lazy_find_container_project,
                 :name              => "container_replicator_name_1"
-              }, {
-                :ref => :by_container_project_and_name
-              }
+              }, :ref => :by_container_project_and_name
             ),
             :container_build_pod  => persister.container_build_pods.lazy_find(
-              :namespace => "container_project_name_1",
-              :name      => nil
+              {
+                :namespace => "container_project_name_1",
+                :name      => nil
+              }
             )
           )
         )
@@ -556,8 +556,10 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :container_build_pod => persister.container_build_pods.lazy_find(
-              :namespace => "container_project_name_1",
-              :name      => nil
+              {
+                :namespace => "container_project_name_1",
+                :name      => nil
+              }
             )
           )
         )
@@ -577,8 +579,10 @@ describe InventoryRefresh::Persister do
             container_group_data(
               1,
               :container_build_pod => persister.container_build_pods.lazy_find(
-                :namespace => persister.container_projects.lazy_find("container_project_ems_ref_1", :key => :name),
-                :name      => "container_build_pod_name_1"
+                {
+                  :namespace => persister.container_projects.lazy_find("container_project_ems_ref_1", :key => :name),
+                  :name      => "container_build_pod_name_1"
+                }
               )
             )
           )

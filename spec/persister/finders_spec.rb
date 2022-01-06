@@ -19,7 +19,7 @@ describe InventoryRefresh::Persister do
   it "raises an exception when relation object is needed, but something else is provided" do
     expected_error = "Wrong index for key :vm_or_template, the value must be of type Nil or InventoryObject or InventoryObjectLazy, got: not_allowed_string"
     expect do
-      persister.hardwares.lazy_find(:vm_or_template => "not_allowed_string")
+      persister.hardwares.lazy_find({:vm_or_template => "not_allowed_string"})
     end.to(raise_error(expected_error))
 
     expect do
@@ -37,63 +37,63 @@ describe InventoryRefresh::Persister do
   it "raises an exception passing bad primary index used by finder" do
     expected_error = "Finder has missing keys for index :manager_ref, missing indexes are: [:hardware]"
     expect do
-      persister.networks.lazy_find(:hardwares => "something", :description => "public")
+      persister.networks.lazy_find({:hardwares => "something", :description => "public"})
     end.to(raise_error(expected_error))
 
     expected_error = "Finder has missing keys for index :manager_ref, missing indexes are: [:ems_ref]"
     expect do
-      persister.vms.lazy_find(:ems_ruf => "some_ems_ref")
+      persister.vms.lazy_find({:ems_ruf => "some_ems_ref"})
     end.to(raise_error(expected_error))
   end
 
-  it "raises an exception passing bad secondsry index used by finder" do
+  it "raises an exception passing bad secondary index used by finder" do
     expected_error = "Finder has missing keys for index :by_name, missing indexes are: [:name]"
     expect do
-      persister.vms.lazy_find({:names => "name"}, {:ref => :by_name})
+      persister.vms.lazy_find({:names => "name"}, :ref => :by_name)
     end.to(raise_error(expected_error))
 
     expected_error = "Finder has missing keys for index :by_uid_ems_and_name, missing indexes are: [:uid_ems, :name]"
     expect do
-      persister.vms.lazy_find({:names => "name", :uida_ems => "uid_ems"}, {:ref => :by_uid_ems_and_name})
+      persister.vms.lazy_find({:names => "name", :uida_ems => "uid_ems"}, :ref => :by_uid_ems_and_name)
     end.to(raise_error(expected_error))
   end
 
   it "checks that we recognize first argument vs passed kwargs" do
     # This passes nicely
-    lazy_vm = persister.vms.lazy_find({:name => "name"}, {:ref => :by_name})
+    lazy_vm = persister.vms.lazy_find({:name => "name"}, :ref => :by_name)
     expect(lazy_vm.reference.full_reference).to eq(:name => "name")
 
     # TODO(lsmola) But this fails, since it takes the whole hash as 1st arg, it should correctly raise invalid format
     expected_error = "Finder has missing keys for index :manager_ref, missing indexes are: [:ems_ref]"
     expect do
-      persister.vms.lazy_find(:name => "name", :ref => :by_name)
+      persister.vms.lazy_find({:name => "name", :ref => :by_name})
     end.to(raise_error(expected_error))
 
     # TODO(lsmola) And this doesn't fail, but the :key is silently ignored, it should also raise invalid format
-    lazy_vm = persister.vms.lazy_find(:ems_ref => "ems_ref_1", :key => :name)
+    lazy_vm = persister.vms.lazy_find({:ems_ref => "ems_ref_1", :key => :name})
     expect(lazy_vm.reference.full_reference).to eq(:ems_ref => "ems_ref_1", :key => :name)
   end
 
   it "checks passing more keys to index passes just fine" do
     # There is not need to force exact match as long as all keys of the index are passed
-    vm_lazy1 = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, {:ref => :by_uid_ems_and_name})
+    vm_lazy1 = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, :ref => :by_uid_ems_and_name)
 
     expect(vm_lazy1.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
     expect(vm_lazy1.ref).to eq(:by_uid_ems_and_name)
     expect(vm_lazy1.to_s).to eq("uid_ems__name")
 
-    vm_lazy2 = persister.vms.lazy_find(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    vm_lazy2 = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"})
     expect(vm_lazy2.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
     expect(vm_lazy2.ref).to eq(:manager_ref)
     expect(vm_lazy2.to_s).to eq("ems_ref")
   end
 
   it "checks passing composite index doesn't depend on order" do
-    lazy_find_vm       = persister.vms.lazy_find(:ems_ref => "ems_ref_1")
-    lazy_find_hardware = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
+    lazy_find_vm       = persister.vms.lazy_find({:ems_ref => "ems_ref_1"})
+    lazy_find_hardware = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm})
 
-    lazy_find_network1 = persister.networks.lazy_find(:hardware => lazy_find_hardware, :description => "public")
-    lazy_find_network2 = persister.networks.lazy_find(:description => "public", :hardware => lazy_find_hardware)
+    lazy_find_network1 = persister.networks.lazy_find({:hardware => lazy_find_hardware, :description => "public"})
+    lazy_find_network2 = persister.networks.lazy_find({:description => "public", :hardware => lazy_find_hardware})
 
     expect(lazy_find_network1.to_s).to eq("ems_ref_1__public")
     expect(lazy_find_network1.to_s).to eq(lazy_find_network2.to_s)
@@ -101,7 +101,7 @@ describe InventoryRefresh::Persister do
 
   it "checks non composite index is allowed as non hash" do
     ems_ref = "vm_ems_ref_1"
-    vm_lazy1 = persister.vms.lazy_find(:ems_ref => ems_ref)
+    vm_lazy1 = persister.vms.lazy_find({:ems_ref => ems_ref})
     vm_lazy2 = persister.vms.lazy_find(ems_ref)
 
     # Check the stringified reference matches
@@ -117,10 +117,10 @@ describe InventoryRefresh::Persister do
 
   it "checks non composite relation index is allowed as non hash" do
     ems_ref = "vm_ems_ref_1"
-    vm_lazy = persister.vms.lazy_find(:ems_ref => ems_ref)
+    vm_lazy = persister.vms.lazy_find({:ems_ref => ems_ref})
 
     hardware_lazy1 = persister.hardwares.lazy_find(vm_lazy)
-    hardware_lazy2 = persister.hardwares.lazy_find(:vm_or_template => vm_lazy)
+    hardware_lazy2 = persister.hardwares.lazy_find({:vm_or_template => vm_lazy})
 
     # Check the stringified reference matches
     expect(hardware_lazy1.to_s).to eq ems_ref
@@ -145,7 +145,7 @@ describe InventoryRefresh::Persister do
 
   it "raises exception unless only primary index is used in nested lazy_find when building" do
     name = vm_data(1)[:name]
-    vm_lazy = persister.vms.lazy_find({:name => name}, {:ref => :by_name})
+    vm_lazy = persister.vms.lazy_find({:name => name}, :ref => :by_name)
 
     persister.vms.build(vm_data(1))
 
@@ -158,8 +158,8 @@ describe InventoryRefresh::Persister do
 
   it "raises exception unless only primary index is used in deep nested lazy_find when building" do
     name = vm_data(1)[:name]
-    vm_lazy = persister.vms.lazy_find({:name => name}, {:ref => :by_name})
-    hardware_lazy = persister.hardwares.lazy_find(:vm_or_template => vm_lazy)
+    vm_lazy = persister.vms.lazy_find({:name => name}, :ref => :by_name)
+    hardware_lazy = persister.hardwares.lazy_find({:vm_or_template => vm_lazy})
 
     persister.vms.build(vm_data(1))
 

@@ -29,7 +29,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(1)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(1)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -37,7 +37,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             2,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(2)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(2)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -45,7 +45,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             3,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(3)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(3)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -78,7 +78,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(1)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(1)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )
@@ -86,7 +86,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             2,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(2)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(2)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )
@@ -94,7 +94,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             3,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(3)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(3)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )
@@ -127,7 +127,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(1)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(1)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -135,7 +135,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             2,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(2)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(2)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -143,7 +143,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             3,
             :container_project => persister.container_projects.lazy_find(
-              {:name => container_project_data(3)[:name]}, {:ref => :by_name}
+              {:name => container_project_data(3)[:name]}, :ref => :by_name
             ),
           )
         )
@@ -176,7 +176,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(1)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(1)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )
@@ -184,7 +184,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             2,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(2)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(2)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )
@@ -192,7 +192,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             3,
             :dns_policy => persister.container_projects.lazy_find(
-              {:name => container_project_data(3)[:name]}, {:ref => :by_name, :key => :display_name}
+              {:name => container_project_data(3)[:name]}, :ref => :by_name, :key => :display_name
             ),
           )
         )

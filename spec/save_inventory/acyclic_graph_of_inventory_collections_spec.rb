@@ -596,19 +596,19 @@ describe InventoryRefresh::SaveInventory do
     @key_pair_data_2  = key_pair_data(2)
     @key_pair_data_3  = key_pair_data(3)
 
-    lazy_find_vm_1       = @persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
-    lazy_find_hardware_1 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_1)
-    lazy_find_vm_2       = @persister.vms.lazy_find(:ems_ref => vm_data(2)[:ems_ref])
-    lazy_find_hardware_2 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_2)
-    lazy_find_vm_4       = @persister.vms.lazy_find(:ems_ref => vm_data(4)[:ems_ref])
-    lazy_find_hardware_4 = @persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm_4)
+    lazy_find_vm_1       = @persister.vms.lazy_find({:ems_ref => vm_data(1)[:ems_ref]})
+    lazy_find_hardware_1 = @persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm_1})
+    lazy_find_vm_2       = @persister.vms.lazy_find({:ems_ref => vm_data(2)[:ems_ref]})
+    lazy_find_hardware_2 = @persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm_2})
+    lazy_find_vm_4       = @persister.vms.lazy_find({:ems_ref => vm_data(4)[:ems_ref]})
+    lazy_find_hardware_4 = @persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm_4})
 
     @vm_data_1 = vm_data(1).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(1)[:name]),
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
-                                                  {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                  :key     => :hostname,
+                                                  :default => 'default_value_unknown'),
     )
 
     @vm_data_12 = vm_data(12).merge(
@@ -617,24 +617,24 @@ describe InventoryRefresh::SaveInventory do
                      @persister.key_pairs.lazy_find(key_pair_data(1)[:name]),
                      @persister.key_pairs.lazy_find(key_pair_data(12)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
-                                                  {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                  :key     => :hostname,
+                                                  :default => 'default_value_unknown'),
     )
 
     @vm_data_2 = vm_data(2).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(2)[:name]),
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
-                                                  {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                  :key     => :hostname,
+                                                  :default => 'default_value_unknown'),
     )
 
     @vm_data_4 = vm_data(4).merge(
       :flavor    => @persister.flavors.lazy_find(flavor_data(4)[:name]),
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(4)[:name])].compact,
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
-                                                  {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                  :key     => :hostname,
+                                                  :default => 'default_value_unknown'),
     )
 
     @hardware_data_1 = hardware_data(1).merge(
