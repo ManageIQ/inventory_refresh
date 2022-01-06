@@ -103,7 +103,7 @@ describe InventoryRefresh::TargetCollection do
 
       target_collection = InventoryRefresh::TargetCollection.new
 
-      expect { target_collection.add_target(data) }.to raise_error("Provide either :manager or :manager_id argument")
+      expect { target_collection.add_target(**data) }.to raise_error("Provide either :manager or :manager_id argument")
     end
   end
 
