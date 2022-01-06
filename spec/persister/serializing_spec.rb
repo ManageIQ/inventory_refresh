@@ -60,16 +60,16 @@ describe InventoryRefresh::Persister do
     @image_data1          = image_data(1)
     @image_hardware_data1 = image_hardware_data(1).merge(
       :guest_os       => "linux_generic_1",
-      :vm_or_template => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
+      :vm_or_template => persister.miq_templates.lazy_find({:ems_ref => image_data(1)[:ems_ref]}),
       :model          => "test1",
       :manufacturer   => "test2"
     )
 
     # Nested lazy find
-    lazy_find_image      = persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref])
-    lazy_find_image_sec  = persister.miq_templates.lazy_find({:name => image_data(1)[:name]}, {:ref => :by_name})
+    lazy_find_image      = persister.miq_templates.lazy_find({:ems_ref => image_data(1)[:ems_ref]})
+    lazy_find_image_sec  = persister.miq_templates.lazy_find({:name => image_data(1)[:name]}, **{:ref => :by_name})
     lazy_find_image_sec1 = persister.miq_templates.lazy_find(
-      {:name => image_data(1)[:name], :uid_ems => image_data(1)[:uid_ems]}, {:ref => :by_uid_ems_and_name}
+      {:name => image_data(1)[:name], :uid_ems => image_data(1)[:uid_ems]}, **{:ref => :by_uid_ems_and_name}
     )
     # TODO(lsmola) we build :hardwares with vm_or_template => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref])
     # so it's indexed by vm ems_ref. Then we try to fetch it with lazy_find_image_sec2, which uses a by_uid_ems_and_name.
@@ -86,38 +86,38 @@ describe InventoryRefresh::Persister do
     # And we need more focus on having e.g. hardware, using vm with different refs, since we can then have duplicates.
     # On saving, those duplicates will be eliminated, but if anything pointed to the duplicate, it will not get it's id.
     lazy_find_image_sec2 = persister.miq_templates.lazy_find(
-      {:name => image_data(1)[:name], :uid_ems => image_data(1)[:uid_ems]}, {:ref => :by_uid_ems_and_name, :key => :vendor}
+      {:name => image_data(1)[:name], :uid_ems => image_data(1)[:uid_ems]}, **{:ref => :by_uid_ems_and_name, :key => :vendor}
     )
-    lazy_find_vm         = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
-    lazy_find_hardware   = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
+    lazy_find_vm         = persister.vms.lazy_find({:ems_ref => vm_data(1)[:ems_ref]})
+    lazy_find_hardware   = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm})
 
     @vm_data1 = vm_data(1).merge(
-      :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
-      :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
+      :flavor           => persister.flavors.lazy_find({:ems_ref => flavor_data(1)[:name]}),
+      :genealogy_parent => persister.miq_templates.lazy_find({:ems_ref => image_data(1)[:ems_ref]}),
+      :key_pairs        => [persister.key_pairs.lazy_find({:name => key_pair_data(1)[:name]})],
       :location         => persister.networks.lazy_find(
         {:hardware => lazy_find_hardware, :description => "public"},
-        {:key     => :hostname,
+        **{:key     => :hostname,
          :default => 'default_value_unknown'}
       )
     )
 
     @hardware_data1 = hardware_data(1).merge(
-      :guest_os           => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image}, {:key => :guest_os}),
+      :guest_os           => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image}, **{:key => :guest_os}),
       :model              => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image_sec},
-                                                           {:key => :model, :transform_nested_lazy_finds => true}),
+                                                           **{:key => :model, :transform_nested_lazy_finds => true}),
       :manufacturer       => persister.hardwares.lazy_find({:vm_or_template => lazy_find_image_sec1},
-                                                           {:key => :manufacturer, :transform_nested_lazy_finds => true}),
+                                                           **{:key => :manufacturer, :transform_nested_lazy_finds => true}),
       :guest_os_full_name => lazy_find_image_sec2,
-      :vm_or_template     => persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
+      :vm_or_template     => persister.vms.lazy_find({:ems_ref => vm_data(1)[:ems_ref]})
     )
 
     @public_network_data1 = public_network_data(1).merge(
-      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
+      :hardware => persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm})
     )
 
     @disk_data1 = disk_data(1).merge(
-      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
+      :hardware => persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm})
     )
 
     persister.miq_templates.build(@image_data1)
