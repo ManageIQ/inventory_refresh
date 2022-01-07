@@ -61,7 +61,7 @@ describe InventoryRefresh::Target do
         :options     => {:opt1 => "opt1", :opt2 => "opt2"}
       }
 
-      expect { InventoryRefresh::Target.load(data) }.to raise_error("Provide either :manager or :manager_id argument")
+      expect { InventoryRefresh::Target.load(**data) }.to raise_error("Provide either :manager or :manager_id argument")
     end
   end
 
