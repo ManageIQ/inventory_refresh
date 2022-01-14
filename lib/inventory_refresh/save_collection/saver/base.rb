@@ -21,7 +21,7 @@ module InventoryRefresh::SaveCollection
         @table_name             = @model_class.table_name
         @q_table_name           = get_connection.quote_table_name(@table_name)
         @primary_key            = @model_class.primary_key
-        @arel_primary_key       = @model_class.arel_attribute(@primary_key)
+        @arel_primary_key       = @model_class.arel_table[@primary_key]
         @unique_index_keys      = inventory_collection.unique_index_keys
         @unique_index_keys_to_s = inventory_collection.manager_ref_to_cols.map(&:to_s)
         @select_keys            = [@primary_key] + @unique_index_keys_to_s + internal_columns.map(&:to_s)
