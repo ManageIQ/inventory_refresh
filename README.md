@@ -4,7 +4,6 @@
 [![Build Status](https://travis-ci.org/ManageIQ/inventory_refresh.svg)](https://travis-ci.org/ManageIQ/inventory_refresh)
 [![Code Climate](https://codeclimate.com/github/ManageIQ/inventory_refresh.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh)
 [![Test Coverage](https://codeclimate.com/github/ManageIQ/inventory_refresh/badges/coverage.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh/coverage)
-[![Security](https://hakiri.io/github/ManageIQ/inventory_refresh/master.svg)](https://hakiri.io/github/ManageIQ/inventory_refresh/master)
 
 [![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ManageIQ/manageiq/providers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
