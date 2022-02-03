@@ -145,8 +145,9 @@ describe InventoryRefresh::SaveInventory do
           :strategy => :local_db_find_missing_references
         )
         hardwares_init_data(
-          :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :strategy => db_strategy,
+          :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+          :strategy                     => db_strategy,
+          :parent_inventory_collections => %i(vms)
         )
 
         # Parse data for InventoryCollections
@@ -230,8 +231,9 @@ describe InventoryRefresh::SaveInventory do
           :strategy => :local_db_find_missing_references,
         )
         hardwares_init_data(
-          :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :strategy => :local_db_find_missing_references,
+          :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+          :strategy                     => :local_db_find_missing_references,
+          :parent_inventory_collections => %i(vms)
         )
         network_ports_init_data(
           :parent   => @ems.network_manager,

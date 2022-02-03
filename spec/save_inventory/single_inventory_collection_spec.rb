@@ -314,6 +314,7 @@ describe InventoryRefresh::SaveInventory do
         end
 
         expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+                                                                      __parent_inventory_collections
                                                                       ems_ref
                                                                       name
                                                                       location
@@ -342,6 +343,7 @@ describe InventoryRefresh::SaveInventory do
           )
         end
         expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+                                                                      __parent_inventory_collections
                                                                       uid_ems
                                                                       name
                                                                       location

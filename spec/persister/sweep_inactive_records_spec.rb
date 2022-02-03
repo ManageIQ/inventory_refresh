@@ -482,7 +482,7 @@ describe InventoryRefresh::Persister do
       end
 
       def create_persister
-        create_containers_persister(:retention_strategy => "archive")
+        create_containers_persister(:retention_strategy => "archive", :parent_inventory_collections => [])
       end
 
       def persist(persister, _config)

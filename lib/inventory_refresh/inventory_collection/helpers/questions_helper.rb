@@ -92,7 +92,28 @@ module InventoryRefresh
         # @return [Boolean] true if processing of this InventoryCollection object would lead to no operations.
         def noop?
           # If this InventoryCollection doesn't do anything. it can easily happen for targeted/batched strategies.
-          data.blank? && custom_save_block.nil? && skeletal_primary_index.blank?
+          saving_noop?
+        end
+
+        # @return [Boolean] true if processing InventoryCollection will not lead to any created/updated/deleted record
+        def saving_noop?
+          saving_targeted_collection_noop? || saving_full_collection_noop?
+        end
+
+        private
+
+        # @return true if it's a noop parent targeted InventoryCollection
+        def saving_targeted_collection_noop?
+          targeted_noop_condition && parent_inventory_collections.blank?
+        end
+
+        # @return true if it's a noop full InventoryCollection refresh
+        def saving_full_collection_noop?
+          !targeted? && data.blank? && !delete_allowed? && skeletal_primary_index.blank?
+        end
+
+        def targeted_noop_condition
+          targeted? && data.blank? && custom_save_block.nil? && skeletal_primary_index.blank?
         end
       end
     end

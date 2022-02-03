@@ -383,7 +383,8 @@ describe InventoryRefresh::SaveInventory do
       end
       @persister.add_collection(:hardwares) do |builder|
         builder.add_properties(
-          :manager_ref => %i(vm_or_template),
+          :manager_ref                  => %i(vm_or_template),
+          :parent_inventory_collections => %i(vms)
         )
       end
     end
@@ -466,7 +467,8 @@ describe InventoryRefresh::SaveInventory do
       end
       @persister.add_collection(:hardwares) do |builder|
         builder.add_properties(
-          :manager_ref => %i(vm_or_template virtualization_type),
+          :manager_ref                  => %i(vm_or_template virtualization_type),
+          :parent_inventory_collections => %i(vms)
         )
       end
 
@@ -524,17 +526,20 @@ describe InventoryRefresh::SaveInventory do
     end
     @persister.add_collection(:hardwares) do |builder|
       builder.add_properties(
-        :manager_ref => %i(vm_or_template),
+        :manager_ref                  => %i(vm_or_template),
+        :parent_inventory_collections => %i(vms miq_templates)
       )
     end
     @persister.add_collection(:disks) do |builder|
       builder.add_properties(
-        :manager_ref => %i(hardware device_name),
+        :manager_ref                  => %i(hardware device_name),
+        :parent_inventory_collections => %i(vms miq_templates)
       )
     end
     @persister.add_collection(:networks) do |builder|
       builder.add_properties(
-        :manager_ref => %i(hardware description),
+        :manager_ref                  => %i(hardware description),
+        :parent_inventory_collections => %i(vms miq_templates)
       )
     end
     @persister.add_collection(:flavors) do |builder|

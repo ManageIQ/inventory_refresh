@@ -75,9 +75,48 @@ module InventoryRefresh
         #        This example is used in Example2 of the <param custom_save_block> and it means that our :custom_save_block
         #        will be invoked after the InventoryCollection :orchestration_stacks and :orchestration_stacks_resources
         #        are saved.
-        def init_ic_relations(dependency_attributes)
-          @dependency_attributes = dependency_attributes || {}
-          @dependees             = Set.new
+        # @param parent_inventory_collections [Array] Array of symbols having a name pointing to the
+        #        InventoryRefresh::InventoryCollection objects, that serve as parents to this InventoryCollection. There are
+        #        several scenarios to consider, when deciding if InventoryCollection has parent collections, see the example.
+        #
+        #        Example:
+        #          taking inventory collections :vms and :disks (local disks), if we write that:
+        #          inventory_collection = InventoryCollection.new({
+        #                       :model_class                 => ::Disk,
+        #                       :association                 => :disks,
+        #                       :manager_ref                 => [:vm, :location]
+        #                       :parent_inventory_collection => [:vms],
+        #                     })
+        #
+        #          Then the decision for having :parent_inventory_collection => [:vms] was probably driven by these
+        #          points:
+        #          1. We can get list of all disks only by doing SQL query through the parent object (so there will be join
+        #             from vms to disks table).
+        #          2. There is no API query for getting all disks from the provider API, we get them inside VM data, or as
+        #             a Vm subquery
+        #          3. Part of the manager_ref of the IC is the VM object (foreign key), so the disk's location is unique
+        #             only under 1 Vm. (In current models, this modeled going through Hardware model)
+        #          4. In targeted refresh, we always expect that each Vm will be saved with all its disks.
+        #
+        #          Then having the above points, adding :parent_inventory_collection => [:vms], will bring these
+        #          implications:
+        #          1. By archiving/deleting Vm, we can no longer see the disk, because those were owned by the Vm. Any
+        #             archival/deletion of the Disk model, must be then done by cascade delete/hooks logic.
+        #          2. Having Vm as a parent ensures we always process it first. So e.g. when providing no Vms for saving
+        #             we would have no graph dependency (no data --> no edges --> no dependencies) and Disk could be
+        #             archived/removed before the Vm, while we always want to archive the VM first.
+        #          3. For targeted refresh, we always expect that all disks are saved with a VM. So for targeting :disks,
+        #             we are not using #manager_uuids attribute, since the scope is "all disks of all targeted VMs", so we
+        #             always use #manager_uuids of the parent. (that is why :parent_inventory_collections and
+        #             :manager_uuids are mutually exclusive attributes)
+        #          4. For automatically building the #targeted_arel query, we need the parent to know what is the root node.
+        #             While this information can be introspected from the data, it creates a scope for create&update&delete,
+        #             which means it has to work with no data provided (causing delete all). So with no data we cannot
+        #             introspect anything.
+        def init_ic_relations(dependency_attributes, parent_inventory_collections = nil)
+          @dependency_attributes        = dependency_attributes || {}
+          @dependees                    = Set.new
+          @parent_inventory_collections = parent_inventory_collections
         end
 
         # @param complete [Boolean] By default true, :complete is marking we are sending a complete dataset and therefore
@@ -92,7 +131,8 @@ module InventoryRefresh
         # @param use_ar_object [Boolean] True or False. Whether we need to initialize AR object as part of the saving
         #        it's needed if the model have special setters, serialize of columns, etc. This setting is relevant only
         #        for the batch saver strategy.
-        # @param targeted [Boolean] True if the collection is targeted, going forward, everything will be targeted
+        # @param targeted [Boolean] True if the collection is targeted, in that case it will be leveraging :manager_uuids
+        #        :parent_inventory_collections and :targeted_arel to save a subgraph of a data.
         def init_flags(complete, create_only, check_changed,
                        update_only, use_ar_object, targeted,
                        assert_graph_integrity)
@@ -146,7 +186,7 @@ module InventoryRefresh
           @attributes_whitelist             = Set.new
           @batch_extra_attributes           = batch_extra_attributes || []
           @inventory_object_attributes      = inventory_object_attributes
-          @internal_attributes              = %i(__feedback_edge_set_parent)
+          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections)
           @transitive_dependency_attributes = Set.new
 
           blacklist_attributes!(attributes_blacklist) if attributes_blacklist.present?
@@ -190,8 +230,8 @@ module InventoryRefresh
         #                                   :targeted_arel               => targeted_arel,
         #                                 })
         def init_arels(arel, targeted_arel)
-          @arel          = arel
-          @targeted_arel = targeted_arel
+          @arel                   = arel
+          @targeted_arel          = targeted_arel
         end
 
         # @param custom_save_block [Proc] A custom lambda/proc for persisting in the DB, for cases where it's not enough

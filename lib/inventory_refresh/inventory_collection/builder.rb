@@ -11,8 +11,8 @@ module InventoryRefresh
            dependency_attributes        check_changed           inventory_object_attributes
            manager_ref                  manager_ref_allowed_nil
            model_class                  name                    parent
-           retention_strategy           strategy
-           secondary_refs               targeted
+           parent_inventory_collections retention_strategy      strategy
+           secondary_refs          targeted
            targeted_arel                update_only             use_ar_object
            assert_graph_integrity).to_set
       end
