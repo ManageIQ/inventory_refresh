@@ -126,7 +126,7 @@ module InventoryRefresh::SaveCollection
       table       = model_class.arel_table
       date_field  = table[:last_seen_at]
       all_entities_query = inventory_collection.full_collection_for_comparison
-      all_entities_query = all_entities_query.active if inventory_collection.retention_strategy == :archive && inventory_collection.supports_column?(:archived_at)
+      all_entities_query.active if inventory_collection.retention_strategy == :archive && inventory_collection.supports_column?(:archived_at)
 
       all_entities_query = apply_targeted_sweep_scope(all_entities_query)
 
