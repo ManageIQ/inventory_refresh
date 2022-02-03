@@ -195,7 +195,6 @@ describe InventoryRefresh::SaveInventory do
 
       # Invoke the InventoryCollections saving
       InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
-      @ems.reload
 
       # Assert saved data
       assert_full_inventory_collections_graph
@@ -284,7 +283,6 @@ describe InventoryRefresh::SaveInventory do
 
       # Invoke the InventoryCollections saving
       InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
-      @ems.reload
 
       # Assert saved data
       assert_full_inventory_collections_graph
