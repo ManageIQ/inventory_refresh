@@ -1,2 +1,5 @@
-# GlobalVars:
-#   AllowedVariables:
+AllCops:
+  Exclude:
+  - spec/schema.rb
+Rails:
+  Enabled: false
