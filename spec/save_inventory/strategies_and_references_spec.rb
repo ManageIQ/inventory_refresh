@@ -303,14 +303,15 @@ describe InventoryRefresh::SaveInventory do
         expect(@network_port1.device).to eq @vm3
         expect(@network_port1.name).to eq "vm_name_3"
         expect(@network_port12.device).to eq @vm2
-        expect(@network_port12.name).to eq "vm_name_4"
+        # Vm4 name was not found, because @vm4 got disconnected and no longer can be found in ems.vms
+        expect(@network_port12.name).to eq "default_name"
         expect(@network_port3.device).to eq @vm1
         expect(@network_port3.name).to eq "vm_name_1"
         expect(@vm3.hardware.guest_os).to eq "linux_generic_2"
         # We don't support :key pointing to a has_many, so it default to []
         expect(@vm31.hardware).to be_nil
-        # We don't archive anything until we explicitly call sweep
-        expect(@vm4.archived_at).to be_nil
+        # Check Vm4 was disconnected
+        expect(@vm4.archived_at).not_to be_nil
       end
     end
   end

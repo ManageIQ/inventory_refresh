@@ -9,8 +9,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string "ems_ref"
     t.string "type"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_availability_zone_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_availability_zones_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_availability_zones_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_availability_zones_on_ems_id", using: :btree
@@ -28,8 +26,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "type"
     t.bigint   "parent_id"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_cloud_tenants_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_cloud_tenants_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_cloud_tenants_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["type"], name: "index_cloud_tenants_on_type", using: :btree
@@ -116,8 +112,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "source_region_id"
     t.bigint   "subscription_id"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_vms_on_last_seen_at", using: :btree
     t.index ["availability_zone_id"], name: "index_vms_on_availability_zone_id", using: :btree
     t.index ["evm_owner_id"], name: "index_vms_on_evm_owner_id", using: :btree
     t.index ["flavor_id"], name: "index_vms_on_flavor_id", using: :btree
@@ -175,8 +169,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string  "firmware_type"
     t.bigint  "canister_id"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_hardwares_on_last_seen_at", using: :btree
     t.index ["computer_system_id"], name: "index_hardwares_on_computer_system_id", using: :btree
     t.index ["host_id"], name: "index_hardwares_on_host_id", using: :btree
     t.index ["vm_or_template_id"], name: "index_hardwares_on_vm_or_template_id", unique: true, using: :btree
@@ -207,8 +199,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "storage_profile_id"
     t.boolean  "bootable"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_disks_on_last_seen_at", using: :btree
     t.index ["hardware_id", "device_name"], name: "index_disks_on_hardware_id_and_device_name", unique: true, using: :btree
     t.index ["device_type"], name: "index_disks_on_device_type", using: :btree
     t.index ["storage_id"], name: "index_disks_on_storage_id", using: :btree
@@ -338,8 +328,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint  "swap_disk_size"
     t.boolean "publicly_available"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_flavors_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_flavors_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_flavors_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id", "name"], name: "index_flavors_on_ems_id_and_name", unique: true, using: :btree
@@ -385,8 +373,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "maintenance_reason"
     t.bigint   "physical_server_id"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_hosts_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_hosts_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_hosts_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["availability_zone_id"], name: "index_hosts_on_availability_zone_id", using: :btree
@@ -414,8 +400,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "domain"
     t.string   "ipv6address"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_networks_on_last_seen_at", using: :btree
     t.index ["hardware_id", "description"], name: "index_networks_on_hardware_id_and_description", unique: true, using: :btree
     t.index ["device_id"], name: "index_networks_on_device_id", using: :btree
   end
@@ -440,8 +424,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.text    "extra_attributes"
     t.string  "source"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_network_ports_on_last_seen_at", using: :btree
     t.index ["cloud_tenant_id"], name: "index_network_ports_on_cloud_tenant_id", using: :btree
     t.index ["device_id", "device_type"], name: "index_network_ports_on_device_id_and_device_type", using: :btree
     t.index ["type"], name: "index_network_ports_on_type", using: :btree
@@ -463,8 +445,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "start_time"
     t.datetime "finish_time"
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_orchestration_stack_resources_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_stacks_res_on_archived_at", using: :btree
     t.index ["stack_id", "ems_ref"], name: "index_stacks_res_on_stack_id_and_ems_ref", unique: true, using: :btree
     t.index ["stack_id"], name: "index_orchestration_stack_resources_on_stack_id", using: :btree
@@ -497,8 +477,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.text     "hosts",                        array: true
     t.datetime "archived_at"
     t.bigint "parent_id"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_orchestration_stacks_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_stacks_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_stacks_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index "ancestry varchar_pattern_ops", name: "index_orchestration_stacks_on_ancestry_vpo", using: :btree
@@ -531,8 +509,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "ems_compliance_name"
     t.string   "ems_compliance_status"
     t.bigint   "physical_chassis_id"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_physical_servers_on_last_seen_at", using: :btree
+
     t.datetime "archived_at"
     t.index ["archived_at"], name: "index_physical_servers_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_physical_servers_on_ems_id_and_ems_ref", unique: true, using: :btree
@@ -561,6 +538,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "old_ems_id"
     t.bigint   "old_container_project_id"
     t.datetime "updated_on"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
@@ -568,8 +546,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.jsonb    "resource_counters", default: {}
     t.integer  "resource_counters_max"
     t.string   "resource_version"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_container_groups_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_container_groups_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_groups_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_groups_on_ems_id", using: :btree
@@ -583,8 +559,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.text "description"
     t.datetime "created_at", null: false
     t.string "value", default: "", null: false
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_tags_on_last_seen_at", using: :btree
     t.index ["ems_id", "namespace", "name", "value"], name: "index_tags_on_ems_id_and_namespace_and_name_and_value", unique: true
   end
 
@@ -638,11 +612,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_containers_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_containers_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_containers_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["type"], name: "index_containers_on_type", using: :btree
@@ -687,11 +660,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "capabilities_add"
     t.string   "capabilities_drop"
     t.text     "command"
+    t.datetime "last_seen_at"
     t.datetime "resource_timestamp"
     t.jsonb    "resource_timestamps", default: {}
     t.datetime "resource_timestamps_max"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_nested_containers_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_nested_containers_on_archived_at", using: :btree
     t.index ["container_group_id", "name"], name: "index_nested_containers_uniq", unique: true, using: :btree
     t.index ["type"], name: "index_nested_containers_on_type", using: :btree
@@ -728,8 +700,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "archived_at"
     t.string   "type"
     t.jsonb    "timestamps",                  default: {}
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_container_images_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_container_images_on_archived_at", using: :btree
     t.index ["ems_id", "image_ref"], name: "index_container_images_unique_multi_column", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_images_on_ems_id", using: :btree
@@ -745,8 +715,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_on"
     t.datetime "archived_at"
     t.bigint   "old_ems_id"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_container_projects_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_container_projects_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_projects_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_projects_on_ems_id", using: :btree
@@ -786,7 +754,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "old_ems_id"
     t.datetime "archived_at"
     t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_container_nodes_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_container_nodes_on_archived_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_nodes_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_nodes_on_ems_id", using: :btree
@@ -809,8 +776,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "container_build_id"
     t.bigint   "ems_id"
     t.datetime "created_on"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_container_build_pods_on_last_seen_at", using: :btree
     t.index ["ems_id", "ems_ref"], name: "index_container_build_pods_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id", "namespace", "name"], name: "index_container_build_pods_on_ems_id_and_name", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_build_pods_on_ems_id", using: :btree
@@ -824,8 +789,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_source_regions_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_source_regions_on_archived_at"
     t.index ["ems_id", "ems_ref"], name: "index_source_regions_on_ems_id_and_ems_ref", unique: true
     t.index ["ems_id"], name: "index_source_regions_on_ems_id"
@@ -838,8 +801,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "archived_at"
-    t.datetime "last_seen_at"
-    t.index ["last_seen_at"], name: "index_subscriptions_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_subscriptions_on_archived_at"
     t.index ["ems_id", "ems_ref"], name: "index_subscriptions_on_ems_id_and_ems_ref", unique: true
     t.index ["ems_id"], name: "index_subscriptions_on_ems_id"

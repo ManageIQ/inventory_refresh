@@ -131,8 +131,6 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it "saves records correctly with complex interconnection" do
-        time_now = Time.now.utc
-
         # Setup InventoryCollections
         miq_templates_init_data(inventory_collection_options(options))
 
@@ -234,20 +232,20 @@ describe InventoryRefresh::SaveInventory do
 
         # Check ICs stats
         expect(@persister.vms.created_records).to match_array(record_stats([@vm3, @vm31]))
-        expect(@persister.vms.deleted_records).to match_array(record_stats([]))
+        expect(@persister.vms.deleted_records).to match_array(record_stats([@vm1, @vm12, @vm4]))
         expect(@persister.vms.updated_records).to match_array(record_stats([@vm2]))
 
         expect(@persister.network_ports.created_records).to match_array(record_stats([@network_port3]))
-        expect(@persister.network_ports.deleted_records).to match_array(record_stats([]))
+        expect(@persister.network_ports.deleted_records).to match_array(record_stats([@network_port2, @network_port4]))
         expect(@persister.network_ports.updated_records).to match_array(record_stats([@network_port1, @network_port12]))
 
         expect(@persister.hardwares.created_records).to match_array(record_stats([@vm3.hardware, @vm31.hardware]))
         # We don't see hardwares that were disconnected as a part of Vm or Template
-        expect(@persister.hardwares.deleted_records).to match_array(record_stats([]))
+        expect(@persister.hardwares.deleted_records).to match_array(record_stats([@image_hardware2, @image_hardware3]))
         expect(@persister.hardwares.updated_records).to match_array(record_stats([@hardware2]))
 
         expect(@persister.miq_templates.created_records).to match_array(record_stats([]))
-        expect(@persister.miq_templates.deleted_records).to match_array(record_stats([]))
+        expect(@persister.miq_templates.deleted_records).to match_array(record_stats([@image1]))
         expect(@persister.miq_templates.updated_records).to match_array(record_stats([@image2, @image3]))
 
         # Check the changed timestamps
@@ -312,14 +310,14 @@ describe InventoryRefresh::SaveInventory do
           {:vm_or_template_id => @image2.id, :guest_os => "linux_generic_2"},
           {:vm_or_template_id => @image3.id, :guest_os => "linux_generic_3"},
           {:vm_or_template_id => @vm1.id, :guest_os => "linux_generic_1"},
-          {:vm_or_template_id => @vm2.id, :guest_os => "linux_generic_1"},
+          {:vm_or_template_id => @vm2.id, :guest_os => nil},
           {:vm_or_template_id => @vm12.id, :guest_os => "linux_generic_1"},
           {:vm_or_template_id => @vm3.id, :guest_os => "linux_generic_2"},
           {:vm_or_template_id => @vm31.id, :guest_os => "linux_generic_2"}
         )
 
         assert_all_records_match_hashes(
-          [NetworkPort.active.where(:last_seen_at => time_now..DateTime::Infinity.new)],
+          [NetworkPort.active],
           {
             :id          => @network_port1.id,
             :ems_id      => @ems.network_manager.id,

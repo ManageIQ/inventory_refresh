@@ -59,9 +59,9 @@ describe InventoryRefresh::InventoryCollection::Builder do
   # --- shared properties ---
 
   it 'applies shared properties' do
-    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:update_only => true}).to_hash
+    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:targeted => true}).to_hash
 
-    expect(data[:update_only]).to be_truthy
+    expect(data[:targeted]).to be_truthy
   end
 
   it "doesn't overwrite defined properties by shared properties" do

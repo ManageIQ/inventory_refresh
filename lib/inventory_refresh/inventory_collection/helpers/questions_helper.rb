@@ -81,11 +81,17 @@ module InventoryRefresh
           data_collection_finalized
         end
 
+        # @return [Boolean] true is processing of this InventoryCollection will be in targeted mode
+        def targeted?
+          targeted
+        end
+
         # True if processing of this InventoryCollection object would lead to no operations. Then we use this marker to
         # stop processing of the InventoryCollector object very soon, to avoid a lot of unnecessary Db queries, etc.
         #
         # @return [Boolean] true if processing of this InventoryCollection object would lead to no operations.
         def noop?
+          # If this InventoryCollection doesn't do anything. it can easily happen for targeted/batched strategies.
           data.blank? && custom_save_block.nil? && skeletal_primary_index.blank?
         end
       end

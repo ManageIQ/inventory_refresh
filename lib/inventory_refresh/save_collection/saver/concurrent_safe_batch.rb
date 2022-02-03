@@ -55,8 +55,6 @@ module InventoryRefresh::SaveCollection
           # Building fast iterator doing pure SQL query and therefore avoiding redundant creation of AR objects. The
           # iterator responds to find_in_batches, so it acts like the AR relation. For targeted refresh, the association
           # can already be ApplicationRecordIterator, so we will skip that.
-          # TODO(lsmola) Since everything is targeted now, we want to probably delete this branch and make iterator to
-          # do pure SQL queries, if there will be no .check_changed?
           pure_sql_iterator = lambda do |&block|
             primary_key_offset = nil
             loop do
@@ -178,7 +176,14 @@ module InventoryRefresh::SaveCollection
         records_for_destroy = []
         indexed_inventory_objects = {}
 
-        records_batch_iterator.find_in_batches(:batch_size => batch_size, :attributes_index => attributes_index) do |batch|
+        # TODO(lsmola) remove when switching to only targeted mode
+        attrs = if records_batch_iterator.kind_of?(InventoryRefresh::ApplicationRecordIterator)
+                  {:batch_size => batch_size, :attributes_index => attributes_index}
+                else
+                  {:batch_size => batch_size}
+                end
+
+        records_batch_iterator.find_in_batches(attrs) do |batch|
           update_time = time_now
 
           batch.each do |record|
@@ -287,7 +292,10 @@ module InventoryRefresh::SaveCollection
       def db_columns_index(record, pure_sql: false)
         # Incoming values are in SQL string form.
         # TODO(lsmola) unify this behavior with object_index_with_keys method in InventoryCollection
+        # TODO(lsmola) maybe we can drop the whole pure sql fetching, since everything will be targeted refresh
         # with streaming refresh? Maybe just metrics and events will not be, but those should be upsert only
+        # TODO(lsmola) taking ^ in account, we can't drop pure sql, since that is returned by batch insert and
+        # update queries
         unique_index_keys_to_s.map do |attribute|
           value = if pure_sql
                     record[attribute]
