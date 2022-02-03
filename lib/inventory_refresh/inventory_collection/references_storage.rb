@@ -45,6 +45,23 @@ module InventoryRefresh
         add_reference(reference_data)
       end
 
+      # Adds array of references to the storage. The reference can be already existing, otherwise we attempt to build
+      # it.
+      #
+      # @param references_array [Array] Array of reference objects acceptable by add_reference method.
+      # @param ref [Symbol] A key to specific reference, if it's a reference pointing to something else than primary
+      #        index.
+      # @return [InventoryRefresh::InventoryCollection::ReferencesStorage] Returns self
+      def merge!(references_array, ref: nil)
+        references_array.each { |reference_data| add_reference(reference_data, :ref => ref) }
+        self
+      end
+
+      # @return [Hash{String => InventoryRefresh::InventoryCollection::Reference}] Hash of indexed Reference objects
+      def primary_references
+        references[primary_index_ref]
+      end
+
       # Builds a Reference object
       #
       # @param reference_data [InventoryRefresh::InventoryCollection::References, Hash, Object] Either existing Reference

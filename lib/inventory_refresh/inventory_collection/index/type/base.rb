@@ -27,6 +27,14 @@ module InventoryRefresh
             index[build_stringified_reference(inventory_object.data, attribute_names)] = inventory_object
           end
 
+          # Rebuilds the indexes for all InventoryObject objects
+          def reindex!
+            self.index = {}
+            data.each do |inventory_object|
+              store_index_for(inventory_object)
+            end
+          end
+
           # @return [Array] Returns index data
           def index_data
             index.values

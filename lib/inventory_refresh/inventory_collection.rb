@@ -112,6 +112,7 @@ module InventoryRefresh
              :lazy_find_by,
              :named_ref,
              :primary_index,
+             :reindex_secondary_indexes!,
              :skeletal_primary_index,
              :to => :index_proxy
 
@@ -447,11 +448,13 @@ module InventoryRefresh
 
     # @return [Integer] default batch size for talking to the DB
     def batch_size
+      # TODO(lsmola) mode to the settings
       1000
     end
 
     # @return [Integer] default batch size for talking to the DB if not using ApplicationRecord objects
     def batch_size_pure_sql
+      # TODO(lsmola) mode to the settings
       10_000
     end
 
@@ -565,6 +568,12 @@ module InventoryRefresh
       {
         :id => identity
       }
+    end
+
+    # TODO: Not used!
+    # @return [Array<Symbol>] all association attributes and foreign keys of the model class
+    def association_attributes
+      model_class.reflect_on_all_associations.map { |x| [x.name, x.foreign_key] }.flatten.compact.map(&:to_sym)
     end
   end
 end

@@ -2,7 +2,7 @@ require_relative "test_builder"
 require_relative "test_builder/persister_helper"
 
 class TestPersister < InventoryRefresh::Persister
-  attr_reader :manager, :collections, :options
+  attr_reader :manager, :target, :collections, :options
 
   include ::TestBuilder::PersisterHelper
 
@@ -11,8 +11,9 @@ class TestPersister < InventoryRefresh::Persister
     @options ||= {}
   end
 
-  def initialize(manager, extra_options = {})
+  def initialize(manager, target = nil, extra_options = {})
     @manager = manager
+    @target  = target
 
     @collections = {}
     @options     = extra_options

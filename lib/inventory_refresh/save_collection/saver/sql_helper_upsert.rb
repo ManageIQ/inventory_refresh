@@ -92,6 +92,8 @@ module InventoryRefresh::SaveCollection
                               :resource_counter
                             end
 
+        # TODO(lsmola) should we add :deleted => false to the update clause? That should handle a reconnect, without a
+        # a need to list :deleted anywhere in the parser. We just need to check that a model has the :deleted attribute
         query = <<-SQL
           SET #{(all_attribute_keys - ignore_cols).map { |key| build_insert_set_cols(key) }.join(", ")}
         SQL

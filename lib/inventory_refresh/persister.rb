@@ -3,13 +3,15 @@ module InventoryRefresh
     require 'json'
     require 'yaml'
 
-    attr_reader :manager, :collections
+    attr_reader :manager, :target, :collections
 
     attr_accessor :refresh_state_uuid, :refresh_state_part_uuid, :total_parts, :sweep_scope, :retry_count, :retry_max
 
     # @param manager [ManageIQ::Providers::BaseManager] A manager object
-    def initialize(manager)
+    # @param target [Object] A refresh Target object
+    def initialize(manager, target = nil)
       @manager = manager
+      @target  = target
 
       @collections = {}
 
@@ -120,16 +122,18 @@ module InventoryRefresh
       #
       # @param json_data [String] input JSON data
       # @return [ManageIQ::Providers::Inventory::Persister] Persister object loaded from a passed JSON
-      def from_json(json_data, manager)
-        from_hash(JSON.parse(json_data), manager)
+      def from_json(json_data, manager, target = nil)
+        from_hash(JSON.parse(json_data), manager, target)
       end
 
       # Returns Persister object built from serialized data
       #
       # @param persister_data [Hash] serialized Persister object in hash
       # @return [ManageIQ::Providers::Inventory::Persister] Persister object built from serialized data
-      def from_hash(persister_data, manager)
-        new(manager).tap do |persister|
+      def from_hash(persister_data, manager, target = nil)
+        target ||= InventoryRefresh::TargetCollection.new(:manager => manager)
+
+        new(manager, target).tap do |persister|
           persister_data['collections'].each do |collection|
             inventory_collection = persister.collections[collection['name'].try(:to_sym)]
             raise "Unrecognized InventoryCollection name: #{collection['name']}" if inventory_collection.blank?

@@ -71,7 +71,7 @@ describe InventoryRefresh::SaveInventory do
     @ems = FactoryBot.create(:ems_cloud)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
-    @persister = persister_class.new(@ems)
+    @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
   end
 
   context 'with empty DB' do

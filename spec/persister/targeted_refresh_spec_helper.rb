@@ -3,11 +3,11 @@ require_relative '../helpers/test_persister/containers'
 
 module TargetedRefreshSpecHelper
   def create_persister(extra_options = {})
-    TestPersister::Cloud.new(@ems, extra_options)
+    TestPersister::Cloud.new(@ems, @ems, extra_options)
   end
 
   def create_containers_persister(extra_options = {})
-    TestPersister::Containers.new(@ems, extra_options)
+    TestPersister::Containers.new(@ems, @ems, extra_options)
   end
 
   def expected_ext_management_systems_count
