@@ -27,7 +27,8 @@ module InventoryRefresh::SaveCollection
       end
 
       def sweep_possible?(inventory_collection, scope_set)
-        inventory_collection.supports_column?(:last_seen_at) && in_scope?(inventory_collection, scope_set)
+        inventory_collection.supports_column?(:last_seen_at) && inventory_collection.parallel_safe? &&
+          in_scope?(inventory_collection, scope_set)
       end
 
       def in_scope?(inventory_collection, scope_set)

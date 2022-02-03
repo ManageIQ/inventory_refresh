@@ -8,6 +8,9 @@ module InventoryRefresh::SaveCollection
     module SqlHelper
       include InventoryRefresh::Logging
 
+      # TODO(lsmola) all below methods should be rewritten to arel, but we need to first extend arel to be able to do
+      # this
+
       extend ActiveSupport::Concern
 
       included do

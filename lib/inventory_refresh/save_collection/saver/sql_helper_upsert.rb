@@ -55,6 +55,8 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_on_conflict_behavior(all_attribute_keys, on_conflict, mode, ignore_cols, column_name)
+        return "" unless inventory_collection.parallel_safe?
+
         insert_query_on_conflict = insert_query_on_conflict_do(on_conflict)
         if on_conflict == :do_update
           insert_query_on_conflict += insert_query_on_conflict_update(all_attribute_keys, mode, ignore_cols, column_name)
@@ -181,12 +183,16 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_returning_timestamps
-        # For upsert, we'll return also created and updated timestamps, so we can recognize what was created and what
-        # updated
-        if inventory_collection.internal_timestamp_columns.present?
-          <<-SQL
-            , #{inventory_collection.internal_timestamp_columns.map { |x| quote_column_name(x) }.join(",")}
-          SQL
+        if inventory_collection.parallel_safe?
+          # For upsert, we'll return also created and updated timestamps, so we can recognize what was created and what
+          # updated
+          if inventory_collection.internal_timestamp_columns.present?
+            <<-SQL
+              , #{inventory_collection.internal_timestamp_columns.map { |x| quote_column_name(x) }.join(",")}
+            SQL
+          end
+        else
+          ""
         end
       end
     end

@@ -132,13 +132,19 @@ module InventoryRefresh
 
         delegate :association_to_foreign_key_mapping,
                  :build_stringified_reference,
+                 :parallel_safe?,
                  :strategy,
                  :to => :inventory_collection
 
         attr_reader :all_refs, :data_indexes, :inventory_collection, :primary_ref, :local_db_indexes, :secondary_refs
 
         def find_in_data_or_skeletal_index(reference)
-          data_index_find(reference) || skeletal_index_find(reference)
+          if parallel_safe?
+            # With parallel safe strategies, we create skeletal nodes that we can look for
+            data_index_find(reference) || skeletal_index_find(reference)
+          else
+            data_index_find(reference)
+          end
         end
 
         def skeletal_index_find(reference)
