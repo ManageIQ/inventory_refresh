@@ -611,26 +611,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.index ["type"], name: "index_container_groups_on_type", using: :btree
   end
 
-  create_table "tags", id: :bigserial, force: :cascade do |t|
-    t.bigint "ems_id", null: false
-    t.string "name", null: false
-    t.string "namespace", default: "", null: false
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.string "value", default: "", null: false
-    t.index ["ems_id", "namespace", "name", "value"], name: "index_tags_on_ems_id_and_namespace_and_name_and_value", unique: true
-  end
-
-  create_table "container_group_tags", id: :serial, force: :cascade do |t|
-    t.bigint "tag_id", null: false
-    t.bigint "container_group_id", null: false
-    t.index ["container_group_id", "tag_id"], name: "uniq_index_on_container_group_id_tag_id", unique: true
-    t.index ["tag_id"], name: "index_container_group_tags_on_tag_id"
-  end
-
-  add_foreign_key "container_group_tags", "container_groups", on_delete: :cascade
-  add_foreign_key "container_group_tags", "tags", on_delete: :cascade
-
   create_table "containers", id: :bigserial, force: :cascade do |t|
     t.string   "ems_ref"
     t.integer  "restart_count"
@@ -821,10 +801,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
 
   create_table "container_build_pods", id: :bigserial, force: :cascade do |t|
     t.string   "ems_ref"
-    t.string   "name", null: false
+    t.string   "name"
     t.datetime "ems_created_on"
     t.string   "resource_version_string"
-    t.string   "namespace", null: false
+    t.string   "namespace"
     t.string   "message"
     t.string   "phase"
     t.string   "reason"
@@ -836,7 +816,6 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "ems_id"
     t.datetime "created_on"
     t.index ["ems_id", "ems_ref"], name: "index_container_build_pods_on_ems_id_and_ems_ref", unique: true, using: :btree
-    t.index ["ems_id", "namespace", "name"], name: "index_container_build_pods_on_ems_id_and_name", unique: true, using: :btree
     t.index ["ems_id"], name: "index_container_build_pods_on_ems_id", using: :btree
   end
 

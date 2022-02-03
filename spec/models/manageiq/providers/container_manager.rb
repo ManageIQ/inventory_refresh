@@ -5,7 +5,6 @@ module ManageIQ
     class ContainerManager < ManageIQ::Providers::BaseManager
       has_many :container_nodes, -> { active }, :foreign_key => :ems_id
       has_many :container_groups, -> { active }, :foreign_key => :ems_id
-      has_many :container_group_tags, :through => :container_groups
       has_many :container_replicators, :foreign_key => :ems_id, :dependent => :destroy
       has_many :containers, -> { active }, :foreign_key => :ems_id
       has_many :container_build_pods, :foreign_key => :ems_id, :dependent => :destroy
@@ -14,8 +13,6 @@ module ManageIQ
       has_many :container_images, -> { active }, :foreign_key => :ems_id, :dependent => :destroy
 
       has_many :nested_containers, :through => :container_groups
-
-      has_many :tags, :foreign_key => :ems_id
 
       # Archived and active entities to destroy when the container manager is deleted
       has_many :all_containers, :foreign_key => :ems_id, :dependent => :destroy, :class_name => "Container"

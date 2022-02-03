@@ -5,14 +5,12 @@ class TestPersister::Containers < ::TestPersister
     %i(containers
        container_build_pods
        container_groups
-       container_group_tags
        container_image_registries
        container_images
        container_nodes
        container_projects
        container_replicators
-       nested_containers
-       tags).each do |name|
+       nested_containers).each do |name|
 
       add_collection(name, container)
     end

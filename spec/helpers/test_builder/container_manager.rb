@@ -52,22 +52,6 @@ class TestBuilder::ContainerManager < ::TestBuilder
     add_common_default_values
   end
 
-  def container_group_tags
-    add_properties(
-      :model_class => ContainerGroupTag,
-      :manager_ref => %i(container_group tag),
-    )
-  end
-
-  def tags
-    add_properties(
-      :model_class => Tag,
-      :manager_ref => %i(name value),
-    )
-    add_default_values(:namespace => "openshift")
-    add_common_default_values
-  end
-
   def containers
     add_properties(
       :model_class            => Container,
@@ -96,6 +80,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
 
   def container_build_pods
     add_properties(
+      # TODO: (bpaskinc) convert namespace column -> container_project_id?
       :manager_ref    => %i(namespace name),
       :secondary_refs => {:by_namespace_and_name => %i(namespace name)},
       :model_class    => ContainerBuildPod,

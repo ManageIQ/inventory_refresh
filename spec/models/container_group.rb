@@ -6,8 +6,6 @@ class ContainerGroup < ActiveRecord::Base
   has_many :containers, :dependent => :destroy
   has_many :nested_containers, :dependent => :destroy
   has_many :container_images, -> { distinct }, :through => :containers
-  has_many :container_group_tags
-  has_many :tags, :through => :container_group_tags
   belongs_to :ext_management_system, :foreign_key => "ems_id"
   belongs_to :container_node
   belongs_to :container_replicator
