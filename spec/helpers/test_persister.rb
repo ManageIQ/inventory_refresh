@@ -12,8 +12,12 @@ class TestPersister < InventoryRefresh::Persister
   end
 
   def initialize(manager, extra_options = {})
+    @manager = manager
+
+    @collections = {}
     @options     = extra_options
-    super(manager)
+
+    initialize_inventory_collections
   end
 
   def assert_graph_integrity?
