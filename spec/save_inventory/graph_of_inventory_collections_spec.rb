@@ -799,12 +799,6 @@ describe InventoryRefresh::SaveInventory do
     expect(orchestration_stack_resource_12_23.stack).to eq(orchestration_stack_1_12)
   end
 
-  def add_default_values(builder)
-    builder.add_default_values(
-      :ems_id => ->(persister) { persister.manager.id }
-    )
-  end
-
   # Initialize the InventoryCollections
   def initialize_inventory_collections(opts = {})
     collections = [
@@ -817,8 +811,6 @@ describe InventoryRefresh::SaveInventory do
         builder.add_properties(
           :model_class => params[1],
         )
-
-        add_default_values(builder) if params[0] == :orchestration_stacks
       end
     end
 

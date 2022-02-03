@@ -4,9 +4,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   enable_extension "plpgsql"
 
   create_table "availability_zones", id: :bigserial, force: :cascade do |t|
-    t.bigint "ems_id", null: false
+    t.bigint "ems_id"
     t.string "name"
-    t.string "ems_ref", null: false
+    t.string "ems_ref"
     t.string "type"
     t.datetime "archived_at"
     t.datetime "last_seen_at"
@@ -21,8 +21,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "name"
     t.text     "description"
     t.boolean  "enabled"
-    t.string   "ems_ref", null: false
-    t.bigint   "ems_id", null: false
+    t.string   "ems_ref"
+    t.bigint   "ems_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "type"
@@ -51,7 +51,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "updated_on", null: false
     t.bigint   "storage_id"
     t.string   "guid"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.datetime "last_scan_on"
     t.datetime "last_scan_attempt_on"
     t.string   "uid_ems"
@@ -136,7 +136,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "hardwares", id: :bigserial, force: :cascade do |t|
-    t.bigint  "vm_or_template_id", null: false
+    t.bigint  "vm_or_template_id"
     t.string  "config_version"
     t.string  "virtual_hw_version"
     t.string  "guest_os"
@@ -185,11 +185,11 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   add_foreign_key :hardwares, :vms, on_delete: :cascade, column: 'vm_or_template_id'
 
   create_table "disks", id: :bigserial, force: :cascade do |t|
-    t.string   "device_name", null: false
+    t.string   "device_name"
     t.string   "device_type"
     t.string   "location"
     t.string   "filename"
-    t.bigint   "hardware_id", null: false
+    t.bigint   "hardware_id"
     t.string   "mode"
     t.string   "controller_type"
     t.bigint   "size"
@@ -232,7 +232,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.bigint   "dest_vm_or_template_id"
     t.string   "source"
     t.bigint   "chain_id"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.boolean  "is_task"
     t.text     "full_data"
     t.datetime "created_on"
@@ -262,7 +262,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "middleware_deployment_name"
     t.bigint   "generating_ems_id"
     t.bigint   "physical_server_id"
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.bigint   "middleware_domain_id"
     t.string   "middleware_domain_name"
     t.bigint   "user_id"
@@ -289,7 +289,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "name"
     t.datetime "created_on"
     t.datetime "updated_on"
-    t.string   "guid", null: false
+    t.string   "guid"
     t.bigint   "zone_id"
     t.string   "type"
     t.string   "api_version"
@@ -317,8 +317,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "flavors", id: :bigserial, force: :cascade do |t|
-    t.bigint  "ems_id", null: false
-    t.string  "name", null: false
+    t.bigint  "ems_id"
+    t.string  "name"
     t.string  "description"
     t.integer "cpus"
     t.integer "cpu_cores"
@@ -341,6 +341,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "last_seen_at"
     t.index ["last_seen_at"], name: "index_flavors_on_last_seen_at", using: :btree
     t.index ["archived_at"], name: "index_flavors_on_archived_at", using: :btree
+    t.index ["ems_id", "ems_ref"], name: "index_flavors_on_ems_id_and_ems_ref", unique: true, using: :btree
     t.index ["ems_id", "name"], name: "index_flavors_on_ems_id_and_name", unique: true, using: :btree
     t.index ["ems_id"], name: "index_flavors_on_ems_id", using: :btree
     t.index ["type"], name: "index_flavors_on_type", using: :btree
@@ -357,7 +358,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.datetime "created_on"
     t.datetime "updated_on"
     t.string   "guid"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.string   "user_assigned_os"
     t.string   "power_state",             default: ""
     t.integer  "smart"
@@ -374,7 +375,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "mac_address"
     t.string   "type"
     t.boolean  "failover"
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.boolean  "hyperthreading"
     t.bigint   "ems_cluster_id"
     t.integer  "next_available_vnc_port"
@@ -397,9 +398,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "networks", id: :bigserial, force: :cascade do |t|
-    t.bigint   "hardware_id", null: false
+    t.bigint   "hardware_id"
     t.bigint   "device_id"
-    t.string   "description", null: false
+    t.string   "description"
     t.string   "guid"
     t.boolean  "dhcp_enabled"
     t.string   "ipaddress"
@@ -424,8 +425,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   create_table "network_ports", id: :bigserial, force: :cascade do |t|
     t.string  "type"
     t.string  "name"
-    t.string  "ems_ref", null: false
-    t.bigint  "ems_id", null: false
+    t.string  "ems_ref"
+    t.bigint  "ems_id"
     t.string  "mac_address"
     t.string  "status"
     t.boolean "admin_state_up"
@@ -457,8 +458,8 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "resource_status"
     t.text     "resource_status_reason"
     t.datetime "last_updated"
-    t.bigint   "stack_id", null: false
-    t.text     "ems_ref", null: false
+    t.bigint   "stack_id"
+    t.text     "ems_ref"
     t.datetime "start_time"
     t.datetime "finish_time"
     t.datetime "archived_at"
@@ -474,9 +475,9 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "type"
     t.text     "description"
     t.string   "status"
-    t.text     "ems_ref", null: false
+    t.text     "ems_ref"
     t.string   "ancestry"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.bigint   "orchestration_template_id"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -507,11 +508,11 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "physical_servers", id: :bigserial, force: :cascade do |t|
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.string   "name"
     t.string   "type"
     t.string   "uid_ems"
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.datetime "created_at",             null: false
     t.datetime "updated_at",             null: false
     t.string   "health_state"
@@ -538,7 +539,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "container_groups", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.string   "name"
     t.datetime "ems_created_on"
     t.string   "resource_version_string"
@@ -598,7 +599,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   add_foreign_key "container_group_tags", "tags", on_delete: :cascade
 
   create_table "containers", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.integer  "restart_count"
     t.string   "state"
     t.string   "name"
@@ -651,7 +652,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "ems_ref"
     t.integer  "restart_count"
     t.string   "state"
-    t.string   "name", null: false
+    t.string   "name"
     t.string   "backing_ref"
     t.datetime "last_perf_capture_on"
     t.string   "type"
@@ -698,16 +699,16 @@ ActiveRecord::Schema.define(version: 20180906121026) do
 
   create_table "container_image_registries", id: :bigserial, force: :cascade do |t|
     t.string "name"
-    t.string "host", null: false
-    t.string "port", null: false
-    t.bigint "ems_id", null: false
+    t.string "host"
+    t.string "port"
+    t.bigint "ems_id"
     t.index ["ems_id", "host", "port"], name: "index_container_image_registries_on_ems_id_and_host_and_port", unique: true, using: :btree
   end
 
   create_table "container_images", id: :bigserial, force: :cascade do |t|
     t.string   "tag"
     t.string   "name"
-    t.string   "image_ref", null: false
+    t.string   "image_ref"
     t.bigint   "container_image_registry_id"
     t.bigint   "ems_id", null: false
     t.datetime "last_sync_on"
@@ -735,12 +736,12 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "container_projects", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.string   "name"
     t.datetime "ems_created_on"
     t.string   "resource_version_string"
     t.string   "display_name"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.datetime "created_on"
     t.datetime "archived_at"
     t.bigint   "old_ems_id"
@@ -752,10 +753,10 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "container_replicators", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.string   "name"
     t.datetime "ems_created_on"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.string   "resource_version_string"
     t.integer  "replicas"
     t.integer  "current_replicas"
@@ -765,11 +766,11 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "container_nodes", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.string   "name"
     t.datetime "ems_created_on"
     t.string   "resource_version_string"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.string   "lives_on_type"
     t.bigint   "lives_on_id"
     t.datetime "last_perf_capture_on"
@@ -793,7 +794,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
   end
 
   create_table "container_build_pods", id: :bigserial, force: :cascade do |t|
-    t.string   "ems_ref", null: false
+    t.string   "ems_ref"
     t.string   "name", null: false
     t.datetime "ems_created_on"
     t.string   "resource_version_string"
@@ -806,7 +807,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
     t.string   "start_timestamp"
     t.bigint   "duration"
     t.bigint   "container_build_id"
-    t.bigint   "ems_id", null: false
+    t.bigint   "ems_id"
     t.datetime "created_on"
     t.datetime "last_seen_at"
     t.index ["last_seen_at"], name: "index_container_build_pods_on_last_seen_at", using: :btree
@@ -817,7 +818,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
 
   create_table "source_regions", force: :cascade do |t|
     t.bigint "ems_id", null: false
-    t.string "ems_ref", null: false
+    t.string "ems_ref"
     t.string "name"
     t.string "endpoint"
     t.datetime "created_at", null: false
@@ -832,7 +833,7 @@ ActiveRecord::Schema.define(version: 20180906121026) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.bigint "ems_id", null: false
-    t.string "ems_ref", null: false
+    t.string "ems_ref"
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

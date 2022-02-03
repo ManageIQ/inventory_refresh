@@ -17,7 +17,8 @@ describe InventoryRefresh::SaveInventory do
   ].each do |options|
     context "with options #{options}" do
       before do
-        @ems = FactoryBot.create(:ems_cloud, :network_manager => FactoryBot.create(:ems_network))
+        @ems = FactoryBot.create(:ems_cloud,
+                                  :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
         @persister = persister_class.new(@ems)
