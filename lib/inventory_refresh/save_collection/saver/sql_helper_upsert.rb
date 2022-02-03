@@ -128,7 +128,7 @@ module InventoryRefresh::SaveCollection
           , #{attr_partial} = '{}', #{attr_partial_max} = NULL
 
           WHERE EXCLUDED.#{attr_full} IS NULL OR (
-            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_full} >= #{q_table_name}.#{attr_full}) AND
+            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_full} > #{q_table_name}.#{attr_full}) AND
             (#{q_table_name}.#{attr_partial_max} IS NULL OR EXCLUDED.#{attr_full} >= #{q_table_name}.#{attr_partial_max})
           )
         SQL
@@ -154,9 +154,9 @@ module InventoryRefresh::SaveCollection
           #{insert_query_set_jsonb_version(cast, attr_partial, attr_partial_max, column_name)}
           , #{attr_partial_max} = greatest(#{q_table_name}.#{attr_partial_max}::#{cast}, EXCLUDED.#{attr_partial_max}::#{cast})
           WHERE EXCLUDED.#{attr_partial_max} IS NULL OR (
-            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_partial_max} >= #{q_table_name}.#{attr_full}) AND (
+            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_partial_max} > #{q_table_name}.#{attr_full}) AND (
               (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast} IS NULL OR
-              EXCLUDED.#{attr_partial_max}::#{cast} >= (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast}
+              EXCLUDED.#{attr_partial_max}::#{cast} > (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast}
             )
           )
         SQL
