@@ -322,11 +322,7 @@ describe InventoryRefresh::SaveInventory do
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system
-                                                                      created_on
-                                                                      ems_id
-                                                                      updated_on
-                                                                   ))
+                                                                      ext_management_system))
       end
 
       it 'does not blacklist fixed attributes when changing manager_ref' do
@@ -337,7 +333,7 @@ describe InventoryRefresh::SaveInventory do
             :attributes_blacklist => %i(ems_ref uid_ems name location vendor raw_power_state)
           )
         end
-        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor raw_power_state))
+        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor ems_ref raw_power_state))
       end
 
       it 'has fixed and internal attributes amongst whitelisted_attributes when changing manager_ref' do
@@ -354,12 +350,7 @@ describe InventoryRefresh::SaveInventory do
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system
-                                                                      created_on
-                                                                      ems_id
-                                                                      ems_ref
-                                                                      updated_on
-                                                                    ))
+                                                                      ext_management_system))
       end
 
       it 'saves all attributes with blacklist and whitelist disabled' do
