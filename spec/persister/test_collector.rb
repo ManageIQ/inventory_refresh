@@ -2,9 +2,9 @@ require_relative '../helpers/test_persister/containers'
 
 class TestCollector
   class << self
-    def generate_batches_of_partial_container_group_data(ems_id:, version:, settings:, batch_size: 4, index_start: 0,
+    def generate_batches_of_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
                                                          persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems, settings)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
@@ -15,9 +15,9 @@ class TestCollector
       persister
     end
 
-    def generate_batches_of_different_partial_container_group_data(ems_id:, version:, settings:, batch_size: 4,
+    def generate_batches_of_different_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4,
                                                                    index_start: 0, persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems, settings)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
@@ -28,9 +28,9 @@ class TestCollector
       persister
     end
 
-    def generate_batches_of_full_container_group_data(ems_id:, version:, settings:, batch_size: 4, index_start: 0,
+    def generate_batches_of_full_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
                                                       persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems, settings)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|

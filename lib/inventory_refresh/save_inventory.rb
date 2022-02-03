@@ -50,7 +50,7 @@ module InventoryRefresh
       # @param ems [ExtManagementSystem] manager owning the inventory_collections
       # @return [String] helper string for logging
       def log_header(ems)
-        "EMS: [#{ems.id}]"
+        "EMS: [#{ems.name}], id: [#{ems.id}]"
       end
     end
   end
