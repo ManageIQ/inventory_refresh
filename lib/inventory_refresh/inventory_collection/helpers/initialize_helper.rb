@@ -73,6 +73,33 @@ module InventoryRefresh
           @secondary_refs          = secondary_refs || {}
         end
 
+        # @param all_manager_uuids [Array] Array of all manager_uuids of the InventoryObjects. With the :targeted true,
+        #        having this parameter defined will invoke only :delete_method on a complement of this set, making sure
+        #        the DB has only this set of data after. This :attribute serves for deleting of top level
+        #        InventoryCollections, i.e. InventoryCollections having parent_inventory_collections nil. The deleting of
+        #        child collections is already handled by the scope of the parent_inventory_collections and using Rails
+        #        :dependent => :destroy,
+        # @param all_manager_uuids_scope [Array] A scope limiting the :all_manager_uuids parameter. E.g. we can send
+        #        all_manager_uuids for 1 region, leading to delete a complement of the entities just under that 1
+        #        region.
+        #        If all_manager_uuids_scope is used with :all_manager_uuids => nil, it will do delete_complement of the
+        #        scope itself. E.g. sending a list of all active regions, we will delete complement entities not
+        #        belonging to those regions.
+        #        Example:
+        #          :all_manager_uuids       => [{:source_ref => x}, {:source_ref => y}],
+        #          :all_manager_uuids_scope => [{:region => regions.lazy_find(X)}, {:region => regions.lazy_find(Y)}]
+        #
+        #        Will cause deletion/archival or all entities that don't have source_ref "x" or "y", but only under
+        #        regions X and Y.
+        # @param all_manager_uuids_timestamp [String] A timestamp in UTC marking a time before we collected all of the
+        #        all_manager_uuids. Meaning we won't be archiving any newer entities.
+        def init_all_manager_uuids(all_manager_uuids, all_manager_uuids_scope, all_manager_uuids_timestamp)
+          # TODO(lsmola) Should we refactor this to use references too?
+          @all_manager_uuids           = all_manager_uuids
+          @all_manager_uuids_scope     = all_manager_uuids_scope
+          @all_manager_uuids_timestamp = all_manager_uuids_timestamp
+        end
+
         # @param dependency_attributes [Hash] Manually defined dependencies of this InventoryCollection. We can use this
         #        by manually place the InventoryCollection into the graph, to make sure the saving is invoked after the
         #        dependencies were saved. The dependencies itself are InventoryCollection objects. For a common use-cases
@@ -198,7 +225,7 @@ module InventoryRefresh
           @attributes_whitelist             = Set.new
           @batch_extra_attributes           = batch_extra_attributes || []
           @inventory_object_attributes      = inventory_object_attributes
-          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections)
+          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections __all_manager_uuids_scope)
           @transitive_dependency_attributes = Set.new
 
           blacklist_attributes!(attributes_blacklist) if attributes_blacklist.present?

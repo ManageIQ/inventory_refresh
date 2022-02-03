@@ -3,6 +3,28 @@ module InventoryRefresh::SaveCollection
     module RetentionHelper
       private
 
+      # Deletes a complement of referenced data
+      def delete_complement
+        return unless inventory_collection.delete_allowed?
+
+        all_manager_uuids_size = inventory_collection.all_manager_uuids.size
+
+        logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
+                     "#{all_manager_uuids_size}...")
+
+        query = complement_of!(inventory_collection.all_manager_uuids,
+                               inventory_collection.all_manager_uuids_scope,
+                               inventory_collection.all_manager_uuids_timestamp)
+
+        ids_of_non_active_entities = ActiveRecord::Base.connection.execute(query.to_sql).to_a
+        ids_of_non_active_entities.each_slice(10_000) do |batch|
+          destroy_records!(batch)
+        end
+
+        logger.debug("Processing :delete_complement of #{inventory_collection} of size "\
+                     "#{all_manager_uuids_size}, deleted=#{inventory_collection.deleted_records.size}...Complete")
+      end
+
       # Applies strategy based on :retention_strategy parameter, or fallbacks to legacy_destroy_records.
       #
       # @param records [Array<ApplicationRecord, Hash, Array>] Records we want to delete or archive

@@ -4,7 +4,7 @@ module InventoryRefresh
       class MissingModelClassError < StandardError; end
 
       def self.allowed_properties
-        %i(arel                         association
+        %i(all_manager_uuids            arel                    association
            attributes_blacklist         attributes_whitelist    batch_extra_attributes
            complete                     create_only             custom_save_block
            custom_reconnect_block       default_values          delete_method

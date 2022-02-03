@@ -71,6 +71,20 @@ module InventoryRefresh
     #   InventoryCollection, since it is already persisted into the DB.
     attr_accessor :saved
 
+    # If present, InventoryCollection switches into delete_complement mode, where it will
+    # delete every record from the DB, that is not present in this list. This is used for the batch processing,
+    # where we don't know which InventoryObject should be deleted, but we know all manager_uuids of all
+    # InventoryObject objects that exists in the provider.
+    #
+    # @return [Array, nil] nil or a list of all :manager_uuids that are present in the Provider's InventoryCollection.
+    attr_accessor :all_manager_uuids
+
+    # @return [Array, nil] Scope for applying :all_manager_uuids
+    attr_accessor :all_manager_uuids_scope
+
+    # @return [String] Timestamp in UTC before fetching :all_manager_uuids
+    attr_accessor :all_manager_uuids_timestamp
+
     # @return [Set] A set of InventoryCollection objects that depends on this InventoryCollection object.
     attr_accessor :dependees
 
@@ -150,6 +164,10 @@ module InventoryRefresh
       init_references(properties[:manager_ref],
                       properties[:manager_ref_allowed_nil],
                       properties[:secondary_refs])
+
+      init_all_manager_uuids(properties[:all_manager_uuids],
+                             properties[:all_manager_uuids_scope],
+                             properties[:all_manager_uuids_timestamp])
 
       init_ic_relations(properties[:dependency_attributes],
                         properties[:parent_inventory_collections])

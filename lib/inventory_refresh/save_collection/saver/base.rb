@@ -78,8 +78,11 @@ module InventoryRefresh::SaveCollection
         # If we have a targeted InventoryCollection that wouldn't do anything, quickly skip it
         return if inventory_collection.noop?
 
+        # Delete_complement strategy using :all_manager_uuids attribute
+        delete_complement unless inventory_collection.delete_complement_noop?
+
         # Create/Update/Archive/Delete records based on InventoryCollection data and scope
-        save!(association)
+        save!(association) unless inventory_collection.saving_noop?
       end
 
       protected
