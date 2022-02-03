@@ -171,8 +171,27 @@ module InventoryRefresh
         #               'vms' => {:ems_ref => manager_refs}
         #             )
         #        And etc. for the other Vm related records.
-        def init_arels(arel)
-          @arel = arel
+        # @param targeted_arel [Proc] A callable block that receives this InventoryCollection as a first argument. In there
+        #        we can leverage a :parent_inventory_collections or :manager_uuids to limit the query based on the
+        #        manager_uuids available.
+        #        Example:
+        #          targeted_arel = lambda do |inventory_collection|
+        #            # Getting ems_refs of parent :vms and :miq_templates
+        #            manager_uuids = inventory_collection.parent_inventory_collections.collect(&:manager_uuids).flatten
+        #            inventory_collection.db_collection_for_comparison.hardwares.joins(:vm_or_template).where(
+        #              'vms' => {:ems_ref => manager_uuids}
+        #            )
+        #          end
+        #
+        #          inventory_collection = InventoryCollection.new({
+        #                                   :model_class                 => ::Hardware,
+        #                                   :association                 => :hardwares,
+        #                                   :parent_inventory_collection => [:vms, :miq_templates],
+        #                                   :targeted_arel               => targeted_arel,
+        #                                 })
+        def init_arels(arel, targeted_arel)
+          @arel          = arel
+          @targeted_arel = targeted_arel
         end
 
         # @param custom_save_block [Proc] A custom lambda/proc for persisting in the DB, for cases where it's not enough

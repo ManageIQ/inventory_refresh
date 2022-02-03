@@ -13,7 +13,7 @@ module InventoryRefresh
            model_class                  name                    parent
            retention_strategy           strategy
            secondary_refs               targeted
-           update_only                  use_ar_object
+           targeted_arel                update_only             use_ar_object
            assert_graph_integrity).to_set
       end
 

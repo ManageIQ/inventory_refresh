@@ -78,7 +78,7 @@ module InventoryRefresh
                 :internal_attributes, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
                 :inventory_object_attributes, :name, :saver_strategy, :default_values,
-                :targeted, :manager_ref_allowed_nil, :use_ar_object,
+                :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
                 :assert_graph_integrity
@@ -147,7 +147,8 @@ module InventoryRefresh
 
       init_ic_relations(properties[:dependency_attributes])
 
-      init_arels(properties[:arel])
+      init_arels(properties[:arel],
+                 properties[:targeted_arel])
 
       init_custom_procs(properties[:custom_save_block],
                         properties[:custom_reconnect_block])
