@@ -150,14 +150,7 @@ module InventoryRefresh::SaveCollection
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
         # Records that are in the DB, we will be updating or deleting them.
         ActiveRecord::Base.transaction do
-          # TODO(lsmola) remove when switching to only targeted mode
-          attrs = if association.kind_of?(InventoryRefresh::ApplicationRecordIterator)
-                    {:attributes_index => attributes_index}
-                  else
-                    {}
-                  end
-
-          association.find_each(attrs) do |record|
+          association.find_each do |record|
             index = build_stringified_reference_for_record(record, unique_index_keys)
 
             next unless assert_distinct_relation(record.id)

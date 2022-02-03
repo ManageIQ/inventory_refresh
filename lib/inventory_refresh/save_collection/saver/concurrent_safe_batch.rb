@@ -89,7 +89,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys      = Set.new + inventory_collection.batch_extra_attributes
 
         inventory_collection.each do |inventory_object|
-          attributes = inventory_object.class.attributes_with_keys(inventory_object.data, inventory_collection, all_attribute_keys, inventory_object)
+          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           # Interesting fact: not building attributes_index and using only inventory_objects_index doesn't do much
@@ -176,14 +176,7 @@ module InventoryRefresh::SaveCollection
         records_for_destroy = []
         indexed_inventory_objects = {}
 
-        # TODO(lsmola) remove when switching to only targeted mode
-        attrs = if records_batch_iterator.kind_of?(InventoryRefresh::ApplicationRecordIterator)
-                  {:batch_size => batch_size, :attributes_index => attributes_index}
-                else
-                  {:batch_size => batch_size}
-                end
-
-        records_batch_iterator.find_in_batches(attrs) do |batch|
+        records_batch_iterator.find_in_batches(:batch_size => batch_size) do |batch|
           update_time = time_now
 
           batch.each do |record|

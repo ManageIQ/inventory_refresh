@@ -67,10 +67,15 @@ module InventoryRefresh
         #        avoid this usecase by a proper modeling.
         #        Note that InventoryObject's data has to be build with <foreign_key> => nil, it means that key cannot be missing!
         # @param secondary_refs [Hash] TODO
-        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs)
+        # @param manager_uuids [Array|Proc] Array of manager_uuids of the InventoryObjects we want to create/update/delete. Using
+        #        this attribute, the db_collection_for_comparison will be automatically limited by the manager_uuids, in a
+        #        case of a simple relation. In a case of a complex relation, we can leverage :manager_uuids in a
+        #        custom :targeted_arel. We can pass also lambda, for lazy_evaluation.
+        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,  manager_uuids)
           @manager_ref             = manager_ref || %i(ems_ref)
           @manager_ref_allowed_nil = manager_ref_allowed_nil || []
           @secondary_refs          = secondary_refs || {}
+          @manager_uuids           = manager_uuids || []
         end
 
         # @param all_manager_uuids [Array] Array of all manager_uuids of the InventoryObjects. With the :targeted true,
@@ -235,6 +240,7 @@ module InventoryRefresh
         def init_storages
           @data_storage       = ::InventoryRefresh::InventoryCollection::DataStorage.new(self, @secondary_refs)
           @references_storage = ::InventoryRefresh::InventoryCollection::ReferencesStorage.new(index_proxy)
+          @targeted_scope     = ::InventoryRefresh::InventoryCollection::ReferencesStorage.new(index_proxy).merge!(@manager_uuids)
         end
 
         # @param arel [ActiveRecord::Associations::CollectionProxy|Arel::SelectManager] Instead of :parent and :association
@@ -426,14 +432,6 @@ module InventoryRefresh
               ":local_db_find_references and :local_db_find_missing_references."
           end
           strategy_name
-        end
-
-        # Saves passed strategy, modifies :data_collection_finalized and :saved attributes for db only strategies
-        #
-        # @param strategy [Symbol] Passed saver strategy
-        # @return [Symbol] Returns back the passed strategy if supported, or raises exception
-        def strategy=(strategy)
-          @strategy = process_strategy(strategy)
         end
 
         # Processes passed retention strategy

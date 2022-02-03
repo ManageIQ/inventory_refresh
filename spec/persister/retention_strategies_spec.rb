@@ -180,7 +180,148 @@ describe InventoryRefresh::Persister do
         end
       end
 
+      context "not providing nested hardware, disks and networks" do
+        it "archives the data with :retention_strategy => 'archive' and with #{extra_options}" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          all_network_port_uuids, all_vm_uuids = build_data_without_nested_refs(persister)
+
+          # Delete the complement of what we've built
+          persister.vms.all_manager_uuids           = all_vm_uuids
+          persister.network_ports.all_manager_uuids = all_network_port_uuids
+
+          persister.persist!
+
+          expect(Vm.active.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(60)[:ems_ref]])
+          )
+          expect(Vm.archived.pluck(:ems_ref)).to(
+            match_array([vm_data(12)[:ems_ref], vm_data(4)[:ems_ref]])
+          )
+
+          expect(NetworkPort.active.pluck(:ems_ref)).to(
+            match_array([network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]])
+          )
+          expect(@ems.network_ports.archived.pluck(:ems_ref)).to(
+            match_array([network_port_data(12)[:ems_ref], network_port_data(4)[:ems_ref]])
+          )
+
+          # The vm(12) gets archived, but we don't propagate to nested models, so active_hardwares returns 1
+          assert_counts(
+            :active_disks           => 2,
+            :active_hardwares       => 1,
+            :active_network_ports   => 3,
+            :active_networks        => 2,
+            :active_vms             => 3,
+            :archived_disks         => 2,
+            :archived_hardwares     => 2,
+            :archived_network_ports => 2,
+            :archived_networks      => 2,
+            :archived_vms           => 2,
+          )
+        end
+
+        it "destroys the data with :retention_strategy => 'destroy' and with #{extra_options}" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "destroy"))
+
+          all_network_port_uuids, all_vm_uuids = build_data_without_nested_refs(persister)
+
+          # Delete the complement of what we've built
+          persister.vms.all_manager_uuids           = all_vm_uuids
+          persister.network_ports.all_manager_uuids = all_network_port_uuids
+
+          persister.persist!
+
+          expect(Vm.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(60)[:ems_ref]])
+          )
+          expect(NetworkPort.pluck(:ems_ref)).to(
+            match_array([network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]])
+          )
+
+          assert_counts(
+            :active_disks           => 0,
+            :active_hardwares       => 0,
+            :active_network_ports   => 3,
+            :active_networks        => 0,
+            :active_vms             => 3,
+            :archived_disks         => 0,
+            :archived_hardwares     => 0,
+            :archived_network_ports => 0,
+            :archived_networks      => 0,
+            :archived_vms           => 0,
+          )
+        end
+      end
+
       context "providing nested hardware, disks and networks" do
+        it "archives the data with :retention_strategy => 'archive' and with #{extra_options}" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
+
+          all_network_port_uuids, all_vm_uuids = build_data_with_nested_refs(persister)
+
+          # Delete the complement of what we've built
+          persister.vms.all_manager_uuids           = all_vm_uuids
+          persister.network_ports.all_manager_uuids = all_network_port_uuids
+
+          persister.persist!
+
+          expect(Vm.active.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(60)[:ems_ref]])
+          )
+          expect(Vm.archived.pluck(:ems_ref)).to(
+            match_array([vm_data(12)[:ems_ref], vm_data(4)[:ems_ref]])
+          )
+
+          expect(NetworkPort.active.pluck(:ems_ref)).to(
+            match_array([network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]])
+          )
+          expect(@ems.network_ports.archived.pluck(:ems_ref)).to(
+            match_array([network_port_data(12)[:ems_ref], network_port_data(4)[:ems_ref]])
+          )
+
+          # Skeletal precreate is causing the lazy linked models to be created
+          active_hardwares = if extra_options[:saver_strategy] == "batch"
+                               1
+                             elsif extra_options[:saver_strategy] == "concurrent_safe_batch"
+                               2
+                             end
+
+          assert_counts(
+            :active_disks           => 2,
+            :active_hardwares       => active_hardwares,
+            :active_network_ports   => 3,
+            :active_networks        => 2,
+            :active_vms             => 3,
+            :archived_disks         => 2,
+            :archived_hardwares     => 2,
+            :archived_network_ports => 2,
+            :archived_networks      => 2,
+            :archived_vms           => 2,
+          )
+        end
+
+        it "destroys the data with :retention_strategy => 'destroy' and with #{extra_options}" do
+          persister = create_persister(extra_options.merge(:retention_strategy => "destroy"))
+
+          all_network_port_uuids, all_vm_uuids = build_data_with_nested_refs(persister)
+
+          # Delete the complement of what we've built
+          persister.vms.all_manager_uuids           = all_vm_uuids
+          persister.network_ports.all_manager_uuids = all_network_port_uuids
+
+          persister.persist!
+
+          expect(Vm.pluck(:ems_ref)).to(
+            match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(60)[:ems_ref]])
+          )
+          expect(NetworkPort.pluck(:ems_ref)).to(
+            match_array([network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]])
+          )
+
+          assert_result_with_nested_refs_and_destroy(extra_options)
+        end
+
         it "checks delete_complement acts the same as full refresh with :retention_strategy => 'destroy'" do
           persister = create_persister(extra_options.merge(:retention_strategy => "destroy", :targeted => false))
 

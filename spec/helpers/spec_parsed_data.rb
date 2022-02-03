@@ -118,7 +118,7 @@ module SpecParsedData
   end
 
   def nested_container_data(i, data = {})
-    container_data(i, data).merge(:type => "NestedContainer",)
+    container_data(i, data = {}).merge(:type => "NestedContainer",)
   end
 
   def container_data(i, data = {})

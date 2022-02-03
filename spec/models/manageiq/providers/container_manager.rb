@@ -13,7 +13,7 @@ module ManageIQ
       has_many :container_image_registries, :foreign_key => :ems_id, :dependent => :destroy
       has_many :container_images, -> { active }, :foreign_key => :ems_id, :dependent => :destroy
 
-      has_many :nested_containers, -> { active }, :through => :container_groups
+      has_many :nested_containers, :through => :container_groups
 
       has_many :tags, :foreign_key => :ems_id
 
