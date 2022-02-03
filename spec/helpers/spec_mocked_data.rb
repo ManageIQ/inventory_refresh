@@ -30,10 +30,16 @@ module SpecMockedData
       )
     )
 
+    @key_pair1  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(1).merge(:resource => @ems))
+    @key_pair12 = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(12).merge(:resource => @ems))
+    @key_pair2  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(2).merge(:resource => @ems))
+    @key_pair3  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(3).merge(:resource => @ems))
+
     @vm1 = FactoryBot.create(
       :vm_cloud,
       vm_data(1).merge(
         :flavor                => @flavor_1,
+        :key_pairs             => [@key_pair1],
         :location              => 'host_10_10_10_1.com',
         :ext_management_system => @ems,
       )
@@ -42,6 +48,7 @@ module SpecMockedData
       :vm_cloud,
       vm_data(12).merge(
         :flavor                => @flavor1,
+        :key_pairs             => [@key_pair1, @key_pair12],
         :location              => 'host_10_10_10_1.com',
         :ext_management_system => @ems,
       )
@@ -50,6 +57,7 @@ module SpecMockedData
       :vm_cloud,
       vm_data(2).merge(
         :flavor                => @flavor2,
+        :key_pairs             => [@key_pair2],
         :location              => 'host_10_10_10_2.com',
         :ext_management_system => @ems,
       )

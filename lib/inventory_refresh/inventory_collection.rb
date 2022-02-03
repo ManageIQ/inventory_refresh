@@ -79,7 +79,7 @@ module InventoryRefresh
     attr_accessor :parent_inventory_collections
 
     attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
-                :internal_attributes, :dependency_attributes, :manager_ref, :create_only,
+                :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
                 :inventory_object_attributes, :name, :saver_strategy, :default_values,
                 :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
@@ -143,7 +143,9 @@ module InventoryRefresh
                  properties[:assert_graph_integrity])
 
       init_strategies(properties[:strategy],
-                      properties[:retention_strategy])
+                      properties[:saver_strategy],
+                      properties[:retention_strategy],
+                      properties[:delete_method])
 
       init_references(properties[:manager_ref],
                       properties[:manager_ref_allowed_nil],
@@ -418,6 +420,7 @@ module InventoryRefresh
                               :parent                => parent,
                               :arel                  => arel,
                               :strategy              => strategy,
+                              :saver_strategy        => saver_strategy,
                               :custom_save_block     => custom_save_block,
                               # We want cloned IC to be update only, since this is used for cycle resolution
                               :update_only           => true,
@@ -518,6 +521,7 @@ module InventoryRefresh
     def full_collection_for_comparison
       return arel unless arel.nil?
       rel = parent.send(association)
+      rel = rel.active if rel && supports_column?(:archived_at) && retention_strategy == :archive
       rel
     end
 

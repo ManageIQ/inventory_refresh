@@ -16,6 +16,7 @@ module TargetedRefreshSpecHelper
 
   def base_inventory_counts
     {
+      :auth_key_pair                => 0,
       :disk                         => 0,
       :ext_management_system        => expected_ext_management_systems_count,
       :flavor                       => 0,
@@ -61,6 +62,7 @@ module TargetedRefreshSpecHelper
 
   def assert_table_counts(expected_table_counts)
     actual = {
+      :auth_key_pair                => AuthKeyPair.count,
       :ext_management_system        => ExtManagementSystem.count,
       :flavor                       => Flavor.count,
       :vm_or_template               => VmOrTemplate.count,

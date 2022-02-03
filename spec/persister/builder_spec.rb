@@ -16,7 +16,7 @@ describe InventoryRefresh::InventoryCollection::Builder do
     persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
   end
 
-  let(:adv_settings) { {:strategy => :local_db_find_missing_references} }
+  let(:adv_settings) { {:strategy => :local_db_find_missing_references, :saver_strategy => :concurrent_safe_batch} }
 
   let(:persister_class) { ::TestPersister }
 

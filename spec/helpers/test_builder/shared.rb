@@ -45,6 +45,7 @@ class TestBuilder
 
       def vm_template_shared
         add_properties(
+          :delete_method          => :disconnect_inv,
           :attributes_blacklist   => %i(genealogy_parent),
           :custom_reconnect_block => INVENTORY_RECONNECT_BLOCK
         )

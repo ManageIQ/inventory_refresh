@@ -51,6 +51,10 @@ module InitDataHelper
     @persister.add_collection(:miq_templates, cloud, extra_attributes)
   end
 
+  def key_pairs_init_data(extra_attributes = {})
+    @persister.add_collection(:key_pairs, cloud, extra_attributes)
+  end
+
   def hardwares_init_data(extra_attributes = {})
     @persister.add_collection(:hardwares, cloud, extra_attributes)
   end

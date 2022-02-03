@@ -28,6 +28,10 @@ class TestPersister::Containers < ::TestPersister
     :local_db_find_missing_references
   end
 
+  def saver_strategy
+    :concurrent_safe_batch
+  end
+
   def shared_options
     super.merge(options).merge(:retention_strategy => "archive", :parent_inventory_collections => [])
   end

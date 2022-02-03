@@ -130,9 +130,102 @@ module InventoryRefresh::SaveCollection
 
       delegate :supports_column?, :to => :inventory_collection
 
+      # Saves the InventoryCollection
+      #
+      # @param association [Symbol] An existing association on manager
+      def save!(association)
+        attributes_index        = {}
+        inventory_objects_index = {}
+        inventory_collection.each do |inventory_object|
+          attributes = inventory_object.attributes(inventory_collection)
+          index      = build_stringified_reference(attributes, unique_index_keys)
+
+          attributes_index[index]        = attributes
+          inventory_objects_index[index] = inventory_object
+        end
+
+        logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
+        # Records that are in the DB, we will be updating or deleting them.
+        ActiveRecord::Base.transaction do
+          # TODO(lsmola) remove when switching to only targeted mode
+          attrs = if association.kind_of?(InventoryRefresh::ApplicationRecordIterator)
+                    {:attributes_index => attributes_index}
+                  else
+                    {}
+                  end
+
+          association.find_each(attrs) do |record|
+            index = build_stringified_reference_for_record(record, unique_index_keys)
+
+            next unless assert_distinct_relation(record.id)
+            next unless assert_unique_record(record, index)
+
+            inventory_object = inventory_objects_index.delete(index)
+            hash             = attributes_index.delete(index)
+
+            if inventory_object.nil?
+              # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
+              # delete it from the DB.
+              delete_record!(record) if inventory_collection.delete_allowed?
+            else
+              # Record was found in the DB and sent for saving, we will be updating the DB.
+              update_record!(record, hash, inventory_object) if assert_referential_integrity(hash)
+            end
+          end
+        end
+
+        unless inventory_collection.custom_reconnect_block.nil?
+          inventory_collection.custom_reconnect_block.call(inventory_collection, inventory_objects_index, attributes_index)
+        end
+
+        # Records that were not found in the DB but sent for saving, we will be creating these in the DB.
+        if inventory_collection.create_allowed?
+          ActiveRecord::Base.transaction do
+            inventory_objects_index.each do |index, inventory_object|
+              hash = attributes_index.delete(index)
+
+              create_record!(hash, inventory_object) if assert_referential_integrity(hash)
+            end
+          end
+        end
+        logger.debug("Processing #{inventory_collection}, "\
+                     "created=#{inventory_collection.created_records.count}, "\
+                     "updated=#{inventory_collection.updated_records.count}, "\
+                     "deleted=#{inventory_collection.deleted_records.count}...Complete")
+      rescue => e
+        logger.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
+        raise e
+      end
+
       # @return [String] a string for logging purposes
       def inventory_collection_details
         "strategy: #{inventory_collection.strategy}, saver_strategy: #{inventory_collection.saver_strategy}, targeted: #{inventory_collection.targeted?}"
+      end
+
+      # @param record [ApplicationRecord] ApplicationRecord object
+      # @param key [Symbol] A key that is an attribute of the AR object
+      # @return [Object] Value of attribute name :key on the :record
+      def record_key(record, key)
+        record.public_send(key)
+      end
+
+      # Deletes a complement of referenced data
+      def delete_complement
+        raise(":delete_complement method is supported only for :saver_strategy => [:batch, :concurrent_safe_batch]")
+      end
+
+      # Deletes/soft-deletes a given record
+      #
+      # @param [ApplicationRecord] record we want to delete
+      def delete_record!(record)
+        record.public_send(inventory_collection.delete_method)
+        inventory_collection.store_deleted_records(record)
+      end
+
+      # @return [TrueClass] always return true, this method is redefined in default saver
+      def assert_unique_record(_record, _index)
+        # TODO(lsmola) can go away once we indexed our DB with unique indexes
+        true
       end
 
       # Check if relation provided is distinct, i.e. the relation should not return the same primary key value twice.

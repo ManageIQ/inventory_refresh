@@ -1,5 +1,7 @@
 require "inventory_refresh/logging"
+require "inventory_refresh/save_collection/saver/batch"
 require "inventory_refresh/save_collection/saver/concurrent_safe_batch"
+require "inventory_refresh/save_collection/saver/default"
 
 module InventoryRefresh::SaveCollection
   class Base

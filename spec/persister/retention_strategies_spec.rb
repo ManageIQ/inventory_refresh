@@ -23,7 +23,7 @@ describe InventoryRefresh::Persister do
     MiqTemplate.all.destroy_all
   end
 
-  [{}].each do |extra_options|
+  [{:saver_strategy => :default}, {:saver_strategy => :batch}].each do |extra_options|
     it "test legacy refresh deleting with :retention_strategy => nil and with options: #{extra_options}" do
       persister = create_persister(extra_options.merge(:retention_strategy => nil, :targeted => false))
 
@@ -32,10 +32,10 @@ describe InventoryRefresh::Persister do
       # Full refresh
       persister.persist!
 
-      expect(Vm.active.pluck(:ems_ref)).to(
+      expect(Vm.where.not(:ems_id => nil).pluck(:ems_ref)).to(
         match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(60)[:ems_ref]])
       )
-      expect(NetworkPort.active.pluck(:ems_ref)).to(
+      expect(NetworkPort.pluck(:ems_ref)).to(
         match_array([network_port_data(1)[:ems_ref], network_port_data(2)[:ems_ref], network_port_data(60)[:ems_ref]])
       )
 
@@ -44,19 +44,19 @@ describe InventoryRefresh::Persister do
         :active_hardwares       => 1,
         :active_network_ports   => 3,
         :active_networks        => 2,
-        :active_vms             => 3,
-        :archived_disks         => 2,
-        :archived_hardwares     => 2,
-        :archived_network_ports => 2,
-        :archived_networks      => 2,
-        :archived_vms           => 2,
+        :active_vms             => 5,
+        :archived_disks         => 0,
+        :archived_hardwares     => 0,
+        :archived_network_ports => 0,
+        :archived_networks      => 0,
+        :archived_vms           => 0,
       )
     end
   end
 
   it "checks valid retentions strategies" do
     expect do
-      create_persister(:retention_strategy => "made_up_name")
+      create_persister(:retention_strategy => "made_up_name", :saver_strategy => 'batch')
     end.to(
       raise_error("Unknown InventoryCollection retention strategy: :made_up_name, allowed strategies are :destroy and :archive")
     )
@@ -213,10 +213,17 @@ describe InventoryRefresh::Persister do
     return all_network_port_uuids, all_vm_uuids
   end
 
-  def assert_result_with_nested_refs_and_destroy(_extra_options)
+  def assert_result_with_nested_refs_and_destroy(extra_options)
+    # Skeletal precreate is causing the lazy linked models to be created
+    active_hardwares = if extra_options[:saver_strategy] == "batch"
+                         0
+                       elsif extra_options[:saver_strategy] == "concurrent_safe_batch"
+                         3
+                       end
+
     assert_counts(
       :active_disks           => 0,
-      :active_hardwares       => 3,
+      :active_hardwares       => active_hardwares,
       :active_network_ports   => 3,
       :active_networks        => 0,
       :active_vms             => 3,
