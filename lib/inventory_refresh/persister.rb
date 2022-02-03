@@ -214,17 +214,12 @@ module InventoryRefresh
       false
     end
 
-    def use_ar_object?
-      true
-    end
-
     # @return [Hash] kwargs shared for all InventoryCollection objects
     def shared_options
       {
         :strategy               => strategy,
         :parent                 => manager.presence,
         :assert_graph_integrity => assert_graph_integrity?,
-        :use_ar_object          => use_ar_object?,
       }
     end
 

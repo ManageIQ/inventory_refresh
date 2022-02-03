@@ -39,7 +39,7 @@ describe InventoryRefresh::Persister do
           persister.refresh_state_part_uuid = part1_uuid
 
           persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
-          persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before, :phase => "stopped"))
+          persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
           persister.container_groups.build(container_group_data(5).merge(:resource_timestamp => time_before))
           persister = persist(persister, config)
 

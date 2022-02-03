@@ -150,7 +150,8 @@ describe InventoryRefresh::SaveInventory do
 
         # Check the InventoryCollection result matches what was created/deleted/updated
         expect(@persister.vms.created_records).to match_array([])
-        expect(@persister.vms.updated_records).to match_array([{:id => @vm2.id}])
+        # TODO(lsmola) check changed
+        expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}, {:id => @vm2.id}])
         expect(@persister.vms.deleted_records).to match_array([])
 
         # Assert that saved data have the updated values, checking id to make sure the original records are updated

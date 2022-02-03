@@ -89,8 +89,6 @@ module InventoryRefresh::SaveCollection
       # @param attributes [Hash] attributes hash
       # @return [Hash] modified hash from parameter attributes with casted values
       def values_for_database!(all_attribute_keys, attributes)
-        # TODO(lsmola) we'll need to fill default value from the DB to the NOT_NULL columns here, since sending NULL
-        # to column with NOT_NULL constraint always fails, even if there is a default value
         all_attribute_keys.each do |key|
           next unless attributes.key?(key)
 
@@ -102,7 +100,11 @@ module InventoryRefresh::SaveCollection
       end
 
       def transform_to_hash!(all_attribute_keys, hash)
-        if serializable_keys?
+        if inventory_collection.use_ar_object?
+          record = inventory_collection.model_class.new(hash)
+          values_for_database!(all_attribute_keys,
+                               record.attributes.slice(*record.changed_attributes.keys).symbolize_keys)
+        elsif serializable_keys?
           values_for_database!(all_attribute_keys,
                                hash)
         else
