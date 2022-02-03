@@ -55,6 +55,8 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_on_conflict_behavior(all_attribute_keys, on_conflict, mode, ignore_cols, column_name)
+        return "" unless inventory_collection.parallel_safe?
+
         insert_query_on_conflict = insert_query_on_conflict_do(on_conflict)
         if on_conflict == :do_update
           insert_query_on_conflict += insert_query_on_conflict_update(all_attribute_keys, mode, ignore_cols, column_name)
@@ -92,6 +94,8 @@ module InventoryRefresh::SaveCollection
                               :resource_counter
                             end
 
+        # TODO(lsmola) should we add :deleted => false to the update clause? That should handle a reconnect, without a
+        # a need to list :deleted anywhere in the parser. We just need to check that a model has the :deleted attribute
         query = <<-SQL
           SET #{(all_attribute_keys - ignore_cols).map { |key| build_insert_set_cols(key) }.join(", ")}
         SQL
@@ -124,7 +128,7 @@ module InventoryRefresh::SaveCollection
           , #{attr_partial} = '{}', #{attr_partial_max} = NULL
 
           WHERE EXCLUDED.#{attr_full} IS NULL OR (
-            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_full} >= #{q_table_name}.#{attr_full}) AND
+            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_full} > #{q_table_name}.#{attr_full}) AND
             (#{q_table_name}.#{attr_partial_max} IS NULL OR EXCLUDED.#{attr_full} >= #{q_table_name}.#{attr_partial_max})
           )
         SQL
@@ -150,9 +154,9 @@ module InventoryRefresh::SaveCollection
           #{insert_query_set_jsonb_version(cast, attr_partial, attr_partial_max, column_name)}
           , #{attr_partial_max} = greatest(#{q_table_name}.#{attr_partial_max}::#{cast}, EXCLUDED.#{attr_partial_max}::#{cast})
           WHERE EXCLUDED.#{attr_partial_max} IS NULL OR (
-            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_partial_max} >= #{q_table_name}.#{attr_full}) AND (
+            (#{q_table_name}.#{attr_full} IS NULL OR EXCLUDED.#{attr_partial_max} > #{q_table_name}.#{attr_full}) AND (
               (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast} IS NULL OR
-              EXCLUDED.#{attr_partial_max}::#{cast} >= (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast}
+              EXCLUDED.#{attr_partial_max}::#{cast} > (#{q_table_name}.#{attr_partial}->>'#{column_name}')::#{cast}
             )
           )
         SQL
@@ -179,12 +183,16 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_returning_timestamps
-        # For upsert, we'll return also created and updated timestamps, so we can recognize what was created and what
-        # updated
-        if inventory_collection.internal_timestamp_columns.present?
-          <<-SQL
-            , #{inventory_collection.internal_timestamp_columns.map { |x| quote_column_name(x) }.join(",")}
-          SQL
+        if inventory_collection.parallel_safe?
+          # For upsert, we'll return also created and updated timestamps, so we can recognize what was created and what
+          # updated
+          if inventory_collection.internal_timestamp_columns.present?
+            <<-SQL
+              , #{inventory_collection.internal_timestamp_columns.map { |x| quote_column_name(x) }.join(",")}
+            SQL
+          end
+        else
+          ""
         end
       end
     end

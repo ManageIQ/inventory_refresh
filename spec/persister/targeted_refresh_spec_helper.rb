@@ -3,11 +3,11 @@ require_relative '../helpers/test_persister/containers'
 
 module TargetedRefreshSpecHelper
   def create_persister(extra_options = {})
-    TestPersister::Cloud.new(@ems, extra_options)
+    TestPersister::Cloud.new(@ems, @ems, extra_options)
   end
 
   def create_containers_persister(extra_options = {})
-    TestPersister::Containers.new(@ems, extra_options)
+    TestPersister::Containers.new(@ems, @ems, extra_options)
   end
 
   def expected_ext_management_systems_count
@@ -16,6 +16,7 @@ module TargetedRefreshSpecHelper
 
   def base_inventory_counts
     {
+      :auth_key_pair                => 0,
       :disk                         => 0,
       :ext_management_system        => expected_ext_management_systems_count,
       :flavor                       => 0,
@@ -33,14 +34,12 @@ module TargetedRefreshSpecHelper
   def base_inventory_counts_containers
     {
       :container_group          => 0,
-      :container_group_tags     => 0,
       :container_node           => 0,
       :container_project        => 0,
       :container_replicator     => 0,
       :container                => 0,
       :container_image          => 0,
       :container_image_registry => 0,
-      :tags                     => 0
     }
   end
 
@@ -61,6 +60,7 @@ module TargetedRefreshSpecHelper
 
   def assert_table_counts(expected_table_counts)
     actual = {
+      :auth_key_pair                => AuthKeyPair.count,
       :ext_management_system        => ExtManagementSystem.count,
       :flavor                       => Flavor.count,
       :vm_or_template               => VmOrTemplate.count,
@@ -79,14 +79,12 @@ module TargetedRefreshSpecHelper
   def assert_containers_table_counts(expected_table_counts)
     actual = {
       :container_group          => ContainerGroup.count,
-      :container_group_tags     => ContainerGroupTag.count,
       :container_node           => ContainerNode.count,
       :container_project        => ContainerProject.count,
       :container_replicator     => ContainerReplicator.count,
       :container                => Container.count,
       :container_image          => ContainerImage.count,
       :container_image_registry => ContainerImageRegistry.count,
-      :tags                     => Tag.count,
     }
     expect(actual).to eq expected_table_counts
   end

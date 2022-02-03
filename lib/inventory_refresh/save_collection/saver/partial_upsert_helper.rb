@@ -59,7 +59,7 @@ module InventoryRefresh::SaveCollection
         skeletal_inventory_objects_index = {}
 
         inventory_collection.skeletal_primary_index.each_value do |inventory_object|
-          attributes = inventory_object.class.attributes_with_keys(inventory_object.data, inventory_collection, all_attribute_keys, inventory_object)
+          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           skeletal_attributes_index[index]        = attributes
@@ -200,25 +200,7 @@ module InventoryRefresh::SaveCollection
         )
       end
 
-      def comparable_timestamp(timestamp)
-        # Lets cast all timestamps to to_f, rounding the time comparing precision to miliseconds, that should be
-        # enough, since we are the ones setting the record version in collector. Otherwise we will have hard time with
-        # doing equality, since the value changes going through DB (DB. cuts it at 5 decimal places)
-
-        if timestamp.kind_of?(String)
-          Time.use_zone('UTC') { Time.zone.parse(timestamp) }.to_f.round(3)
-        elsif timestamp.kind_of?(Time)
-          timestamp.in_time_zone('UTC').to_f.round(3)
-        else
-          timestamp
-        end
-      end
-
       def skeletonize_or_skip_record(record_version, hash_version, record_versions_max, inventory_object)
-        record_version      = comparable_timestamp(record_version)
-        record_versions_max = comparable_timestamp(record_versions_max) if record_versions_max
-        hash_version        = comparable_timestamp(hash_version)
-
         # Skip updating this record, because it is old
         return true if record_version && hash_version && record_version >= hash_version
 

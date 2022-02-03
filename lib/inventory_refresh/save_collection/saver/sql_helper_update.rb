@@ -27,9 +27,9 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys_array << :id
 
         # If there is not version attribute, the version conditions will be ignored
-        version_attribute = if supports_remote_data_timestamp?(all_attribute_keys)
+        version_attribute = if inventory_collection.parallel_safe? && supports_remote_data_timestamp?(all_attribute_keys)
                               :resource_timestamp
-                            elsif supports_remote_data_version?(all_attribute_keys)
+                            elsif inventory_collection.parallel_safe? && supports_remote_data_version?(all_attribute_keys)
                               :resource_counter
                             end
 
@@ -130,9 +130,13 @@ module InventoryRefresh::SaveCollection
       end
 
       def update_query_returning
-        <<-SQL
-          RETURNING updated_values.#{quote_column_name("id")}, #{unique_index_columns.map { |x| "updated_values.#{quote_column_name(x)}" }.join(",")}
-        SQL
+        if inventory_collection.parallel_safe?
+          <<-SQL
+            RETURNING updated_values.#{quote_column_name("id")}, #{unique_index_columns.map { |x| "updated_values.#{quote_column_name(x)}" }.join(",")}
+          SQL
+        else
+          ""
+        end
       end
     end
   end

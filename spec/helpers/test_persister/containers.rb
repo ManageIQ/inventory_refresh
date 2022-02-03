@@ -5,14 +5,12 @@ class TestPersister::Containers < ::TestPersister
     %i(containers
        container_build_pods
        container_groups
-       container_group_tags
        container_image_registries
        container_images
        container_nodes
        container_projects
        container_replicators
-       nested_containers
-       tags).each do |name|
+       nested_containers).each do |name|
 
       add_collection(name, container)
     end
@@ -20,11 +18,19 @@ class TestPersister::Containers < ::TestPersister
 
   protected
 
+  def targeted?
+    true
+  end
+
   def strategy
     :local_db_find_missing_references
   end
 
+  def saver_strategy
+    :concurrent_safe_batch
+  end
+
   def shared_options
-    super.merge(options).merge(:retention_strategy => "archive")
+    super.merge(options)
   end
 end

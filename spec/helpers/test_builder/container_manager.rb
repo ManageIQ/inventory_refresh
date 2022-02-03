@@ -4,6 +4,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
   def container_projects
     add_properties(
       :secondary_refs => {:by_name => %i(name)},
+      :delete_method  => :disconnect_inv,
       :model_class    => ContainerProject,
     )
     add_common_default_values
@@ -13,6 +14,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
     add_properties(
       :model_class    => ::ContainerNode,
       :secondary_refs => {:by_name => %i(name)},
+      :delete_method  => :disconnect_inv
     )
     add_common_default_values
   end
@@ -20,8 +22,12 @@ class TestBuilder::ContainerManager < ::TestBuilder
   # images have custom_attributes but that's done conditionally in openshift parser
   def container_images
     add_properties(
+      # TODO: (bpaskinc) old save matches on [:image_ref, :container_image_registry_id]
+      # TODO: (bpaskinc) should match on digest when available
+      # TODO: (mslemr) provider-specific class exists (openshift), but specs fail with them (?)
       :model_class            => ::ContainerImage,
       :manager_ref            => %i(image_ref),
+      :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
     )
     add_common_default_values
@@ -40,30 +46,17 @@ class TestBuilder::ContainerManager < ::TestBuilder
       :model_class            => ContainerGroup,
       :secondary_refs         => {:by_container_project_and_name => %i(container_project name)},
       :attributes_blacklist   => %i(namespace),
+      :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
     )
-    add_common_default_values
-  end
-
-  def container_group_tags
-    add_properties(
-      :model_class => ContainerGroupTag,
-      :manager_ref => %i(container_group tag),
-    )
-  end
-
-  def tags
-    add_properties(
-      :model_class => Tag,
-      :manager_ref => %i(name value),
-    )
-    add_default_values(:namespace => "openshift")
     add_common_default_values
   end
 
   def containers
     add_properties(
       :model_class            => Container,
+      # parser sets :ems_ref => "#{pod_id}_#{container.name}_#{container.image}"
+      :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
     )
     add_common_default_values
@@ -87,6 +80,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
 
   def container_build_pods
     add_properties(
+      # TODO: (bpaskinc) convert namespace column -> container_project_id?
       :manager_ref    => %i(namespace name),
       :secondary_refs => {:by_namespace_and_name => %i(namespace name)},
       :model_class    => ContainerBuildPod,

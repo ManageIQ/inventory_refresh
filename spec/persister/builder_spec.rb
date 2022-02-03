@@ -13,10 +13,10 @@ describe InventoryRefresh::InventoryCollection::Builder do
   end
 
   def create_persister
-    persister_class.new(@ems)
+    persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
   end
 
-  let(:adv_settings) { {:strategy => :local_db_find_missing_references} }
+  let(:adv_settings) { {:strategy => :local_db_find_missing_references, :saver_strategy => :concurrent_safe_batch} }
 
   let(:persister_class) { ::TestPersister }
 
@@ -59,9 +59,9 @@ describe InventoryRefresh::InventoryCollection::Builder do
   # --- shared properties ---
 
   it 'applies shared properties' do
-    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:update_only => true}).to_hash
+    data = described_class.prepare_data(:tmp, persister_class, :shared_properties => {:targeted => true}).to_hash
 
-    expect(data[:update_only]).to be_truthy
+    expect(data[:targeted]).to be_truthy
   end
 
   it "doesn't overwrite defined properties by shared properties" do
@@ -161,14 +161,14 @@ describe InventoryRefresh::InventoryCollection::Builder do
     bldr = described_class.prepare_data(:tmp, persister_class) do |builder|
       builder.add_default_values(:ems_id => ->(persister) { persister.manager.id })
       # real values are other inventory_collections, but for this demostration doesn't matter
-      builder.add_dependency_attributes(:manager => ->(persister) { persister.manager })
+      builder.add_dependency_attributes(:target => ->(persister) { persister.target })
     end
     bldr.evaluate_lambdas!(@persister)
 
     data = bldr.to_hash
 
     expect(data[:default_values][:ems_id]).to eq(@persister.manager.id)
-    expect(data[:dependency_attributes][:manager]).to be_kind_of(@ems.class)
+    expect(data[:dependency_attributes][:target]).to be_kind_of(InventoryRefresh::TargetCollection)
   end
 
   # --- inventory object attributes ---

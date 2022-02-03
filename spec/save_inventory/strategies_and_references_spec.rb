@@ -18,7 +18,7 @@ describe InventoryRefresh::SaveInventory do
                                   :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
-        @persister = persister_class.new(@ems)
+        @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
       end
 
       before do
@@ -48,10 +48,16 @@ describe InventoryRefresh::SaveInventory do
           )
         )
 
+        @key_pair1  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(1).merge(:resource => @ems))
+        @key_pair12 = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(12).merge(:resource => @ems))
+        @key_pair2  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(2).merge(:resource => @ems))
+        @key_pair3  = FactoryBot.create(:auth_key_pair_cloud, key_pair_data(3).merge(:resource => @ems))
+
         @vm1 = FactoryBot.create(
           :vm_cloud,
           vm_data(1).merge(
             :flavor    => @flavor_1,
+            :key_pairs => [@key_pair1],
             :location  => 'host_10_10_10_1.com',
           )
         )
@@ -59,6 +65,7 @@ describe InventoryRefresh::SaveInventory do
           :vm_cloud,
           vm_data(12).merge(
             :flavor    => @flavor1,
+            :key_pairs => [@key_pair1, @key_pair12],
             :location  => 'host_10_10_10_12.com',
           )
         )
@@ -66,6 +73,7 @@ describe InventoryRefresh::SaveInventory do
           :vm_cloud,
           vm_data(2).merge(
             :flavor    => @flavor2,
+            :key_pairs => [@key_pair2],
             :location  => 'host_10_10_10_2.com',
           )
         )
@@ -145,8 +153,9 @@ describe InventoryRefresh::SaveInventory do
           :strategy => :local_db_find_missing_references
         )
         hardwares_init_data(
-          :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :strategy => db_strategy,
+          :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+          :strategy                     => db_strategy,
+          :parent_inventory_collections => %i(vms)
         )
 
         # Parse data for InventoryCollections
@@ -218,6 +227,9 @@ describe InventoryRefresh::SaveInventory do
         miq_templates_init_data(
           :strategy => db_strategy
         )
+        key_pairs_init_data(
+          :strategy => db_strategy
+        )
         db_network_ports_init_data(
           :parent   => @ems.network_manager,
           :strategy => db_strategy
@@ -230,8 +242,9 @@ describe InventoryRefresh::SaveInventory do
           :strategy => :local_db_find_missing_references,
         )
         hardwares_init_data(
-          :arel     => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-          :strategy => :local_db_find_missing_references,
+          :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
+          :strategy                     => :local_db_find_missing_references,
+          :parent_inventory_collections => %i(vms)
         )
         network_ports_init_data(
           :parent   => @ems.network_manager,
@@ -253,9 +266,14 @@ describe InventoryRefresh::SaveInventory do
           :device => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]), :key => :vm_or_template)
         )
         @vm_data_3 = vm_data(3).merge(
+          :key_pairs             => [
+            @persister.key_pairs.lazy_find(key_pair_data(2)[:name]),
+            @persister.key_pairs.lazy_find(key_pair_data(3)[:name])
+          ],
           :ext_management_system => @ems
         )
         @vm_data_31 = vm_data(31).merge(
+          :key_pairs             => @persister.db_vms.lazy_find(vm_data(1)[:ems_ref], :key => :key_pairs, :default => []),
           :ext_management_system => @ems
         )
         @hardware_data_3 = hardware_data(3).merge(
@@ -303,14 +321,17 @@ describe InventoryRefresh::SaveInventory do
         expect(@network_port1.device).to eq @vm3
         expect(@network_port1.name).to eq "vm_name_3"
         expect(@network_port12.device).to eq @vm2
-        expect(@network_port12.name).to eq "vm_name_4"
+        # Vm4 name was not found, because @vm4 got disconnected and no longer can be found in ems.vms
+        expect(@network_port12.name).to eq "default_name"
         expect(@network_port3.device).to eq @vm1
         expect(@network_port3.name).to eq "vm_name_1"
+        expect(@vm3.key_pairs).to match_array [@key_pair2, @key_pair3]
         expect(@vm3.hardware.guest_os).to eq "linux_generic_2"
         # We don't support :key pointing to a has_many, so it default to []
+        expect(@vm31.key_pairs).to match_array []
         expect(@vm31.hardware).to be_nil
-        # We don't archive anything until we explicitly call sweep
-        expect(@vm4.archived_at).to be_nil
+        # Check Vm4 was disconnected
+        expect(@vm4.ext_management_system).to be_nil
       end
     end
   end

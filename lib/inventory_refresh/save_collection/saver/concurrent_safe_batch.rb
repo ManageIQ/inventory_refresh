@@ -46,6 +46,40 @@ module InventoryRefresh::SaveCollection
         record[select_keys_indexes[key]]
       end
 
+      # Returns iterator or relation based on settings
+      #
+      # @param association [Symbol] An existing association on manager
+      # @return [ActiveRecord::Relation, InventoryRefresh::ApplicationRecordIterator] iterator or relation based on settings
+      def batch_iterator(association)
+        if pure_sql_records_fetching
+          # Building fast iterator doing pure SQL query and therefore avoiding redundant creation of AR objects. The
+          # iterator responds to find_in_batches, so it acts like the AR relation. For targeted refresh, the association
+          # can already be ApplicationRecordIterator, so we will skip that.
+          pure_sql_iterator = lambda do |&block|
+            primary_key_offset = nil
+            loop do
+              relation    = association.select(*select_keys)
+                                       .reorder("#{primary_key} ASC")
+                                       .limit(batch_size)
+              # Using rails way of comparing primary key instead of offset
+              relation    = relation.where(arel_primary_key.gt(primary_key_offset)) if primary_key_offset
+              records     = get_connection.query(relation.to_sql)
+              last_record = records.last
+              block.call(records)
+
+              break if records.size < batch_size
+              primary_key_offset = record_key(last_record, primary_key)
+            end
+          end
+
+          InventoryRefresh::ApplicationRecordIterator.new(:iterator => pure_sql_iterator)
+        else
+          # Normal Rails ActiveRecord::Relation where we can call find_in_batches or
+          # InventoryRefresh::ApplicationRecordIterator passed from targeted refresh
+          association
+        end
+      end
+
       # Saves the InventoryCollection
       #
       # @param association [Symbol] An existing association on manager
@@ -55,7 +89,7 @@ module InventoryRefresh::SaveCollection
         all_attribute_keys      = Set.new + inventory_collection.batch_extra_attributes
 
         inventory_collection.each do |inventory_object|
-          attributes = inventory_object.class.attributes_with_keys(inventory_object.data, inventory_collection, all_attribute_keys, inventory_object)
+          attributes = inventory_object.attributes_with_keys(inventory_collection, all_attribute_keys, inventory_object)
           index      = build_stringified_reference(attributes, unique_index_keys)
 
           # Interesting fact: not building attributes_index and using only inventory_objects_index doesn't do much
@@ -69,7 +103,7 @@ module InventoryRefresh::SaveCollection
         logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
 
         unless inventory_collection.create_only?
-          load_and_update_records!(association, inventory_objects_index, attributes_index, all_attribute_keys)
+          update_or_destroy_records!(batch_iterator(association), inventory_objects_index, attributes_index, all_attribute_keys)
         end
 
         unless inventory_collection.create_only?
@@ -78,11 +112,15 @@ module InventoryRefresh::SaveCollection
 
         # Records that were not found in the DB but sent for saving, we will be creating these in the DB.
         if inventory_collection.create_allowed?
+          on_conflict = inventory_collection.parallel_safe? ? :do_update : nil
+
           inventory_objects_index.each_slice(batch_size_for_persisting) do |batch|
-            create_records!(all_attribute_keys, batch, attributes_index, :on_conflict => :do_update)
+            create_records!(all_attribute_keys, batch, attributes_index, :on_conflict => on_conflict)
           end
 
-          create_or_update_partial_records(all_attribute_keys)
+          if inventory_collection.parallel_safe?
+            create_or_update_partial_records(all_attribute_keys)
+          end
         end
 
         logger.debug("Marking :last_seen_at of #{inventory_collection} of size #{inventory_collection.size}...")
@@ -111,7 +149,7 @@ module InventoryRefresh::SaveCollection
       end
 
       def mark_last_seen_at(attributes_index)
-        return unless supports_column?(:last_seen_at)
+        return unless supports_column?(:last_seen_at) && inventory_collection.parallel_safe?
         return if attributes_index.blank?
 
         all_attribute_keys = [:last_seen_at]
@@ -124,7 +162,8 @@ module InventoryRefresh::SaveCollection
         get_connection.execute(query)
       end
 
-      # Batch updates existing records that are in the DB using attributes_index.
+      # Batch updates existing records that are in the DB using attributes_index. And delete the ones that were not
+      # present in inventory_objects_index.
       #
       # @param records_batch_iterator [ActiveRecord::Relation, InventoryRefresh::ApplicationRecordIterator] iterator or
       #        relation, both responding to :find_in_batches method
@@ -132,11 +171,12 @@ module InventoryRefresh::SaveCollection
       # @param attributes_index [Hash{String => Hash}] Hash of data hashes with only keys that are column names of the
       #        models's table
       # @param all_attribute_keys [Array<Symbol>] Array of all columns we will be saving into each table row
-      def load_and_update_records!(records_batch_iterator, inventory_objects_index, attributes_index, all_attribute_keys)
-        hashes_for_update         = []
+      def update_or_destroy_records!(records_batch_iterator, inventory_objects_index, attributes_index, all_attribute_keys)
+        hashes_for_update   = []
+        records_for_destroy = []
         indexed_inventory_objects = {}
 
-        records_batch_iterator.find_in_batches(:batch_size => batch_size, :attributes_index => attributes_index) do |batch|
+        records_batch_iterator.find_in_batches(:batch_size => batch_size) do |batch|
           update_time = time_now
 
           batch.each do |record|
@@ -149,14 +189,20 @@ module InventoryRefresh::SaveCollection
             inventory_object = inventory_objects_index.delete(index)
             hash             = attributes_index[index]
 
-            if inventory_object
+            if inventory_object.nil?
+              # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
+              # delete it from the DB.
+              if inventory_collection.delete_allowed?
+                records_for_destroy << record
+              end
+            else
               # Record was found in the DB and sent for saving, we will be updating the DB.
               inventory_object.id = primary_key_value
               next unless assert_referential_integrity(hash)
+              next unless changed?(record, hash, all_attribute_keys)
 
-              record_version = nil
-              record_version_max = nil
-              if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
+              if inventory_collection.parallel_safe? &&
+                 (supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys))
 
                 version_attr, max_version_attr = if supports_remote_data_timestamp?(all_attribute_keys)
                                                    [:resource_timestamp, :resource_timestamps_max]
@@ -164,16 +210,16 @@ module InventoryRefresh::SaveCollection
                                                    [:resource_counter, :resource_counters_max]
                                                  end
 
-                record_version = record_key(record, version_attr.to_s)
-                record_version_max = record_key(record, max_version_attr.to_s)
+                next if skeletonize_or_skip_record(record_key(record, version_attr),
+                                                   hash[version_attr],
+                                                   record_key(record, max_version_attr),
+                                                   inventory_object)
               end
 
               hash_for_update = if inventory_collection.use_ar_object?
                                   record.assign_attributes(hash.except(:id))
-                                  next unless changed?(record)
-
                                   values_for_database!(all_attribute_keys,
-                                                       hash)
+                                                       record.attributes.symbolize_keys)
                                 elsif serializable_keys?
                                   # TODO(lsmola) hash data with current DB data to allow subset of data being sent,
                                   # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
@@ -184,14 +230,6 @@ module InventoryRefresh::SaveCollection
                                   # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
                                   hash
                                 end
-
-              if supports_remote_data_timestamp?(all_attribute_keys) || supports_remote_data_version?(all_attribute_keys)
-                next if skeletonize_or_skip_record(record_version,
-                                                   hash[version_attr],
-                                                   record_version_max,
-                                                   inventory_object)
-              end
-
               assign_attributes_for_update!(hash_for_update, update_time)
 
               hash_for_update[:id] = primary_key_value
@@ -207,22 +245,39 @@ module InventoryRefresh::SaveCollection
             hashes_for_update = []
             indexed_inventory_objects = {}
           end
+
+          # Destroy in batches
+          if records_for_destroy.size >= batch_size_for_persisting
+            destroy_records!(records_for_destroy)
+            records_for_destroy = []
+          end
         end
 
         # Update the last batch
         update_records!(all_attribute_keys, hashes_for_update, indexed_inventory_objects)
         hashes_for_update = [] # Cleanup so GC can release it sooner
+
+        # Destroy the last batch
+        destroy_records!(records_for_destroy)
+        records_for_destroy = [] # Cleanup so GC can release it sooner
       end
 
-      def changed?(record)
+      def changed?(_record, _hash, _all_attribute_keys)
         return true unless inventory_collection.check_changed?
 
-        # If object was archived before, pass it to update so it can be unarchived
-        return true if record.respond_to?(:archived_at) && record.archived_at
-        # Skip if nothing changed
-        return false if record.changed_attributes.empty?
-        # Skip if we only changed the resource_timestamp, but data stays the same
-        return false if record.changed_attributes.keys == ["resource_timestamp"]
+        # TODO(lsmola) this check needs to be disabled now, because it doesn't work with lazy_find having secondary
+        # indexes. Examples: we save a pod before we save a project, that means the project lazy_find won't evaluate,
+        # because we load it with secondary index and can't do skeletal precreate. Then when the object is being saved
+        # again, the lazy_find is evaluated, but the resource version is not changed, so the row is not saved.
+        #
+        # To keep this quick .changed? check, we might need to extend this, so the resource_version doesn't save until
+        # all lazy_links of the row are evaluated.
+        #
+        # if supports_resource_version?(all_attribute_keys) && supports_column?(resource_version_column)
+        #   record_resource_version = record_key(record, resource_version_column.to_s)
+        #
+        #   return record_resource_version != hash[resource_version_column]
+        # end
 
         true
       end
@@ -230,7 +285,10 @@ module InventoryRefresh::SaveCollection
       def db_columns_index(record, pure_sql: false)
         # Incoming values are in SQL string form.
         # TODO(lsmola) unify this behavior with object_index_with_keys method in InventoryCollection
+        # TODO(lsmola) maybe we can drop the whole pure sql fetching, since everything will be targeted refresh
         # with streaming refresh? Maybe just metrics and events will not be, but those should be upsert only
+        # TODO(lsmola) taking ^ in account, we can't drop pure sql, since that is returned by batch insert and
+        # update queries
         unique_index_keys_to_s.map do |attribute|
           value = if pure_sql
                     record[attribute]
@@ -261,13 +319,20 @@ module InventoryRefresh::SaveCollection
       def update_records!(all_attribute_keys, hashes, indexed_inventory_objects)
         return if hashes.blank?
 
+        unless inventory_collection.parallel_safe?
+          # We need to update the stored records before we save it, since hashes are modified
+          inventory_collection.store_updated_records(hashes)
+        end
+
         query = build_update_query(all_attribute_keys, hashes)
         result = get_connection.execute(query)
 
-        # We will check for timestamp clashes of full row update and we will fallback to skeletal update
-        inventory_collection.store_updated_records(result)
+        if inventory_collection.parallel_safe?
+          # We will check for timestamp clashes of full row update and we will fallback to skeletal update
+          inventory_collection.store_updated_records(result)
 
-        skeletonize_ignored_records!(indexed_inventory_objects, result)
+          skeletonize_ignored_records!(indexed_inventory_objects, result)
+        end
 
         result
       end
@@ -287,7 +352,11 @@ module InventoryRefresh::SaveCollection
         hashes                    = []
         create_time               = time_now
         batch.each do |index, inventory_object|
-          hash = if serializable_keys?
+          hash = if inventory_collection.use_ar_object?
+                   record = inventory_collection.model_class.new(attributes_index[index])
+                   values_for_database!(all_attribute_keys,
+                                        record.attributes.symbolize_keys)
+                 elsif serializable_keys?
                    values_for_database!(all_attribute_keys,
                                         attributes_index[index])
                  else
@@ -309,19 +378,24 @@ module InventoryRefresh::SaveCollection
           build_insert_query(all_attribute_keys, hashes, :on_conflict => on_conflict, :mode => :full)
         )
 
-        # We've done upsert, so records were either created or updated. We can recognize that by checking if
-        # created and updated timestamps are the same
-        created_attr = "created_on" if inventory_collection.supports_column?(:created_on)
-        created_attr ||= "created_at" if inventory_collection.supports_column?(:created_at)
-        updated_attr = "updated_on" if inventory_collection.supports_column?(:updated_on)
-        updated_attr ||= "updated_at" if inventory_collection.supports_column?(:updated_at)
+        if inventory_collection.parallel_safe?
+          # We've done upsert, so records were either created or updated. We can recognize that by checking if
+          # created and updated timestamps are the same
+          created_attr = "created_on" if inventory_collection.supports_column?(:created_on)
+          created_attr ||= "created_at" if inventory_collection.supports_column?(:created_at)
+          updated_attr = "updated_on" if inventory_collection.supports_column?(:updated_on)
+          updated_attr ||= "updated_at" if inventory_collection.supports_column?(:updated_at)
 
-        if created_attr && updated_attr
-          created, updated = result.to_a.partition { |x| x[created_attr] == x[updated_attr] }
-          inventory_collection.store_created_records(created)
-          inventory_collection.store_updated_records(updated)
+          if created_attr && updated_attr
+            created, updated = result.to_a.partition { |x| x[created_attr] == x[updated_attr] }
+            inventory_collection.store_created_records(created)
+            inventory_collection.store_updated_records(updated)
+          else
+            # The record doesn't have both created and updated attrs, so we'll take all as created
+            inventory_collection.store_created_records(result)
+          end
         else
-          # The record doesn't have both created and updated attrs, so we'll take all as created
+          # We've done just insert, so all records were created
           inventory_collection.store_created_records(result)
         end
 
@@ -334,7 +408,9 @@ module InventoryRefresh::SaveCollection
                                        :on_conflict => on_conflict)
         end
 
-        skeletonize_ignored_records!(indexed_inventory_objects, result, :all_unique_columns => true)
+        if inventory_collection.parallel_safe?
+          skeletonize_ignored_records!(indexed_inventory_objects, result, :all_unique_columns => true)
+        end
       end
 
       # Stores primary_key values of created records into associated InventoryObject objects.

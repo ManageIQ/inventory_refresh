@@ -4,16 +4,16 @@ module InventoryRefresh
       class MissingModelClassError < StandardError; end
 
       def self.allowed_properties
-        %i(arel                         association
+        %i(all_manager_uuids            arel                    association
            attributes_blacklist         attributes_whitelist    batch_extra_attributes
            complete                     create_only             custom_save_block
-           custom_reconnect_block       default_values
+           custom_reconnect_block       default_values          delete_method
            dependency_attributes        check_changed           inventory_object_attributes
-           manager_ref                  manager_ref_allowed_nil
+           manager_ref                  manager_ref_allowed_nil manager_uuids
            model_class                  name                    parent
-           retention_strategy           strategy
-           secondary_refs
-           update_only                  use_ar_object
+           parent_inventory_collections retention_strategy      strategy
+           saver_strategy               secondary_refs          targeted
+           targeted_arel                update_only             use_ar_object
            assert_graph_integrity).to_set
       end
 

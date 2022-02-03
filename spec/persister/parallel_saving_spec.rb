@@ -8,38 +8,155 @@ describe InventoryRefresh::Persister do
   include SpecParsedData
 
   before(:each) do
-    @ems = FactoryBot.create(:ems_container)
+    @ems = FactoryBot.create(:ems_container, :name => "test_ems")
+  end
+
+  context "with :retention_strategy => 'archive'" do
+    it "archives data with all_manager_uuids_timestamp" do
+      persister = create_containers_persister(:retention_strategy => "archive")
+
+      time_now    = Time.now.utc
+      time_before = Time.now.utc - 20.seconds
+      time_after  = Time.now.utc + 20.seconds
+
+      cg1  = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      _cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_before))
+      cg3  = FactoryBot.create(:container_group, container_group_data(3).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _cg4 = FactoryBot.create(:container_group, container_group_data(4).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      # This VM was added after we've fetched all possible VMs (e.g. by targeted refresh), so we shouldn't delete it
+      _cg5 = FactoryBot.create(:container_group, container_group_data(5).merge(:ext_management_system => @ems, :resource_timestamp => time_after))
+
+      persister.container_groups.all_manager_uuids = [{'ems_ref' => cg1.ems_ref}, {'ems_ref' => cg3.ems_ref}]
+      persister.container_groups.all_manager_uuids_timestamp = time_now.to_s
+
+      persister.persist!
+
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref], container_group_data(3)[:ems_ref],
+                     container_group_data(5)[:ems_ref], container_group_data(4)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
+        match_array([container_group_data(2)[:ems_ref]])
+      )
+    end
+
+    it "archives nested data with all_manager_uuids_timestamp" do
+      time_now    = Time.now.utc
+      time_before = Time.now.utc - 20.seconds
+      time_after  = Time.now.utc + 20.seconds
+
+      cg1 = FactoryBot.create(:container_group, container_group_data(1).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      cg2 = FactoryBot.create(:container_group, container_group_data(2).merge(:ext_management_system => @ems, :resource_timestamp => time_now))
+      _c11 = FactoryBot.create(:nested_container, nested_container_data(11).merge(:container_group => cg1, :resource_timestamp => time_now))
+      _c12 = FactoryBot.create(:nested_container, nested_container_data(12).merge(:container_group => cg1, :resource_timestamp => time_now))
+      _c21 = FactoryBot.create(:nested_container, nested_container_data(21).merge(:container_group => cg2, :resource_timestamp => time_now))
+      _c22 = FactoryBot.create(:nested_container, nested_container_data(22).merge(:container_group => cg2, :resource_timestamp => time_now))
+
+      # We are sending older data, that should not cause any archival, but we should create the non existent old data
+      # nested_container_data(13) and archive them. And we are also sending new data.
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_before))
+      persister.nested_containers.build(
+        nested_container_data(11).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :resource_timestamp => time_before
+        )
+      )
+      persister.nested_containers.build(
+        nested_container_data(13).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :resource_timestamp => time_before
+        )
+      )
+      persister.container_groups.build(container_group_data(2).merge(:resource_timestamp => time_before))
+      persister.nested_containers.build(
+        nested_container_data(21).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(2)[:ems_ref]),
+          :resource_timestamp => time_after
+        )
+      )
+      persister.nested_containers.build(
+        nested_container_data(23).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(2)[:ems_ref]),
+          :resource_timestamp => time_after
+        )
+      )
+
+      persister.persist!
+
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref], container_group_data(2)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+
+      expect(NestedContainer.active.pluck(:ems_ref)).to(
+        match_array([nested_container_data(11)[:ems_ref], nested_container_data(13)[:ems_ref],
+                     nested_container_data(21)[:ems_ref], nested_container_data(23)[:ems_ref]])
+      )
+      expect(NestedContainer.archived.pluck(:ems_ref)).to(
+        match_array([nested_container_data(12)[:ems_ref], nested_container_data(22)[:ems_ref]])
+      )
+      # TODO(lsmola) This should be the right thing, but there is no way to enforce ensure this now, we test that next
+      # refresh will fix it, archiving nested container 13 and reconnecting 12.
+      #
+      # expect(NestedContainer.active.pluck(:ems_ref)).to(
+      #   match_array([nested_container_data(11)[:ems_ref], nested_container_data(12)[:ems_ref],
+      #                nested_container_data(21)[:ems_ref], nested_container_data(23)[:ems_ref]])
+      # )
+      # expect(NestedContainer.archived.pluck(:ems_ref)).to(
+      #   match_array([nested_container_data(13)[:ems_ref], , nested_container_data(22)[:ems_ref]])
+      # )
+
+      # We are sending newer data
+      persister = create_containers_persister(:retention_strategy => "archive")
+      persister.container_groups.build(container_group_data(1).merge(:resource_timestamp => time_after))
+      persister.nested_containers.build(
+        nested_container_data(11).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :resource_timestamp => time_after
+        )
+      )
+      persister.nested_containers.build(
+        nested_container_data(12).merge(
+          :container_group    => persister.container_groups.lazy_find(container_group_data(1)[:ems_ref]),
+          :resource_timestamp => time_after
+        )
+      )
+
+      persister.persist!
+
+      expect(ContainerGroup.active.pluck(:ems_ref)).to(
+        match_array([container_group_data(1)[:ems_ref], container_group_data(2)[:ems_ref]])
+      )
+      expect(ContainerGroup.archived.pluck(:ems_ref)).to(
+        match_array([])
+      )
+
+      expect(NestedContainer.active.pluck(:ems_ref)).to(
+        match_array([nested_container_data(11)[:ems_ref], nested_container_data(12)[:ems_ref],
+                     nested_container_data(21)[:ems_ref], nested_container_data(23)[:ems_ref]])
+      )
+      expect(NestedContainer.archived.pluck(:ems_ref)).to(
+        match_array([nested_container_data(13)[:ems_ref], nested_container_data(22)[:ems_ref]])
+      )
+    end
   end
 
   [{
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_counter",
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_counter",
-   }, {
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_timestamp",
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_timestamp",
-   }, {
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_timestamp",
-     :use_ar_object          => true,
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_timestamp",
-     :use_ar_object          => true,
-   }, {
-     :upsert_only            => true,
-     :parallel_saving_column => "resource_timestamp",
-     :use_ar_object          => false,
-   }, {
-     :upsert_only            => false,
-     :parallel_saving_column => "resource_timestamp",
-     :use_ar_object          => false,
-   }].each do |settings|
+    :upsert_only            => true,
+    :parallel_saving_column => "resource_counter",
+  }, {
+    :upsert_only            => false,
+    :parallel_saving_column => "resource_counter",
+  }, {
+    :upsert_only            => true,
+    :parallel_saving_column => "resource_timestamp",
+  }, {
+    :upsert_only            => false,
+    :parallel_saving_column => "resource_timestamp",
+  },].each do |settings|
     context "with settings #{settings}" do
       before(:each) do
         if settings[:upsert_only]
@@ -56,7 +173,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -79,12 +196,9 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
           else
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
+            match_created(persister)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -102,7 +216,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => bigger_newest_version,
             )
           )
@@ -145,7 +259,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_id           => @ems.id,
+              :ems_name         => @ems.name,
               :version          => bigger_newest_version,
               :resource_version => "same_version",
             )
@@ -204,7 +318,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_id           => @ems.id,
+              :ems_name         => @ems.name,
               :version          => bigger_newest_version,
               :resource_version => "different_version_#{i}",
             )
@@ -246,7 +360,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -280,11 +394,10 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
       end
@@ -296,7 +409,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -307,16 +420,10 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
           end
-
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -324,7 +431,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -336,18 +443,11 @@ describe InventoryRefresh::Persister do
               have_attributes(
                 :name                      => "container_group_#{expected_version}",
                 version_col(settings)      => expected_version,
-                versions_max_col(settings) => expected_version,
+                versions_max_col(settings) => nil,
+                versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
                 :phase                     => "#{expected_version} status",
               )
-            )
-
-            expect(container_group.send(versions_col(settings))).to(
-              match(
-                "phase"      => expected_version,
-                "dns_policy" => expected_version,
-                "reason"     => expected_version,
-                )
             )
           end
 
@@ -357,7 +457,7 @@ describe InventoryRefresh::Persister do
           expect(container_group_created_on).to eq(container_group_current_created_on)
 
           match_created(persister)
-          match_updated(persister, :container_groups => ContainerGroup.all)
+          match_updated(persister)
           match_deleted(persister)
         end
       end
@@ -367,7 +467,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -396,11 +496,10 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -408,7 +507,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -431,11 +530,7 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
+            match_updated(persister)
           end
           match_created(persister)
           match_deleted(persister)
@@ -447,7 +542,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings         => settings,
-              :ems_id           => @ems.id,
+              :ems_name         => @ems.name,
               :version          => newest_version(settings),
               :resource_version => "same_version",
             )
@@ -478,11 +573,10 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -490,7 +584,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings         => settings,
-              :ems_id           => @ems.id,
+              :ems_name         => @ems.name,
               :version          => newest_version(settings),
               :resource_version => "same_version",
             )
@@ -515,11 +609,7 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
+            match_updated(persister)
           end
           match_created(persister)
           match_deleted(persister)
@@ -535,7 +625,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
@@ -546,16 +636,10 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
           end
-
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -563,7 +647,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => bigger_newest_version,
             )
           )
@@ -595,7 +679,11 @@ describe InventoryRefresh::Persister do
           container_group_current_created_on = ContainerGroup.where(:dns_policy => "1").first.created_on
           expect(container_group_created_on).to eq(container_group_current_created_on)
 
-          match_updated(persister, :container_groups => ContainerGroup.all)
+          if i == 0
+            match_updated(persister, :container_groups => ContainerGroup.all)
+          else
+            match_updated(persister)
+          end
           match_created(persister)
           match_deleted(persister)
         end
@@ -608,39 +696,17 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => newest_version(settings),
             )
           )
 
-          ContainerGroup.find_each do |container_group|
-            expected_bigger_version = expected_version(settings, container_group, newest_version(settings))
-
-            expect(container_group).to(
-              have_attributes(
-                :name                 => nil,
-                version_col(settings) => nil,
-                :reason               => expected_bigger_version.to_s,
-                :phase                => "#{expected_bigger_version} status",
-              )
-            )
-
-            expect(container_group.send(versions_col(settings))).to(
-              match(
-                "dns_policy" => expected_bigger_version,
-                "phase"      => expected_bigger_version,
-                "reason"     => expected_bigger_version,
-              )
-            )
-          end
-
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
 
@@ -648,7 +714,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => bigger_newest_version,
             )
           )
@@ -671,11 +737,7 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
+            match_updated(persister)
           end
           match_created(persister)
           match_deleted(persister)
@@ -690,25 +752,24 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
-              :ems_id   => @ems.id,
+              :ems_name => @ems.name,
               :version  => bigger_newest_version,
             )
           )
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
         end
 
         2.times do |i|
           persister = TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_id      => @ems.id,
+            :ems_name    => @ems.name,
             :version     => newest_version(settings),
             :index_start => 0,
             :batch_size  => 2
@@ -716,7 +777,7 @@ describe InventoryRefresh::Persister do
 
           TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_id      => @ems.id,
+            :ems_name    => @ems.name,
             :version     => even_bigger_newest_version,
             :persister   => persister,
             :index_start => 1,
@@ -771,11 +832,7 @@ describe InventoryRefresh::Persister do
           if i == 0
             match_updated(persister, :container_groups => ContainerGroup.all)
           else
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
-            end
+            match_updated(persister)
           end
           match_created(persister)
           match_deleted(persister)
@@ -788,13 +845,13 @@ describe InventoryRefresh::Persister do
         2.times do |i|
           persister = TestCollector.generate_batches_of_partial_container_group_data(
             :settings => settings,
-            :ems_id   => @ems.id,
+            :ems_name => @ems.name,
             :version  => newest_version(settings),
           )
 
           TestCollector.generate_batches_of_different_partial_container_group_data(
             :settings    => settings,
-            :ems_id      => @ems.id,
+            :ems_name    => @ems.name,
             :version     => bigger_newest_version,
             :persister   => persister,
             :index_start => 1,
@@ -805,17 +862,16 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            match_updated(persister, :container_groups => ContainerGroup.all)
           end
+          match_updated(persister)
           match_deleted(persister)
 
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_different_partial_container_group_data(
               :settings    => settings,
-              :ems_id      => @ems.id,
+              :ems_name    => @ems.name,
               :version     => bigger_newest_version,
               :index_start => 0,
               :batch_size  => 2
@@ -846,7 +902,11 @@ describe InventoryRefresh::Persister do
             )
           end
 
-          match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
+          if i == 0
+            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
+          else
+            match_updated(persister)
+          end
           match_created(persister)
           match_deleted(persister)
         end
@@ -857,13 +917,13 @@ describe InventoryRefresh::Persister do
 
         persister = TestCollector.generate_batches_of_partial_container_group_data(
           :settings => settings,
-          :ems_id   => @ems.id,
+          :ems_name => @ems.name,
           :version  => bigger_newest_version,
         )
 
         TestCollector.generate_batches_of_different_partial_container_group_data(
           :settings    => settings,
-          :ems_id      => @ems.id,
+          :ems_name    => @ems.name,
           :version     => newest_version(settings),
           :persister   => persister,
           :index_start => 1,
@@ -923,7 +983,7 @@ describe InventoryRefresh::Persister do
         persister = TestCollector.refresh(
           TestCollector.generate_batches_of_different_partial_container_group_data(
             :settings    => settings,
-            :ems_id      => @ems.id,
+            :ems_name    => @ems.name,
             :version     => newest_version(settings),
             :index_start => 0,
             :batch_size  => 2
@@ -965,13 +1025,13 @@ describe InventoryRefresh::Persister do
         2.times do |i|
           persister = TestCollector.generate_batches_of_full_container_group_data(
             :settings => settings,
-            :ems_id   => @ems.id,
+            :ems_name => @ems.name,
             :version  => bigger_newest_version,
           )
 
           TestCollector.generate_batches_of_full_container_group_data(
             :settings    => settings,
-            :ems_id      => @ems.id,
+            :ems_name    => @ems.name,
             :version     => newest_version(settings),
             :persister   => persister,
             :index_start => 1,
@@ -997,21 +1057,16 @@ describe InventoryRefresh::Persister do
 
           if i == 0
             match_created(persister, :container_groups => ContainerGroup.all)
-            match_updated(persister)
           else
             match_created(persister)
-            if settings[:upsert_only]
-              match_updated(persister, :container_groups => ContainerGroup.all)
-            else
-              match_updated(persister)
-            end
           end
+          match_updated(persister)
           match_deleted(persister)
 
           persister = TestCollector.refresh(
             TestCollector.generate_batches_of_full_container_group_data(
               :settings    => settings,
-              :ems_id      => @ems.id,
+              :ems_name    => @ems.name,
               :version     => newest_version(settings),
               :index_start => 0,
               :batch_size  => 2

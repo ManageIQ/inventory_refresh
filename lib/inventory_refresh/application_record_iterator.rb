@@ -1,12 +1,20 @@
 module InventoryRefresh
   class ApplicationRecordIterator
-    attr_reader :inventory_collection
+    attr_reader :inventory_collection, :manager_uuids_set, :iterator, :query
 
-    # An iterator that can fetch batches of the AR objects based on a set of attribute_indexes
+    # An iterator that can fetch batches of the AR objects based on a set of manager refs, or just mimics AR relation
+    # when given an iterator. Or given query, acts as iterator by selecting batches.
     #
     # @param inventory_collection [InventoryRefresh::InventoryCollection] Inventory collection owning the iterator
-    def initialize(inventory_collection: nil)
+    # @param manager_uuids_set [Array<InventoryRefresh::InventoryCollection::Reference>] Array of references we want to
+    #        fetch from the DB
+    # @param iterator [Proc] Block based iterator
+    # @query query [ActiveRecord::Relation] Existing query we want to use for querying the db
+    def initialize(inventory_collection: nil, manager_uuids_set: nil, iterator: nil, query: nil)
       @inventory_collection = inventory_collection
+      @manager_uuids_set    = manager_uuids_set
+      @iterator             = iterator
+      @query                = query
     end
 
     # Iterator that mimics find_in_batches of ActiveRecord::Relation. This iterator serves for making more optimized query
@@ -17,19 +25,28 @@ module InventoryRefresh
     # and relation.where(:id => 500ids)
     #
     # @param batch_size [Integer] A batch size we want to fetch from DB
-    # @param attributes_index [Hash{String => Hash}] Indexed hash with data we will be saving
     # @yield Code processing the batches
-    def find_in_batches(batch_size: 1000, attributes_index: {})
-      attributes_index.each_slice(batch_size) do |batch|
-        yield(inventory_collection.db_collection_for_comparison_for(batch))
+    def find_in_batches(batch_size: 1000)
+      if iterator
+        iterator.call do |batch|
+          yield(batch)
+        end
+      elsif query
+        manager_uuids_set.each_slice(batch_size) do |batch|
+          yield(query.where(inventory_collection.targeted_selection_for(batch)))
+        end
+      else
+        manager_uuids_set.each_slice(batch_size) do |batch|
+          yield(inventory_collection.db_collection_for_comparison_for(batch))
+        end
       end
     end
 
     # Iterator that mimics find_each of ActiveRecord::Relation using find_in_batches (see #find_in_batches)
     #
     # @yield Code processing the batches
-    def find_each(attributes_index: {})
-      find_in_batches(:attributes_index => attributes_index) do |batch|
+    def find_each
+      find_in_batches do |batch|
         batch.each do |item|
           yield(item)
         end

@@ -14,6 +14,15 @@ module SpecParsedData
     }.merge(data)
   end
 
+  def key_pair_data(i, data = {})
+    {
+      :type          => ManageIQ::Providers::CloudManager::AuthKeyPair.name,
+      :resource_id   => @ems.id,
+      :resource_type => "ExtManagementSystem",
+      :name          => "key_pair_name_#{i}",
+    }.merge(data)
+  end
+
   def image_data(i, data = {})
     {
       :type               => ManageIQ::Providers::CloudManager::Template.name,
@@ -59,9 +68,8 @@ module SpecParsedData
 
   def flavor_data(i, data = {})
     {
-      :name    => "t#{i}.nano",
-      :ems_ref => "t#{i}.nano",
-      :ems_id  => @ems.id,
+      :name   => "t#{i}.nano",
+      :ems_id => @ems.id,
     }.merge(data)
   end
 
@@ -110,7 +118,7 @@ module SpecParsedData
   end
 
   def nested_container_data(i, data = {})
-    container_data(i, data).merge(:type => "NestedContainer",)
+    container_data(i, data = {}).merge(:type => "NestedContainer",)
   end
 
   def container_data(i, data = {})

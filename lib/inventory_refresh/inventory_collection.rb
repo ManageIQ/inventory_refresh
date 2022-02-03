@@ -71,14 +71,32 @@ module InventoryRefresh
     #   InventoryCollection, since it is already persisted into the DB.
     attr_accessor :saved
 
+    # If present, InventoryCollection switches into delete_complement mode, where it will
+    # delete every record from the DB, that is not present in this list. This is used for the batch processing,
+    # where we don't know which InventoryObject should be deleted, but we know all manager_uuids of all
+    # InventoryObject objects that exists in the provider.
+    #
+    # @return [Array, nil] nil or a list of all :manager_uuids that are present in the Provider's InventoryCollection.
+    attr_accessor :all_manager_uuids
+
+    # @return [Array, nil] Scope for applying :all_manager_uuids
+    attr_accessor :all_manager_uuids_scope
+
+    # @return [String] Timestamp in UTC before fetching :all_manager_uuids
+    attr_accessor :all_manager_uuids_timestamp
+
     # @return [Set] A set of InventoryCollection objects that depends on this InventoryCollection object.
     attr_accessor :dependees
 
+    # @return [Array<Symbol>] @see #parent_inventory_collections documentation of InventoryCollection.new's initialize_ic_relations()
+    #   parameters
+    attr_accessor :parent_inventory_collections
+
     attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
-                :internal_attributes, :dependency_attributes, :manager_ref, :secondary_refs, :create_only,
+                :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only,
                 :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
-                :inventory_object_attributes, :name, :saver_strategy, :default_values,
-                :manager_ref_allowed_nil, :use_ar_object,
+                :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
+                :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
                 :created_records, :updated_records, :deleted_records, :retention_strategy,
                 :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
                 :assert_graph_integrity
@@ -112,6 +130,7 @@ module InventoryRefresh
              :lazy_find_by,
              :named_ref,
              :primary_index,
+             :reindex_secondary_indexes!,
              :skeletal_primary_index,
              :to => :index_proxy
 
@@ -134,18 +153,28 @@ module InventoryRefresh
                  properties[:check_changed],
                  properties[:update_only],
                  properties[:use_ar_object],
+                 properties[:targeted],
                  properties[:assert_graph_integrity])
 
       init_strategies(properties[:strategy],
-                      properties[:retention_strategy])
+                      properties[:saver_strategy],
+                      properties[:retention_strategy],
+                      properties[:delete_method])
 
       init_references(properties[:manager_ref],
                       properties[:manager_ref_allowed_nil],
-                      properties[:secondary_refs])
+                      properties[:secondary_refs],
+                      properties[:manager_uuids])
 
-      init_ic_relations(properties[:dependency_attributes])
+      init_all_manager_uuids(properties[:all_manager_uuids],
+                             properties[:all_manager_uuids_scope],
+                             properties[:all_manager_uuids_timestamp])
 
-      init_arels(properties[:arel])
+      init_ic_relations(properties[:dependency_attributes],
+                        properties[:parent_inventory_collections])
+
+      init_arels(properties[:arel],
+                 properties[:targeted_arel])
 
       init_custom_procs(properties[:custom_save_block],
                         properties[:custom_reconnect_block])
@@ -282,11 +311,6 @@ module InventoryRefresh
       @base_columns ||= (unique_index_columns + internal_columns + not_null_columns).uniq
     end
 
-    # @return [Array<Symbol>] Array of all column names on the InventoryCollection
-    def all_column_names
-      @all_column_names ||= model_class.columns.map { |x| x.name.to_sym }
-    end
-
     # @param value [Object] Object we want to test
     # @return [Boolean] true is value is kind of InventoryRefresh::InventoryObject
     def inventory_object?(value)
@@ -311,7 +335,7 @@ module InventoryRefresh
 
     # Convert manager_ref list of attributes to list of DB columns
     #
-    # @return [Array<String>] Converted manager_ref list of attributes to list of DB columns
+    # @return [Array<String>] true is processing of this InventoryCollection will be in targeted mode
     def manager_ref_to_cols
       # TODO(lsmola) this should contain the polymorphic _type, otherwise the IC with polymorphic unique key will get
       # conflicts
@@ -342,25 +366,13 @@ module InventoryRefresh
     #
     # @return [Array<Symbol>] attributes that are needed for saving of the record
     def fixed_attributes
-      not_null_attributes = []
-
       if model_class
-        # Attrs having presence validator
         presence_validators = model_class.validators.detect { |x| x.kind_of?(ActiveRecord::Validations::PresenceValidator) }
-        not_null_attributes += presence_validators.attributes if presence_validators.present?
-
-        # Column names having NOT NULL constraint
-        non_null_constraints = model_class.columns_hash.values.reject(&:null).map(&:name) - [model_class.primary_key]
-        not_null_attributes += non_null_constraints.map(&:to_sym)
-
-        # Column names having NOT NULL constraint transformed to relation names
-        not_null_attributes += non_null_constraints.map {|x| foreign_key_to_association_mapping[x]}.compact
       end
       # Attributes that has to be always on the entity, so attributes making unique index of the record + attributes
       # that have presence validation
-
       fixed_attributes = manager_ref
-      fixed_attributes += not_null_attributes.uniq
+      fixed_attributes += presence_validators.attributes if presence_validators.present?
       fixed_attributes
     end
 
@@ -422,6 +434,7 @@ module InventoryRefresh
                               :parent                => parent,
                               :arel                  => arel,
                               :strategy              => strategy,
+                              :saver_strategy        => saver_strategy,
                               :custom_save_block     => custom_save_block,
                               # We want cloned IC to be update only, since this is used for cycle resolution
                               :update_only           => true,
@@ -459,12 +472,24 @@ module InventoryRefresh
 
     # @return [Integer] default batch size for talking to the DB
     def batch_size
+      # TODO(lsmola) mode to the settings
       1000
     end
 
     # @return [Integer] default batch size for talking to the DB if not using ApplicationRecord objects
     def batch_size_pure_sql
+      # TODO(lsmola) mode to the settings
       10_000
+    end
+
+    # Returns a list of stringified uuids of all scoped InventoryObjects, which is used for scoping in targeted mode
+    #
+    # @return [Array<String>] list of stringified uuids of all scoped InventoryObjects
+    def manager_uuids
+      # TODO(lsmola) LEGACY: this is still being used by :targetel_arel definitions and it expects array of strings
+      raise "This works only for :manager_ref size 1" if manager_ref.size > 1
+      key = manager_ref.first
+      transform_references_to_hashes(targeted_scope.primary_references).map { |x| x[key] }
     end
 
     # Builds a multiselection conditions like (table1.a = a1 AND table2.b = b1) OR (table1.a = a2 AND table2.b = b2)
@@ -472,18 +497,53 @@ module InventoryRefresh
     # @param hashes [Array<Hash>] data we want to use for the query
     # @param keys [Array<Symbol>] keys of attributes involved
     # @return [String] A condition usable in .where of an ActiveRecord relation
-    def build_multi_selection_condition(hashes, keys = unique_index_keys)
+    def build_multi_selection_condition(hashes, keys = manager_ref)
       arel_table = model_class.arel_table
       # We do pure SQL OR, since Arel is nesting every .or into another parentheses, otherwise this would be just
       # inject(:or) instead of to_sql with .join(" OR ")
       hashes.map { |hash| "(#{keys.map { |key| arel_table[key].eq(hash[key]) }.inject(:and).to_sql})" }.join(" OR ")
     end
 
-    # Returns iterator for the passed references and a query
-    #
-    # @return [InventoryRefresh::ApplicationRecordIterator] Iterator for the references and query
+    # @return [ActiveRecord::Relation] A relation that can fetch all data of this InventoryCollection from the DB
     def db_collection_for_comparison
-      InventoryRefresh::ApplicationRecordIterator.new(:inventory_collection => self)
+      if targeted?
+        if targeted_arel.respond_to?(:call)
+          targeted_arel.call(self)
+        elsif parent_inventory_collections.present?
+          targeted_arel_default
+        else
+          targeted_iterator_for(targeted_scope.primary_references)
+        end
+      else
+        full_collection_for_comparison
+      end
+    end
+
+    # Builds targeted query limiting the results by the :references defined in parent_inventory_collections
+    #
+    # @return [InventoryRefresh::ApplicationRecordIterator] an iterator for default targeted arel
+    def targeted_arel_default
+      if parent_inventory_collections.collect { |x| x.model_class.base_class }.uniq.count > 1
+        raise "Multiple :parent_inventory_collections with different base class are not supported by default. Write "\
+              ":targeted_arel manually, or separate [#{self}] into 2 InventoryCollection objects."
+      end
+      parent_collection = parent_inventory_collections.first
+      references        = parent_inventory_collections.map { |x| x.targeted_scope.primary_references }.reduce({}, :merge!)
+
+      parent_collection.targeted_iterator_for(references, full_collection_for_comparison)
+    end
+
+    # Gets targeted references and transforms them into list of hashes
+    #
+    # @param references [Array, InventoryRefresh::InventoryCollection::TargetedScope] passed references
+    # @return [Array<Hash>] References transformed into the array of hashes
+    def transform_references_to_hashes(references)
+      if references.kind_of?(Array)
+        # Sliced InventoryRefresh::InventoryCollection::TargetedScope
+        references.map { |x| x.second.full_reference }
+      else
+        references.values.map(&:full_reference)
+      end
     end
 
     # Builds a multiselection conditions like (table1.a = a1 AND table2.b = b1) OR (table1.a = a2 AND table2.b = b2)
@@ -492,20 +552,20 @@ module InventoryRefresh
     # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] passed references
     # @return [String] A condition usable in .where of an ActiveRecord relation
     def targeted_selection_for(references)
-      build_multi_selection_condition(references.map(&:second))
+      build_multi_selection_condition(transform_references_to_hashes(references))
     end
 
-    def select_keys
-      @select_keys ||= [@model_class.primary_key] + manager_ref_to_cols.map(&:to_s) + internal_columns.map(&:to_s)
-    end
-
-    # @return [ActiveRecord::ConnectionAdapters::AbstractAdapter] ActiveRecord connection
-    def get_connection
-      ActiveRecord::Base.connection
-    end
-
-    def pure_sql_record_fetching?
-      !use_ar_object?
+    # Returns iterator for the passed references and a query
+    #
+    # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] Passed references
+    # @param query [ActiveRecord::Relation] relation that can fetch all data of this InventoryCollection from the DB
+    # @return [InventoryRefresh::ApplicationRecordIterator] Iterator for the references and query
+    def targeted_iterator_for(references, query = nil)
+      InventoryRefresh::ApplicationRecordIterator.new(
+        :inventory_collection => self,
+        :manager_uuids_set    => references,
+        :query                => query
+      )
     end
 
     # Builds an ActiveRecord::Relation that can fetch all the references from the DB
@@ -513,18 +573,14 @@ module InventoryRefresh
     # @param references [Hash{String => InventoryRefresh::InventoryCollection::Reference}] passed references
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def db_collection_for_comparison_for(references)
-      query = full_collection_for_comparison.where(targeted_selection_for(references))
-      if pure_sql_record_fetching?
-        return get_connection.query(query.select(*select_keys).to_sql)
-      end
-
-      query
+      full_collection_for_comparison.where(targeted_selection_for(references))
     end
 
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def full_collection_for_comparison
       return arel unless arel.nil?
       rel = parent.send(association)
+      rel = rel.active if rel && supports_column?(:archived_at) && retention_strategy == :archive
       rel
     end
 
@@ -577,6 +633,12 @@ module InventoryRefresh
       {
         :id => identity
       }
+    end
+
+    # TODO: Not used!
+    # @return [Array<Symbol>] all association attributes and foreign keys of the model class
+    def association_attributes
+      model_class.reflect_on_all_associations.map { |x| [x.name, x.foreign_key] }.flatten.compact.map(&:to_sym)
     end
   end
 end

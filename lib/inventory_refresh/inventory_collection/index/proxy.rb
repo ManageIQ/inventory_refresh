@@ -64,6 +64,14 @@ module InventoryRefresh
           end
         end
 
+        def reindex_secondary_indexes!
+          data_indexes.each do |ref, index|
+            next if ref == primary_index_ref
+
+            index.reindex!
+          end
+        end
+
         def primary_index
           data_index(primary_index_ref)
         end
@@ -86,16 +94,30 @@ module InventoryRefresh
           end
         end
 
+        def find_by(manager_uuid_hash, ref: primary_index_ref)
+          # TODO(lsmola) deprecate this, it's enough to have find method
+          find(manager_uuid_hash, :ref => ref)
+        end
+
+        def lazy_find_by(manager_uuid_hash, ref: primary_index_ref, key: nil, default: nil)
+          # TODO(lsmola) deprecate this, it's enough to have lazy_find method
+
+          lazy_find(manager_uuid_hash, :ref => ref, :key => key, :default => default)
+        end
+
         def lazy_find(manager_uuid, ref: primary_index_ref, key: nil, default: nil, transform_nested_lazy_finds: false)
+          # TODO(lsmola) also, it should be enough to have only 1 find method, everything can be lazy, until we try to
+          # access the data
+          # TODO(lsmola) lazy_find will support only hash, then we can remove the _by variant
           return if manager_uuid.nil?
           assert_index(manager_uuid, ref)
 
           ::InventoryRefresh::InventoryObjectLazy.new(inventory_collection,
-                                                      manager_uuid,
-                                                      :ref                         => ref,
-                                                      :key                         => key,
-                                                      :default                     => default,
-                                                      :transform_nested_lazy_finds => transform_nested_lazy_finds)
+                                                    manager_uuid,
+                                                    :ref                         => ref,
+                                                    :key                         => key,
+                                                    :default                     => default,
+                                                    :transform_nested_lazy_finds => transform_nested_lazy_finds)
         end
 
         def named_ref(ref = primary_index_ref)
@@ -110,13 +132,19 @@ module InventoryRefresh
 
         delegate :association_to_foreign_key_mapping,
                  :build_stringified_reference,
+                 :parallel_safe?,
                  :strategy,
                  :to => :inventory_collection
 
         attr_reader :all_refs, :data_indexes, :inventory_collection, :primary_ref, :local_db_indexes, :secondary_refs
 
         def find_in_data_or_skeletal_index(reference)
-          data_index_find(reference) || skeletal_index_find(reference)
+          if parallel_safe?
+            # With parallel safe strategies, we create skeletal nodes that we can look for
+            data_index_find(reference) || skeletal_index_find(reference)
+          else
+            data_index_find(reference)
+          end
         end
 
         def skeletal_index_find(reference)

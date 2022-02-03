@@ -70,6 +70,15 @@ module InventoryRefresh
         build(hash)
       end
 
+      # Finds InventoryObject.
+      #
+      # @param hash [Hash] Hash that needs to contain attributes defined in :manager_ref of the InventoryCollection
+      # @return [InventoryRefresh::InventoryObject] Found or built InventoryObject object
+      def find_in_data(hash)
+        _hash, _uuid, inventory_object = primary_index_scan(hash)
+        inventory_object
+      end
+
       # Finds of builds a new InventoryObject. By building it, we also put in into the InventoryCollection's storage.
       #
       # @param hash [Hash] Hash that needs to contain attributes defined in :manager_ref of the

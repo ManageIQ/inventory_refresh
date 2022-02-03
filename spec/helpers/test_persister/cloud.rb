@@ -12,6 +12,7 @@ class TestPersister::Cloud < ::TestPersister
       end
     end
 
+    add_key_pairs
     add_flavors
 
     %i(source_regions
@@ -31,6 +32,13 @@ class TestPersister::Cloud < ::TestPersister
   private
 
   # Cloud InventoryCollection
+  def add_key_pairs
+    add_collection(:key_pairs, cloud) do |builder|
+      builder.add_properties(:manager_uuids => name_references(:key_pairs))
+    end
+  end
+
+  # Cloud InventoryCollection
   def add_orchestration_stacks_resources
     add_collection(:orchestration_stacks_resources, cloud) do |builder|
       builder.add_properties(:secondary_refs => {:by_stack_and_ems_ref => %i(stack ems_ref)})
@@ -48,10 +56,15 @@ class TestPersister::Cloud < ::TestPersister
   def add_network_ports
     add_collection(:network_ports, network) do |builder|
       builder.add_properties(
+        :manager_uuids  => references(:vms) + references(:network_ports) + references(:load_balancers),
         :parent         => manager.network_manager,
         :secondary_refs => {:by_device => [:device], :by_device_and_name => %i(device name)}
       )
     end
+  end
+
+  def targeted?
+    true
   end
 
   def strategy
@@ -60,6 +73,10 @@ class TestPersister::Cloud < ::TestPersister
 
   def parent
     manager.presence
+  end
+
+  def saver_strategy
+    :default # TODO(lsmola) turn everything to concurrent_safe_batch
   end
 
   def shared_options

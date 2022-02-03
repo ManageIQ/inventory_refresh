@@ -2,10 +2,10 @@ require_relative '../helpers/test_persister/containers'
 
 class TestCollector
   class << self
-    def generate_batches_of_partial_container_group_data(ems_id:, version:, settings:, batch_size: 4, index_start: 0,
+    def generate_batches_of_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
                                                          persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
-      persister ||= new_persister(ems, settings)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
+      persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
         parse_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
@@ -15,10 +15,10 @@ class TestCollector
       persister
     end
 
-    def generate_batches_of_different_partial_container_group_data(ems_id:, version:, settings:, batch_size: 4,
+    def generate_batches_of_different_partial_container_group_data(ems_name:, version:, settings:, batch_size: 4,
                                                                    index_start: 0, persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
-      persister ||= new_persister(ems, settings)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
+      persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
         parse_another_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
@@ -28,10 +28,10 @@ class TestCollector
       persister
     end
 
-    def generate_batches_of_full_container_group_data(ems_id:, version:, settings:, batch_size: 4, index_start: 0,
+    def generate_batches_of_full_container_group_data(ems_name:, version:, settings:, batch_size: 4, index_start: 0,
                                                       persister: nil, resource_version: nil)
-      ems = ExtManagementSystem.find_by(:id => ems_id)
-      persister ||= new_persister(ems, settings)
+      ems = ExtManagementSystem.find_by(:name => ems_name)
+      persister ||= new_persister(ems)
 
       (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
         parse_container_group(index, persister, settings, incremented_counter(settings, version, index), resource_version)
@@ -83,19 +83,13 @@ class TestCollector
 
     def refresh(persister)
       manager = persister.manager
-      use_ar_object = persister.inventory_collections.first.use_ar_object
-
       persister = persister.class.from_json(persister.to_json, manager)
-      # :use_ar_object is not exposed to be serializable, it's taken from Persister class, so it's not changeable
-      # in the runtime.
-      persister.inventory_collections.each { |x| x.instance_variable_set(:@use_ar_object, use_ar_object) }
-
       persister.persist!
       persister
     end
 
-    def new_persister(ems, settings)
-      TestPersister::Containers.new(ems, :use_ar_object => settings[:use_ar_object])
+    def new_persister(ems)
+      TestPersister::Containers.new(ems, ems)
     end
 
     def version_col(settings)

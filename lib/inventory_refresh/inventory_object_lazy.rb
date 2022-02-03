@@ -30,6 +30,7 @@ module InventoryRefresh
 
     # @return [String] stringified reference
     def to_s
+      # TODO(lsmola) do we need this method?
       stringified_reference
     end
 
@@ -70,6 +71,10 @@ module InventoryRefresh
 
     # @return [Boolean] true if the key is an association on inventory_collection_scope model class
     def association?(key)
+      # TODO(lsmola) remove this if there will be better dependency scan, probably with transitive dependencies filled
+      # in a second pass, then we can get rid of this hardcoded symbols. Right now we are not able to introspect these.
+      return true if [:parent, :genealogy_parent].include?(key)
+
       inventory_collection.dependency_attributes.key?(key) ||
         !inventory_collection.association_to_foreign_key_mapping[key].nil?
     end
@@ -95,7 +100,7 @@ module InventoryRefresh
 
     private
 
-    delegate :saved?, :saver_strategy, :skeletal_primary_index, :to => :inventory_collection
+    delegate :parallel_safe?, :saved?, :saver_strategy, :skeletal_primary_index, :targeted?, :to => :inventory_collection
     delegate :nested_secondary_index?, :primary?, :full_reference, :keys, :primary?, :to => :reference
 
     attr_writer :reference
@@ -107,18 +112,20 @@ module InventoryRefresh
     #
     # @return [InventoryRefresh::InventoryObject, NilClass] Returns pre-created InventoryObject or nil
     def skeletal_precreate!
+      # We can do skeletal pre-create only for strategies using unique indexes. Since this can build records out of
+      # the given :arel scope, we will always attempt to create the recod, so we need unique index to avoid duplication
+      # of records.
+      return unless parallel_safe?
       # Pre-create only for strategies that will be persisting data, i.e. are not saved already
       return if saved?
       # We can only do skeletal pre-create for primary index reference, since that is needed to create DB unique index
-      # and full reference must be present
-      return if !primary? || full_reference.blank?
+      return unless primary?
+      # Full reference must be present
+      return if full_reference.blank?
 
-      # To avoid pre-creating invalid records all fields of a primary key must have non null value
-      # TODO(lsmola) for composite keys, it's still valid to have one of the keys nil, figure out how to allow this. We
-      # will need to scan the DB for NOT NULL constraint and allow it based on that. So we would move this check to
-      # saving code, but this will require bigger change, since having the column nil means we will have to batch it
-      # smartly, since having nil means we will need to use different unique index for the upsert/update query.
-      return if keys.any? { |x| full_reference[x].nil? }
+      # To avoid pre-creating invalid records all fields of a primary key must have value
+      # TODO(lsmola) for composite keys, it's still valid to have one of the keys nil, figure out how to allow this
+      return if keys.any? { |x| full_reference[x].blank? }
 
       skeletal_primary_index.build(full_reference)
     end

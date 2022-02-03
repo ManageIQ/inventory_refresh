@@ -12,6 +12,8 @@ module InventoryRefresh::SaveCollection
       # @param inventory_collection [InventoryRefresh::InventoryCollection] InventoryCollection object we will be saving
       def initialize(inventory_collection)
         @inventory_collection = inventory_collection
+        # TODO(lsmola) do I need to reload every time? Also it should be enough to clear the associations.
+        inventory_collection.parent.reload if inventory_collection.parent
         @association = inventory_collection.db_collection_for_comparison
 
         # Private attrs
@@ -26,10 +28,14 @@ module InventoryRefresh::SaveCollection
         @unique_db_primary_keys = Set.new
         @unique_db_indexes      = Set.new
 
-        @batch_size_for_persisting = inventory_collection.batch_size_pure_sql
-        @batch_size                = inventory_collection.use_ar_object? ? @batch_size_for_persisting : inventory_collection.batch_size
+        # Right now ApplicationRecordIterator in association is used for targeted refresh. Given the small amount of
+        # records flowing through there, we probably don't need to optimize that association to fetch a pure SQL.
+        @pure_sql_records_fetching = !inventory_collection.use_ar_object? && !@association.kind_of?(InventoryRefresh::ApplicationRecordIterator)
 
-        @record_key_method   = inventory_collection.pure_sql_record_fetching? ? :pure_sql_record_key : :ar_record_key
+        @batch_size_for_persisting = inventory_collection.batch_size_pure_sql
+
+        @batch_size          = @pure_sql_records_fetching ? @batch_size_for_persisting : inventory_collection.batch_size
+        @record_key_method   = @pure_sql_records_fetching ? :pure_sql_record_key : :ar_record_key
         @select_keys_indexes = @select_keys.each_with_object({}).with_index { |(key, obj), index| obj[key.to_s] = index }
         @pg_types            = @model_class.attribute_names.each_with_object({}) do |key, obj|
           obj[key.to_sym] = inventory_collection.model_class.columns_hash[key]
@@ -69,8 +75,14 @@ module InventoryRefresh::SaveCollection
 
       # Saves the InventoryCollection
       def save_inventory_collection!
+        # If we have a targeted InventoryCollection that wouldn't do anything, quickly skip it
+        return if inventory_collection.noop?
+
+        # Delete_complement strategy using :all_manager_uuids attribute
+        delete_complement unless inventory_collection.delete_complement_noop?
+
         # Create/Update/Archive/Delete records based on InventoryCollection data and scope
-        save!(association)
+        save!(association) unless inventory_collection.saving_noop?
       end
 
       protected
@@ -89,8 +101,6 @@ module InventoryRefresh::SaveCollection
       # @param attributes [Hash] attributes hash
       # @return [Hash] modified hash from parameter attributes with casted values
       def values_for_database!(all_attribute_keys, attributes)
-        # TODO(lsmola) we'll need to fill default value from the DB to the NOT_NULL columns here, since sending NULL
-        # to column with NOT_NULL constraint always fails, even if there is a default value
         all_attribute_keys.each do |key|
           next unless attributes.key?(key)
 
@@ -102,7 +112,11 @@ module InventoryRefresh::SaveCollection
       end
 
       def transform_to_hash!(all_attribute_keys, hash)
-        if serializable_keys?
+        if inventory_collection.use_ar_object?
+          record = inventory_collection.model_class.new(hash)
+          values_for_database!(all_attribute_keys,
+                               record.attributes.slice(*record.changed_attributes.keys).symbolize_keys)
+        elsif serializable_keys?
           values_for_database!(all_attribute_keys,
                                hash)
         else
@@ -113,15 +127,101 @@ module InventoryRefresh::SaveCollection
       private
 
       attr_reader :unique_index_keys, :unique_index_keys_to_s, :select_keys, :unique_db_primary_keys, :unique_db_indexes,
-                  :primary_key, :arel_primary_key, :record_key_method, :select_keys_indexes,
+                  :primary_key, :arel_primary_key, :record_key_method, :pure_sql_records_fetching, :select_keys_indexes,
                   :batch_size, :batch_size_for_persisting, :model_class, :serializable_keys, :deserializable_keys, :pg_types, :table_name,
                   :q_table_name
 
       delegate :supports_column?, :to => :inventory_collection
 
+      # Saves the InventoryCollection
+      #
+      # @param association [Symbol] An existing association on manager
+      def save!(association)
+        attributes_index        = {}
+        inventory_objects_index = {}
+        inventory_collection.each do |inventory_object|
+          attributes = inventory_object.attributes(inventory_collection)
+          index      = build_stringified_reference(attributes, unique_index_keys)
+
+          attributes_index[index]        = attributes
+          inventory_objects_index[index] = inventory_object
+        end
+
+        logger.debug("Processing #{inventory_collection} of size #{inventory_collection.size}...")
+        # Records that are in the DB, we will be updating or deleting them.
+        ActiveRecord::Base.transaction do
+          association.find_each do |record|
+            index = build_stringified_reference_for_record(record, unique_index_keys)
+
+            next unless assert_distinct_relation(record.id)
+            next unless assert_unique_record(record, index)
+
+            inventory_object = inventory_objects_index.delete(index)
+            hash             = attributes_index.delete(index)
+
+            if inventory_object.nil?
+              # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
+              # delete it from the DB.
+              delete_record!(record) if inventory_collection.delete_allowed?
+            else
+              # Record was found in the DB and sent for saving, we will be updating the DB.
+              update_record!(record, hash, inventory_object) if assert_referential_integrity(hash)
+            end
+          end
+        end
+
+        unless inventory_collection.custom_reconnect_block.nil?
+          inventory_collection.custom_reconnect_block.call(inventory_collection, inventory_objects_index, attributes_index)
+        end
+
+        # Records that were not found in the DB but sent for saving, we will be creating these in the DB.
+        if inventory_collection.create_allowed?
+          ActiveRecord::Base.transaction do
+            inventory_objects_index.each do |index, inventory_object|
+              hash = attributes_index.delete(index)
+
+              create_record!(hash, inventory_object) if assert_referential_integrity(hash)
+            end
+          end
+        end
+        logger.debug("Processing #{inventory_collection}, "\
+                     "created=#{inventory_collection.created_records.count}, "\
+                     "updated=#{inventory_collection.updated_records.count}, "\
+                     "deleted=#{inventory_collection.deleted_records.count}...Complete")
+      rescue => e
+        logger.error("Error when saving #{inventory_collection} with #{inventory_collection_details}. Message: #{e.message}")
+        raise e
+      end
+
       # @return [String] a string for logging purposes
       def inventory_collection_details
-        "strategy: #{inventory_collection.strategy}, saver_strategy: #{inventory_collection.saver_strategy}"
+        "strategy: #{inventory_collection.strategy}, saver_strategy: #{inventory_collection.saver_strategy}, targeted: #{inventory_collection.targeted?}"
+      end
+
+      # @param record [ApplicationRecord] ApplicationRecord object
+      # @param key [Symbol] A key that is an attribute of the AR object
+      # @return [Object] Value of attribute name :key on the :record
+      def record_key(record, key)
+        record.public_send(key)
+      end
+
+      # Deletes a complement of referenced data
+      def delete_complement
+        raise(":delete_complement method is supported only for :saver_strategy => [:batch, :concurrent_safe_batch]")
+      end
+
+      # Deletes/soft-deletes a given record
+      #
+      # @param [ApplicationRecord] record we want to delete
+      def delete_record!(record)
+        record.public_send(inventory_collection.delete_method)
+        inventory_collection.store_deleted_records(record)
+      end
+
+      # @return [TrueClass] always return true, this method is redefined in default saver
+      def assert_unique_record(_record, _index)
+        # TODO(lsmola) can go away once we indexed our DB with unique indexes
+        true
       end
 
       # Check if relation provided is distinct, i.e. the relation should not return the same primary key value twice.

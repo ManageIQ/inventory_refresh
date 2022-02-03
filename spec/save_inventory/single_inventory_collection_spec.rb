@@ -21,7 +21,7 @@ describe InventoryRefresh::SaveInventory do
     @ems = FactoryBot.create(:ems_cloud)
 
     allow(@ems.class).to receive(:ems_type).and_return(:mock)
-    @persister = persister_class.new(@ems)
+    @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
   end
 
   context 'with no Vms in the DB' do
@@ -84,7 +84,6 @@ describe InventoryRefresh::SaveInventory do
 
       # Invoke the InventoryCollections saving
       InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
-      @ems.reload
 
       # Assert that saved data have the updated values, checking id to make sure the original records are updated
       assert_all_records_match_hashes(
@@ -184,8 +183,6 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it 'deletes missing VMs' do
-        time_now = Time.now.utc
-
         # Fill the InventoryCollections with data, that are missing one VM
         @persister.vms.build(vm_data(1).merge(:name => "vm_changed_name_1"))
 
@@ -195,17 +192,16 @@ describe InventoryRefresh::SaveInventory do
         # Check the InventoryCollection result matches what was created/deleted/updated
         expect(@persister.vms.created_records).to match_array([])
         expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}])
-        expect(@persister.vms.deleted_records).to match_array([])
+        expect(@persister.vms.deleted_records).to match_array([{:id => @vm2.id}])
 
         # Assert that saved data do miss the deleted VM
         assert_all_records_match_hashes(
-          [Vm.active.where(:last_seen_at => time_now..DateTime::Infinity.new)],
+          [Vm.all, @ems.vms],
           :id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"
         )
       end
 
       it 'deletes missing and creates new VMs' do
-        time_now = Time.now.utc
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
         %w(1 3).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
 
@@ -216,11 +212,11 @@ describe InventoryRefresh::SaveInventory do
         @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
         expect(@persister.vms.created_records).to match_array([{:id => @vm3.id}])
         expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}])
-        expect(@persister.vms.deleted_records).to match_array([])
+        expect(@persister.vms.deleted_records).to match_array([{:id => @vm2.id}])
 
         # Assert that saved data have the new VM and miss the deleted VM
         assert_all_records_match_hashes(
-          [Vm.active.where(:last_seen_at => time_now..DateTime::Infinity.new)],
+          [Vm.all, @ems.vms],
           {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
           {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
         )
@@ -233,12 +229,12 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class   => ManageIQ::Providers::CloudManager::Vm,
+            :delete_method => :disconnect_inv
           )
         end
       end
 
       it 'disconnects a missing VM instead of deleting it' do
-        time_now = Time.now.utc
         # Fill the InventoryCollections with data, that have a modified name, new VM and a missing VM
         %w(1 3).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
 
@@ -255,7 +251,7 @@ describe InventoryRefresh::SaveInventory do
 
         # Assert that ems do not have the disconnected VMs associated
         assert_all_records_match_hashes(
-          @ems.vms.where(:last_seen_at => time_now..DateTime::Infinity.new),
+          @ems.vms,
           {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
           {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
         )
@@ -318,15 +314,13 @@ describe InventoryRefresh::SaveInventory do
         end
 
         expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+                                                                      __parent_inventory_collections
+                                                                      __all_manager_uuids_scope
                                                                       ems_ref
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system
-                                                                      created_on
-                                                                      ems_id
-                                                                      updated_on
-                                                                   ))
+                                                                      ext_management_system))
       end
 
       it 'does not blacklist fixed attributes when changing manager_ref' do
@@ -337,7 +331,7 @@ describe InventoryRefresh::SaveInventory do
             :attributes_blacklist => %i(ems_ref uid_ems name location vendor raw_power_state)
           )
         end
-        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor raw_power_state))
+        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor ems_ref raw_power_state))
       end
 
       it 'has fixed and internal attributes amongst whitelisted_attributes when changing manager_ref' do
@@ -350,16 +344,13 @@ describe InventoryRefresh::SaveInventory do
           )
         end
         expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+                                                                      __parent_inventory_collections
+                                                                      __all_manager_uuids_scope
                                                                       uid_ems
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system
-                                                                      created_on
-                                                                      ems_id
-                                                                      ems_ref
-                                                                      updated_on
-                                                                    ))
+                                                                      ext_management_system))
       end
 
       it 'saves all attributes with blacklist and whitelist disabled' do
@@ -549,10 +540,9 @@ describe InventoryRefresh::SaveInventory do
 
     context 'with VM InventoryCollection with changed parent and association' do
       it 'deletes missing and creates new VMs with AvailabilityZone parent, ' do
-        time_now = Time.now.utc
-        availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems, :ems_ref => "us-east-1")
-        @vm1.update_attributes(:availability_zone => availability_zone)
-        @vm2.update_attributes(:availability_zone => availability_zone)
+        availability_zone = FactoryBot.create(:availability_zone, :ext_management_system => @ems)
+        @vm1.update(:availability_zone => availability_zone)
+        @vm2.update(:availability_zone => availability_zone)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -573,17 +563,16 @@ describe InventoryRefresh::SaveInventory do
 
         # Assert that saved data have the new VM and miss the deleted VM
         assert_all_records_match_hashes(
-          [Vm.active.where(:last_seen_at => time_now..DateTime::Infinity.new)],
-          {:id => @vm1.id, :availability_zone_id => availability_zone.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
-          {:id => anything, :availability_zone_id => availability_zone.id, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
+          [Vm.all, @ems.vms, availability_zone.vms],
+          {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
+          {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
         )
       end
 
       it 'deletes missing and creates new VMs with CloudTenant parent' do
-        time_now = Time.now.utc
         cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
-        @vm1.update_attributes(:cloud_tenant => cloud_tenant)
-        @vm2.update_attributes(:cloud_tenant => cloud_tenant)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -595,7 +584,8 @@ describe InventoryRefresh::SaveInventory do
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
         %w(1 3).each do |i|
           @persister.vms.build(vm_data(i).merge(:name                  => "vm_changed_name_#{i}",
-                                                :cloud_tenant          => cloud_tenant))
+                                                :cloud_tenant          => cloud_tenant,
+                                                :ext_management_system => @ems))
         end
 
         # Invoke the InventoryCollections saving
@@ -603,16 +593,54 @@ describe InventoryRefresh::SaveInventory do
 
         # Assert that saved data have the new VM and miss the deleted VM
         assert_all_records_match_hashes(
-          [Vm.active.where(:last_seen_at => time_now..DateTime::Infinity.new)],
-          {:id => @vm1.id, :cloud_tenant_id => cloud_tenant.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
-          {:id => anything, :cloud_tenant_id => cloud_tenant.id, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
+          [Vm.all, @ems.vms, cloud_tenant.vms],
+          {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
+          {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
+        )
+      end
+
+      it 'affects oly relation to CloudTenant when not providing EMS relation and with CloudTenant parent' do
+        cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
+
+        # Initialize the InventoryCollections
+        @persister.add_collection(:vms) do |builder|
+          builder.add_properties(
+            :model_class => ManageIQ::Providers::CloudManager::Vm,
+            :parent      => cloud_tenant
+          )
+        end
+
+        # Fill the InventoryCollections with data, that have one new VM and are missing one VM
+        @persister.vms.build(vm_data(1).merge(:name         => "vm_changed_name_1",
+                                              :cloud_tenant => cloud_tenant))
+
+        @persister.vms.build(vm_data(3).merge(:name                  => "vm_changed_name_3",
+                                              :cloud_tenant          => cloud_tenant,
+                                              :ext_management_system => nil))
+
+        # Invoke the InventoryCollections saving
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+        # Assert that saved data have the new VM and miss the deleted VM
+        assert_all_records_match_hashes(
+          [Vm.all, cloud_tenant.vms],
+          {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
+          {:id => anything, :ems_ref => "vm_ems_ref_3", :name => "vm_changed_name_3", :location => "vm_location_3"}
+        )
+
+        # Assert that ems relation exists only for the updated VM
+        assert_all_records_match_hashes(
+          [@ems.vms],
+          :id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"
         )
       end
 
       it 'does not delete the missing VMs with :complete => false and with CloudTenant parent' do
         cloud_tenant = FactoryBot.create(:cloud_tenant, :ext_management_system => @ems)
-        @vm1.update_attributes(:cloud_tenant => cloud_tenant)
-        @vm2.update_attributes(:cloud_tenant => cloud_tenant)
+        @vm1.update(:cloud_tenant => cloud_tenant)
+        @vm2.update(:cloud_tenant => cloud_tenant)
 
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
@@ -627,9 +655,9 @@ describe InventoryRefresh::SaveInventory do
         @persister.vms.build(vm_data(1).merge(:name         => "vm_changed_name_1",
                                               :cloud_tenant => cloud_tenant))
 
-        @persister.vms.build(vm_data(3).merge(:name         => "vm_changed_name_3",
-                                              :cloud_tenant => cloud_tenant,
-                                              :ems_id       => FactoryBot.create(:ems_cloud).id))
+        @persister.vms.build(vm_data(3).merge(:name                  => "vm_changed_name_3",
+                                              :cloud_tenant          => cloud_tenant,
+                                              :ext_management_system => nil))
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
@@ -652,55 +680,59 @@ describe InventoryRefresh::SaveInventory do
     end
   end
 
+  %i(default batch).each do |saver_strategy|
+    context "testing reconnect logic with saver_strategy: :#{saver_strategy}" do
+      it 'reconnects existing VM' do
+        # Fill DB with test Vms
+        @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => nil))
+        @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
 
-  it 'reconnects existing VM' do
-    # Fill DB with test Vms, it should not touch VMs of other ems, but this is just example
-    @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => FactoryBot.create(:ems_cloud)))
-    @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+        vms_custom_reconnect_block = lambda do |inventory_collection, inventory_objects_index, attributes_index|
+          inventory_objects_index.each_slice(1000) do |batch|
+            Vm.where(:ems_ref => batch.map(&:second).map(&:manager_uuid)).each do |record|
+              index = inventory_collection.build_stringified_reference_for_record(record, inventory_collection.manager_ref_to_cols)
 
-    vms_custom_reconnect_block = lambda do |inventory_collection, inventory_objects_index, attributes_index|
-      inventory_objects_index.each_slice(1000) do |batch|
-        Vm.where(:ems_ref => batch.map(&:second).map(&:manager_uuid)).each do |record|
-          index = inventory_collection.build_stringified_reference_for_record(record, inventory_collection.manager_ref_to_cols)
+              # We need to delete the record from the inventory_objects_index and attributes_index, otherwise it
+              # would be sent for create.
+              inventory_object = inventory_objects_index.delete(index)
+              hash = attributes_index.delete(index)
 
-          # We need to delete the record from the inventory_objects_index and attributes_index, otherwise it
-          # would be sent for create.
-          inventory_object = inventory_objects_index.delete(index)
-          hash = attributes_index.delete(index)
+              record.assign_attributes(hash.except(:id, :type))
+              if !inventory_collection.check_changed? || record.changed?
+                record.save!
+                inventory_collection.store_updated_records(record)
+              end
 
-          record.assign_attributes(hash.except(:id, :type))
-          if !inventory_collection.check_changed? || record.changed?
-            record.save!
-            inventory_collection.store_updated_records(record)
+              inventory_object.id = record.id
+            end
           end
-
-          inventory_object.id = record.id
         end
+
+        @persister.add_collection(:vms) do |builder|
+          builder.add_properties(
+            :model_class            => ManageIQ::Providers::CloudManager::Vm,
+            :saver_strategy         => saver_strategy,
+            :custom_reconnect_block => vms_custom_reconnect_block,
+          )
+        end
+        # Fill the InventoryCollections with data, that have a modified name
+        (1..2).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
+
+        # Invoke the InventoryCollections saving
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+        # Check the InventoryCollection result matches what was created/deleted/updated
+        expect(@persister.vms.created_records).to match_array([])
+        expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}, {:id => @vm2.id}])
+        expect(@persister.vms.deleted_records).to match_array([])
+
+        # Assert that saved data have the updated values, checking id to make sure the original records are updated
+        assert_all_records_match_hashes(
+          [Vm.all, @ems.vms],
+          {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
+          {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_changed_name_2", :location => "vm_location_2"}
+        )
       end
     end
-
-    @persister.add_collection(:vms) do |builder|
-      builder.add_properties(
-        :model_class            => ManageIQ::Providers::CloudManager::Vm,
-        :custom_reconnect_block => vms_custom_reconnect_block,
-      )
-    end
-    # Fill the InventoryCollections with data, that have a modified name
-    (1..2).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
-
-    # Invoke the InventoryCollections saving
-    InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
-
-    # Check the InventoryCollection result matches what was created/deleted/updated
-    expect(@persister.vms.created_records).to match_array([])
-    expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}, {:id => @vm2.id}])
-    expect(@persister.vms.deleted_records).to match_array([])
-
-    # Assert that saved data have the updated values, checking id to make sure the original records are updated
-    assert_all_records_match_hashes(
-      [Vm.all, @ems.vms],
-      {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
-      {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_changed_name_2", :location => "vm_location_2"}
-    )
   end
 end
