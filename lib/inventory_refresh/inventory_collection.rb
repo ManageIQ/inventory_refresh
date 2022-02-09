@@ -227,7 +227,7 @@ module InventoryRefresh
 
     # @return [Array<ActiveRecord::ConnectionAdapters::IndexDefinition>] array of all unique indexes known to model
     def unique_indexes
-      @unique_indexes if @unique_indexes
+      return @unique_indexes if @unique_indexes
 
       @unique_indexes = model_class.connection.indexes(model_class.table_name).select(&:unique)
 
@@ -246,7 +246,7 @@ module InventoryRefresh
     # @return [ActiveRecord::ConnectionAdapters::IndexDefinition] unique index fitting the keys
     def unique_index_for(keys)
       @unique_index_for_keys_cache ||= {}
-      @unique_index_for_keys_cache[keys] if @unique_index_for_keys_cache[keys]
+      return @unique_index_for_keys_cache[keys] if @unique_index_for_keys_cache[keys]
 
       # Take the uniq key having the least number of columns
       @unique_index_for_keys_cache[keys] = uniq_keys_candidates(keys).min_by { |x| x.columns.count }
