@@ -1,7 +1,7 @@
 # InventoryRefresh
 
 [![Gem Version](https://badge.fury.io/rb/inventory_refresh.svg)](http://badge.fury.io/rb/inventory_refresh)
-[![Build Status](https://travis-ci.org/ManageIQ/inventory_refresh.svg)](https://travis-ci.org/ManageIQ/inventory_refresh)
+[![CI](https://github.com/ManageIQ/inventory_refresh/actions/workflows/ci.yaml/badge.svg)](https://github.com/ManageIQ/inventory_refresh/actions/workflows/ci.yaml)
 [![Code Climate](https://codeclimate.com/github/ManageIQ/inventory_refresh.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh)
 [![Test Coverage](https://codeclimate.com/github/ManageIQ/inventory_refresh/badges/coverage.svg)](https://codeclimate.com/github/ManageIQ/inventory_refresh/coverage)
 
