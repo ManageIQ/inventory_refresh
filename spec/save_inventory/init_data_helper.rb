@@ -95,6 +95,6 @@ module InitDataHelper
 
   def custom_association_attributes
     # These are associations that are not modeled in a standard rails way, e.g. the ancestry
-    %i(parent genealogy_parent genealogy_parent_object)
+    %i[parent genealogy_parent genealogy_parent_object]
   end
 end

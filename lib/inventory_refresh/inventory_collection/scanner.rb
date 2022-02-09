@@ -158,9 +158,10 @@ module InventoryRefresh
 
       def load_inventory_collection_by_name(name)
         ic = indexed_inventory_collections[name]
-        if ic.nil?
-          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}" if targeted?
+        if ic.nil? && targeted?
+          raise "Can't find InventoryCollection :#{name} referenced from #{inventory_collection}"
         end
+
         ic
       end
 
@@ -191,6 +192,7 @@ module InventoryRefresh
 
       def scan_inventory_object_attribute!(key, value)
         return unless loadable?(value)
+
         value_inventory_collection = value.inventory_collection
 
         # Storing attributes and their dependencies
@@ -200,9 +202,9 @@ module InventoryRefresh
         # e.g. load all the referenced uuids from a DB
         add_reference(value_inventory_collection, value)
 
-        if inventory_object_lazy?(value)
+        if inventory_object_lazy?(value) && value.transitive_dependency?
           # Storing if attribute is a transitive dependency, so a lazy_find :key results in dependency
-          transitive_dependency_attributes << key if value.transitive_dependency?
+          transitive_dependency_attributes << key
         end
       end
     end

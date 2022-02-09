@@ -11,8 +11,9 @@ class ContainerNode < ActiveRecord::Base
 
   def disconnect_inv
     return if archived?
+
     _log.info("Disconnecting Node [#{name}] id [#{id}] from EMS [#{ext_management_system.name}]" \
-    "id [#{ext_management_system.id}] ")
+              "id [#{ext_management_system.id}] ")
     self.archived_at = Time.now.utc
     save
   end

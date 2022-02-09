@@ -3,10 +3,10 @@ require "logger"
 module InventoryRefresh
   class NullLogger < Logger
     def initialize(*_args)
-    end 
+    end
 
     def add(*_args, &_block)
-    end 
+    end
 
     def debug?
       false

@@ -13,7 +13,7 @@ module InventoryRefresh::SaveCollection
       def initialize(inventory_collection)
         @inventory_collection = inventory_collection
         # TODO(lsmola) do I need to reload every time? Also it should be enough to clear the associations.
-        inventory_collection.parent.reload if inventory_collection.parent
+        inventory_collection.parent&.reload
         @association = inventory_collection.db_collection_for_comparison
 
         # Private attrs
@@ -163,16 +163,14 @@ module InventoryRefresh::SaveCollection
               # Record was found in the DB but not sent for saving, that means it doesn't exist anymore and we should
               # delete it from the DB.
               delete_record!(record) if inventory_collection.delete_allowed?
-            else
+            elsif assert_referential_integrity(hash)
               # Record was found in the DB and sent for saving, we will be updating the DB.
-              update_record!(record, hash, inventory_object) if assert_referential_integrity(hash)
+              update_record!(record, hash, inventory_object)
             end
           end
         end
 
-        unless inventory_collection.custom_reconnect_block.nil?
-          inventory_collection.custom_reconnect_block.call(inventory_collection, inventory_objects_index, attributes_index)
-        end
+        inventory_collection.custom_reconnect_block&.call(inventory_collection, inventory_objects_index, attributes_index)
 
         # Records that were not found in the DB but sent for saving, we will be creating these in the DB.
         if inventory_collection.create_allowed?
@@ -234,12 +232,12 @@ module InventoryRefresh::SaveCollection
           # Change the InventoryCollection's :association or :arel parameter to return distinct results. The :through
           # relations can return the same record multiple times. We don't want to do SELECT DISTINCT by default, since
           # it can be very slow.
-          unless inventory_collection.assert_graph_integrity
+          if inventory_collection.assert_graph_integrity
+            raise("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. ")
+          else
             logger.warn("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. "\
                         " The duplicate value is being ignored.")
             return false
-          else
-            raise("Please update :association or :arel for #{inventory_collection} to return a DISTINCT result. ")
           end
         else
           unique_db_primary_keys << primary_key_value
@@ -257,14 +255,15 @@ module InventoryRefresh::SaveCollection
       def assert_referential_integrity(hash)
         inventory_collection.fixed_foreign_keys.each do |x|
           next unless hash[x].nil?
+
           subject = "#{hash} of #{inventory_collection} because of missing foreign key #{x} for "\
                     "#{inventory_collection.parent.class.name}:"\
                     "#{inventory_collection.parent.try(:id)}"
-          unless inventory_collection.assert_graph_integrity
+          if inventory_collection.assert_graph_integrity
+            raise("Referential integrity check violated for #{subject}")
+          else
             logger.warn("Referential integrity check violated, ignoring #{subject}")
             return false
-          else
-            raise("Referential integrity check violated for #{subject}")
           end
         end
         true

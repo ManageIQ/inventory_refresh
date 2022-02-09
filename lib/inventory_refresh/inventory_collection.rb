@@ -92,14 +92,9 @@ module InventoryRefresh
     #   parameters
     attr_accessor :parent_inventory_collections
 
-    attr_reader :model_class, :strategy, :attributes_blacklist, :attributes_whitelist, :custom_save_block, :parent,
-                :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only,
-                :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel,
-                :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values,
-                :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object,
-                :created_records, :updated_records, :deleted_records, :retention_strategy,
-                :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges,
-                :assert_graph_integrity
+    attr_accessor :attributes_blacklist, :attributes_whitelist
+
+    attr_reader :model_class, :strategy, :custom_save_block, :parent, :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only, :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel, :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values, :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object, :created_records, :updated_records, :deleted_records, :retention_strategy, :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges, :assert_graph_integrity
 
     delegate :<<,
              :build,
@@ -232,16 +227,16 @@ module InventoryRefresh
 
     # @return [Array<ActiveRecord::ConnectionAdapters::IndexDefinition>] array of all unique indexes known to model
     def unique_indexes
-      @unique_indexes_cache if @unique_indexes_cache
+      @unique_indexes if @unique_indexes
 
-      @unique_indexes_cache = model_class.connection.indexes(model_class.table_name).select(&:unique)
+      @unique_indexes = model_class.connection.indexes(model_class.table_name).select(&:unique)
 
-      if @unique_indexes_cache.blank?
+      if @unique_indexes.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined, to"\
-                " be able to use saver_strategy :concurrent_safe_batch."
+              " be able to use saver_strategy :concurrent_safe_batch."
       end
 
-      @unique_indexes_cache
+      @unique_indexes
     end
 
     # Finds an index that fits the list of columns (keys) the best
@@ -268,7 +263,7 @@ module InventoryRefresh
 
       if unique_indexes.blank? || uniq_key_candidates.blank?
         raise "#{self} and its table #{model_class.table_name} must have a unique index defined "\
-                "covering columns #{keys} to be able to use saver_strategy :concurrent_safe_batch."
+              "covering columns #{keys} to be able to use saver_strategy :concurrent_safe_batch."
       end
 
       uniq_key_candidates
@@ -297,7 +292,7 @@ module InventoryRefresh
     def internal_timestamp_columns
       return @internal_timestamp_columns if @internal_timestamp_columns
 
-      @internal_timestamp_columns = %i(created_at created_on updated_at updated_on).collect do |timestamp_col|
+      @internal_timestamp_columns = %i[created_at created_on updated_at updated_on].collect do |timestamp_col|
         timestamp_col if supports_column?(timestamp_col)
       end.compact
     end
@@ -488,6 +483,7 @@ module InventoryRefresh
     def manager_uuids
       # TODO(lsmola) LEGACY: this is still being used by :targetel_arel definitions and it expects array of strings
       raise "This works only for :manager_ref size 1" if manager_ref.size > 1
+
       key = manager_ref.first
       transform_references_to_hashes(targeted_scope.primary_references).map { |x| x[key] }
     end
@@ -579,6 +575,7 @@ module InventoryRefresh
     # @return [ActiveRecord::Relation] relation that can fetch all the references from the DB
     def full_collection_for_comparison
       return arel unless arel.nil?
+
       rel = parent.send(association)
       rel = rel.active if rel && supports_column?(:archived_at) && retention_strategy == :archive
       rel
@@ -596,8 +593,6 @@ module InventoryRefresh
 
       inventory_object_class.new(self, hash)
     end
-
-    attr_writer :attributes_blacklist, :attributes_whitelist
 
     private
 
@@ -630,6 +625,7 @@ module InventoryRefresh
     def record_identity(record)
       identity = record.try(:[], :id) || record.try(:[], "id") || record.try(:id)
       raise "Cannot obtain identity of the #{record}" if identity.blank?
+
       {
         :id => identity
       }

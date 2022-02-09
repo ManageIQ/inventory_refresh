@@ -2,12 +2,10 @@ require_relative '../test_persister'
 
 class TestPersister::Cloud < ::TestPersister
   def initialize_inventory_collections
-    %i(vms
-       miq_templates).each do |name|
-
+    %i[vms miq_templates].each do |name|
       add_collection(name, cloud) do |builder|
         builder.add_properties(
-          :secondary_refs => {:by_name => [:name], :by_uid_ems_and_name => %i(uid_ems name)}
+          :secondary_refs => {:by_name => [:name], :by_uid_ems_and_name => %i[uid_ems name]}
         )
       end
     end
@@ -15,13 +13,12 @@ class TestPersister::Cloud < ::TestPersister
     add_key_pairs
     add_flavors
 
-    %i(source_regions
+    %i[source_regions
        subscriptions
        hardwares
        networks
        disks
-       orchestration_stacks).each do |name|
-
+       orchestration_stacks].each do |name|
       add_collection(name, cloud)
     end
 
@@ -41,7 +38,7 @@ class TestPersister::Cloud < ::TestPersister
   # Cloud InventoryCollection
   def add_orchestration_stacks_resources
     add_collection(:orchestration_stacks_resources, cloud) do |builder|
-      builder.add_properties(:secondary_refs => {:by_stack_and_ems_ref => %i(stack ems_ref)})
+      builder.add_properties(:secondary_refs => {:by_stack_and_ems_ref => %i[stack ems_ref]})
     end
   end
 
@@ -58,7 +55,7 @@ class TestPersister::Cloud < ::TestPersister
       builder.add_properties(
         :manager_uuids  => references(:vms) + references(:network_ports) + references(:load_balancers),
         :parent         => manager.network_manager,
-        :secondary_refs => {:by_device => [:device], :by_device_and_name => %i(device name)}
+        :secondary_refs => {:by_device => [:device], :by_device_and_name => %i[device name]}
       )
     end
   end

@@ -19,7 +19,7 @@ describe InventoryRefresh::SaveInventory do
     context "with options #{options}" do
       before do
         @ems = FactoryBot.create(:ems_cloud,
-                                  :network_manager => FactoryBot.create(:ems_network))
+                                 :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
         @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
@@ -62,7 +62,7 @@ describe InventoryRefresh::SaveInventory do
           vm_data(1).merge(
             :flavor    => @flavor_1,
             :key_pairs => [@key_pair1],
-            :location  => 'host_10_10_10_1.com',
+            :location  => 'host_10_10_10_1.com'
           )
         )
         @vm12 = FactoryBot.create(
@@ -70,7 +70,7 @@ describe InventoryRefresh::SaveInventory do
           vm_data(12).merge(
             :flavor    => @flavor1,
             :key_pairs => [@key_pair1, @key_pair12],
-            :location  => 'host_10_10_10_12.com',
+            :location  => 'host_10_10_10_12.com'
           )
         )
         @vm2 = FactoryBot.create(
@@ -78,13 +78,13 @@ describe InventoryRefresh::SaveInventory do
           vm_data(2).merge(
             :flavor    => @flavor2,
             :key_pairs => [@key_pair2],
-            :location  => 'host_10_10_10_2.com',
+            :location  => 'host_10_10_10_2.com'
           )
         )
         @vm4 = FactoryBot.create(
           :vm_cloud,
           vm_data(4).merge(
-            :location => 'default_value_unknown',
+            :location => 'default_value_unknown'
           )
         )
 
@@ -172,13 +172,13 @@ describe InventoryRefresh::SaveInventory do
         )
         @vm_data_1 = vm_data(1)
         @vm_data_2 = vm_data(2).merge(
-          :name => "vm_2_changed_name",
+          :name => "vm_2_changed_name"
         )
         @vm_data_3 = vm_data(3).merge(
-          :name => "vm_3_changed_name",
+          :name => "vm_3_changed_name"
         )
         @vm_data_31 = vm_data(31).merge(
-          :name => "vm_31_changed_name",
+          :name => "vm_31_changed_name"
         )
         @hardware_data_2 = hardware_data(2).merge(
           :guest_os       => @persister.hardwares.lazy_find(@persister.miq_templates.lazy_find(image_data(1)[:ems_ref]), :key => :guest_os), # changed

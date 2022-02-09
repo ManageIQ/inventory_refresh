@@ -68,6 +68,7 @@ module InventoryRefresh::SaveCollection
               block.call(records)
 
               break if records.size < batch_size
+
               primary_key_offset = record_key(last_record, primary_key)
             end
           end
@@ -141,7 +142,7 @@ module InventoryRefresh::SaveCollection
       end
 
       def expand_all_attribute_keys!(all_attribute_keys)
-        %i(created_at updated_at created_on updated_on).each do |col|
+        %i[created_at updated_at created_on updated_on].each do |col|
           all_attribute_keys << col if supports_column?(col)
         end
         all_attribute_keys << :type if supports_sti?
@@ -441,6 +442,7 @@ module InventoryRefresh::SaveCollection
               inventory_object[ref] = attributes[ref]
 
               next unless (foreign_key = association_to_foreign_key_mapping[ref])
+
               base_class_name       = attributes[association_to_foreign_type_mapping[ref].try(:to_sym)] || association_to_base_class_mapping[ref]
               id                    = attributes[foreign_key.to_sym]
               inventory_object[ref] = InventoryRefresh::ApplicationRecordReference.new(base_class_name, id)

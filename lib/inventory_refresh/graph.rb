@@ -37,7 +37,7 @@ module InventoryRefresh
         s << "  #{node_names[from]} -> #{node_names[to]};"
       end
       s << "}"
-      s.join("\n") + "\n"
+      "#{s.join("\n")}\n"
     end
 
     protected
@@ -147,7 +147,7 @@ module InventoryRefresh
       nodes.group_by { |n| n.respond_to?(:name) ? n.name.to_s : n.to_s }.each do |base_name, ns|
         ns.each_with_index do |n, i|
           name = ns.size == 1 ? base_name : "#{base_name}_#{i}"
-          name = '"' + name.gsub(/["\\]/) { |c| "\\" + c } + '"' unless name =~ /^[A-Za-z0-9_]+$/
+          name = "\"#{name.gsub(/["\\]/) { |c| "\\#{c}" }}\"" unless /^[A-Za-z0-9_]+$/.match?(name)
           node_names[n] = name
         end
       end

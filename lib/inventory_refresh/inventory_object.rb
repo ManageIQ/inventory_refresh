@@ -60,7 +60,7 @@ module InventoryRefresh
           data[key] = value.compact.map(&:load).compact
           # We can use built in _ids methods to assign array of ids into has_many relations. So e.g. the :key_pairs=
           # relation setter will become :key_pair_ids=
-          attributes_for_saving[(key.to_s.singularize + "_ids").to_sym] = data[key].map(&:id).compact.uniq
+          attributes_for_saving["#{key.to_s.singularize}_ids".to_sym] = data[key].map(&:id).compact.uniq
         elsif loadable?(value) || inventory_collection_scope.association_to_foreign_key_mapping[key]
           # Lets fill also the original data, so other InventoryObject referring to this attribute gets the right
           # result
@@ -148,8 +148,8 @@ module InventoryRefresh
     def assign_attributes(attributes)
       attributes.each do |k, v|
         # We don't want timestamps or resource versions to be overwritten here, since those are driving the conditions
-        next if %i(resource_timestamps resource_timestamps_max resource_timestamp).include?(k)
-        next if %i(resource_counters resource_counters_max resource_counter).include?(k)
+        next if %i[resource_timestamps resource_timestamps_max resource_timestamp].include?(k)
+        next if %i[resource_counters resource_counters_max resource_counter].include?(k)
 
         if data[:resource_timestamp] && attributes[:resource_timestamp]
           assign_only_newest(:resource_timestamp, :resource_timestamps, attributes, data, k, v)
@@ -198,10 +198,10 @@ module InventoryRefresh
           end
         end
 
-        unless defined_methods.include?(attr.to_sym)
-          define_method(attr) do
-            data[attr]
-          end
+        next if defined_methods.include?(attr.to_sym)
+
+        define_method(attr) do
+          data[attr]
         end
       end
     end

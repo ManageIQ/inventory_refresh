@@ -2,7 +2,6 @@ require_relative "test_collector"
 require_relative 'targeted_refresh_spec_helper'
 require_relative '../helpers/spec_parsed_data'
 
-
 describe InventoryRefresh::Persister do
   include TargetedRefreshSpecHelper
   include SpecParsedData
@@ -174,7 +173,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -188,7 +187,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -217,7 +216,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => bigger_newest_version,
+              :version  => bigger_newest_version
             )
           )
 
@@ -231,7 +230,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -250,8 +249,10 @@ describe InventoryRefresh::Persister do
       end
 
       it "checks the full row saving with increasing versions but constant resource_version" do
-        pending("We need to solve the resource version preventing us to connect disconnected nodes, due to secondary
-                indexes being used") if settings[:upsert_only] == false
+        if settings[:upsert_only] == false
+          pending("We need to solve the resource version preventing us to connect disconnected nodes, due to secondary
+                  indexes being used")
+        end
 
         bigger_newest_version = newest_version(settings)
 
@@ -261,7 +262,7 @@ describe InventoryRefresh::Persister do
               :settings         => settings,
               :ems_name         => @ems.name,
               :version          => bigger_newest_version,
-              :resource_version => "same_version",
+              :resource_version => "same_version"
             )
           )
 
@@ -287,7 +288,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -320,7 +321,7 @@ describe InventoryRefresh::Persister do
               :settings         => settings,
               :ems_name         => @ems.name,
               :version          => bigger_newest_version,
-              :resource_version => "different_version_#{i}",
+              :resource_version => "different_version_#{i}"
             )
           )
 
@@ -334,7 +335,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -361,7 +362,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -374,14 +375,14 @@ describe InventoryRefresh::Persister do
                 version_col(settings)      => nil,
                 versions_max_col(settings) => expected_version,
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
             expect(container_group.send(versions_col(settings))).to(
               match(
                 "phase"      => expected_version,
                 "dns_policy" => expected_version,
-                "reason"     => expected_version,
+                "reason"     => expected_version
               )
             )
           end
@@ -410,7 +411,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -432,7 +433,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -446,7 +447,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -468,7 +469,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -481,7 +482,7 @@ describe InventoryRefresh::Persister do
                 version_col(settings)      => nil,
                 versions_max_col(settings) => expected_version,
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
 
@@ -489,7 +490,7 @@ describe InventoryRefresh::Persister do
               match(
                 "phase"      => expected_version,
                 "dns_policy" => expected_version,
-                "reason"     => expected_version,
+                "reason"     => expected_version
               )
             )
           end
@@ -508,7 +509,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -522,7 +523,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
           end
@@ -544,7 +545,7 @@ describe InventoryRefresh::Persister do
               :settings         => settings,
               :ems_name         => @ems.name,
               :version          => newest_version(settings),
-              :resource_version => "same_version",
+              :resource_version => "same_version"
             )
           )
 
@@ -566,7 +567,7 @@ describe InventoryRefresh::Persister do
               match(
                 "phase"      => expected_version,
                 "dns_policy" => expected_version,
-                "reason"     => expected_version,
+                "reason"     => expected_version
               )
             )
           end
@@ -586,7 +587,7 @@ describe InventoryRefresh::Persister do
               :settings         => settings,
               :ems_name         => @ems.name,
               :version          => newest_version(settings),
-              :resource_version => "same_version",
+              :resource_version => "same_version"
             )
           )
 
@@ -601,7 +602,7 @@ describe InventoryRefresh::Persister do
                 versions_col(settings)     => {},
                 :reason                    => expected_version.to_s,
                 :phase                     => "#{expected_version} status",
-                :resource_version          => "same_version",
+                :resource_version          => "same_version"
               )
             )
           end
@@ -626,7 +627,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -648,7 +649,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => bigger_newest_version,
+              :version  => bigger_newest_version
             )
           )
 
@@ -661,7 +662,7 @@ describe InventoryRefresh::Persister do
                 version_col(settings)      => expected_version,
                 versions_max_col(settings) => expected_bigger_version,
                 :reason                    => expected_bigger_version.to_s,
-                :phase                     => "#{expected_bigger_version} status",
+                :phase                     => "#{expected_bigger_version} status"
               )
             )
 
@@ -669,7 +670,7 @@ describe InventoryRefresh::Persister do
               match(
                 "phase"      => expected_bigger_version,
                 "dns_policy" => expected_bigger_version,
-                "reason"     => expected_bigger_version,
+                "reason"     => expected_bigger_version
               )
             )
           end
@@ -697,7 +698,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => newest_version(settings),
+              :version  => newest_version(settings)
             )
           )
 
@@ -715,7 +716,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_full_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => bigger_newest_version,
+              :version  => bigger_newest_version
             )
           )
 
@@ -729,7 +730,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 versions_col(settings)     => {},
                 :reason                    => expected_bigger_version.to_s,
-                :phase                     => "#{expected_bigger_version} status",
+                :phase                     => "#{expected_bigger_version} status"
               )
             )
           end
@@ -753,7 +754,7 @@ describe InventoryRefresh::Persister do
             TestCollector.generate_batches_of_partial_container_group_data(
               :settings => settings,
               :ems_name => @ems.name,
-              :version  => bigger_newest_version,
+              :version  => bigger_newest_version
             )
           )
 
@@ -801,7 +802,7 @@ describe InventoryRefresh::Persister do
                   versions_max_col(settings) => nil,
                   versions_col(settings)     => {},
                   :reason                    => expected_even_bigger_version.to_s,
-                  :phase                     => "#{expected_even_bigger_version} status",
+                  :phase                     => "#{expected_even_bigger_version} status"
                 )
               )
             else
@@ -813,7 +814,7 @@ describe InventoryRefresh::Persister do
                   version_col(settings)      => nil,
                   versions_max_col(settings) => expected_bigger_version,
                   :reason                    => expected_bigger_version.to_s,
-                  :phase                     => "#{expected_bigger_version} status",
+                  :phase                     => "#{expected_bigger_version} status"
                 )
               )
 
@@ -823,7 +824,7 @@ describe InventoryRefresh::Persister do
                   "message"    => expected_version,
                   "name"       => expected_version,
                   "phase"      => expected_bigger_version,
-                  "reason"     => expected_bigger_version,
+                  "reason"     => expected_bigger_version
                 )
               )
             end
@@ -846,7 +847,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.generate_batches_of_partial_container_group_data(
             :settings => settings,
             :ems_name => @ems.name,
-            :version  => newest_version(settings),
+            :version  => newest_version(settings)
           )
 
           TestCollector.generate_batches_of_different_partial_container_group_data(
@@ -888,7 +889,7 @@ describe InventoryRefresh::Persister do
                 :message                   => expected_bigger_version.to_s,
                 versions_max_col(settings) => expected_bigger_version,
                 :reason                    => expected_bigger_version.to_s,
-                :phase                     => "#{expected_version} status",
+                :phase                     => "#{expected_version} status"
               )
             )
 
@@ -897,13 +898,13 @@ describe InventoryRefresh::Persister do
                 "dns_policy" => expected_bigger_version,
                 "message"    => expected_bigger_version,
                 "phase"      => expected_version,
-                "reason"     => expected_bigger_version,
+                "reason"     => expected_bigger_version
               )
             )
           end
 
           if i == 0
-            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
+            match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w[0 1]))
           else
             match_updated(persister)
           end
@@ -918,7 +919,7 @@ describe InventoryRefresh::Persister do
         persister = TestCollector.generate_batches_of_partial_container_group_data(
           :settings => settings,
           :ems_name => @ems.name,
-          :version  => bigger_newest_version,
+          :version  => bigger_newest_version
         )
 
         TestCollector.generate_batches_of_different_partial_container_group_data(
@@ -941,7 +942,7 @@ describe InventoryRefresh::Persister do
               version_col(settings)      => nil,
               versions_max_col(settings) => expected_bigger_version,
               :reason                    => expected_bigger_version.to_s,
-              :phase                     => "#{expected_bigger_version} status",
+              :phase                     => "#{expected_bigger_version} status"
             )
           )
 
@@ -949,7 +950,7 @@ describe InventoryRefresh::Persister do
             # version is only set for container_groups >= 2
             expect(container_group).to(
               have_attributes(
-                :message => expected_version.to_s,
+                :message => expected_version.to_s
               )
             )
             expect(container_group.send(versions_col(settings))).to(
@@ -957,20 +958,20 @@ describe InventoryRefresh::Persister do
                 "dns_policy" => expected_bigger_version,
                 "message"    => expected_version,
                 "phase"      => expected_bigger_version,
-                "reason"     => expected_bigger_version,
+                "reason"     => expected_bigger_version
               )
             )
           else
             expect(container_group).to(
               have_attributes(
-                :message => nil,
+                :message => nil
               )
             )
             expect(container_group.send(versions_col(settings))).to(
               match(
                 "dns_policy" => expected_bigger_version,
                 "phase"      => expected_bigger_version,
-                "reason"     => expected_bigger_version,
+                "reason"     => expected_bigger_version
               )
             )
           end
@@ -1000,7 +1001,7 @@ describe InventoryRefresh::Persister do
               versions_max_col(settings) => expected_bigger_version,
               :reason                    => expected_bigger_version.to_s,
               :phase                     => "#{expected_bigger_version} status",
-              :message                   => expected_version.to_s,
+              :message                   => expected_version.to_s
             )
           )
 
@@ -1009,13 +1010,13 @@ describe InventoryRefresh::Persister do
               "dns_policy" => expected_bigger_version,
               "message"    => expected_version,
               "phase"      => expected_bigger_version,
-              "reason"     => expected_bigger_version,
+              "reason"     => expected_bigger_version
             )
           )
         end
 
         match_created(persister)
-        match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w(0 1)))
+        match_updated(persister, :container_groups => ContainerGroup.where(:dns_policy => %w[0 1]))
         match_deleted(persister)
       end
 
@@ -1026,7 +1027,7 @@ describe InventoryRefresh::Persister do
           persister = TestCollector.generate_batches_of_full_container_group_data(
             :settings => settings,
             :ems_name => @ems.name,
-            :version  => bigger_newest_version,
+            :version  => bigger_newest_version
           )
 
           TestCollector.generate_batches_of_full_container_group_data(
@@ -1050,7 +1051,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 :message                   => expected_bigger_version.to_s,
                 :reason                    => expected_bigger_version.to_s,
-                :phase                     => "#{expected_bigger_version} status",
+                :phase                     => "#{expected_bigger_version} status"
               )
             )
           end
@@ -1083,7 +1084,7 @@ describe InventoryRefresh::Persister do
                 versions_max_col(settings) => nil,
                 :message                   => expected_bigger_version.to_s,
                 :reason                    => expected_bigger_version.to_s,
-                :phase                     => "#{expected_bigger_version} status",
+                :phase                     => "#{expected_bigger_version} status"
               )
             )
           end
@@ -1103,7 +1104,7 @@ describe InventoryRefresh::Persister do
   end
 
   def resource_counter_expected_version(container_group, newest_version)
-    newest_version + index(container_group) * 100
+    newest_version + (index(container_group) * 100)
   end
 
   def resource_counter_newest_version

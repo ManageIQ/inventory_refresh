@@ -3,9 +3,9 @@ class TestBuilder::ContainerManager < ::TestBuilder
   # TODO: (agrare) Targeted refreshes will require adjusting the associations / arels. (duh)
   def container_projects
     add_properties(
-      :secondary_refs => {:by_name => %i(name)},
+      :secondary_refs => {:by_name => %i[name]},
       :delete_method  => :disconnect_inv,
-      :model_class    => ContainerProject,
+      :model_class    => ContainerProject
     )
     add_common_default_values
   end
@@ -13,7 +13,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
   def container_nodes
     add_properties(
       :model_class    => ::ContainerNode,
-      :secondary_refs => {:by_name => %i(name)},
+      :secondary_refs => {:by_name => %i[name]},
       :delete_method  => :disconnect_inv
     )
     add_common_default_values
@@ -26,7 +26,7 @@ class TestBuilder::ContainerManager < ::TestBuilder
       # TODO: (bpaskinc) should match on digest when available
       # TODO: (mslemr) provider-specific class exists (openshift), but specs fail with them (?)
       :model_class            => ::ContainerImage,
-      :manager_ref            => %i(image_ref),
+      :manager_ref            => %i[image_ref],
       :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
     )
@@ -35,8 +35,8 @@ class TestBuilder::ContainerManager < ::TestBuilder
 
   def container_image_registries
     add_properties(
-      :manager_ref => %i(host port),
-      :model_class => ContainerImageRegistry,
+      :manager_ref => %i[host port],
+      :model_class => ContainerImageRegistry
     )
     add_common_default_values
   end
@@ -44,8 +44,8 @@ class TestBuilder::ContainerManager < ::TestBuilder
   def container_groups
     add_properties(
       :model_class            => ContainerGroup,
-      :secondary_refs         => {:by_container_project_and_name => %i(container_project name)},
-      :attributes_blacklist   => %i(namespace),
+      :secondary_refs         => {:by_container_project_and_name => %i[container_project name]},
+      :attributes_blacklist   => %i[namespace],
       :delete_method          => :disconnect_inv,
       :custom_reconnect_block => custom_reconnect_block
     )
@@ -65,15 +65,15 @@ class TestBuilder::ContainerManager < ::TestBuilder
   def nested_containers
     add_properties(
       :model_class => NestedContainer,
-      :manager_ref => %i(container_group name),
+      :manager_ref => %i[container_group name]
     )
   end
 
   def container_replicators
     add_properties(
-      :secondary_refs       => {:by_container_project_and_name => %i(container_project name)},
-      :attributes_blacklist => %i(namespace),
-      :model_class          => ContainerReplicator,
+      :secondary_refs       => {:by_container_project_and_name => %i[container_project name]},
+      :attributes_blacklist => %i[namespace],
+      :model_class          => ContainerReplicator
     )
     add_common_default_values
   end
@@ -81,9 +81,9 @@ class TestBuilder::ContainerManager < ::TestBuilder
   def container_build_pods
     add_properties(
       # TODO: (bpaskinc) convert namespace column -> container_project_id?
-      :manager_ref    => %i(namespace name),
-      :secondary_refs => {:by_namespace_and_name => %i(namespace name)},
-      :model_class    => ContainerBuildPod,
+      :manager_ref    => %i[namespace name],
+      :secondary_refs => {:by_namespace_and_name => %i[namespace name]},
+      :model_class    => ContainerBuildPod
     )
     add_common_default_values
   end

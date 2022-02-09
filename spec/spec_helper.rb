@@ -17,16 +17,16 @@ RSpec.configure do |config|
   end
 end
 
-InventoryRefresh.logger = Logger.new(STDOUT)
+InventoryRefresh.logger = Logger.new($stdout)
 InventoryRefresh.logger.level = Logger::ERROR
 
-Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
+Dir[File.expand_path("support/**/*.rb", __dir__)].sort.each { |f| require f }
 $LOAD_PATH << File.join(__dir__, "models")
-Dir[File.expand_path("models/**/*.rb", __dir__)].each { |f| require f }
+Dir[File.expand_path("models/**/*.rb", __dir__)].sort.each { |f| require f }
 
 puts
 puts "\e[93mUsing ActiveRecord #{ActiveRecord.version}\e[0m"
 
 require 'yaml'
-connection_spec = YAML.load_file(File.join(__dir__, %w(.. config database.yml)))
+connection_spec = YAML.load_file(File.join(__dir__, %w[.. config database.yml]))
 ActiveRecord::Base.establish_connection(connection_spec["test"])

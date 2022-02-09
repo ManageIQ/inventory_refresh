@@ -11,7 +11,7 @@ describe InventoryRefresh::Persister do
   #
   before do
     @ems = FactoryBot.create(:ems_cloud,
-                              :network_manager => FactoryBot.create(:ems_network))
+                             :network_manager => FactoryBot.create(:ems_network))
   end
 
   let(:persister) { create_persister }

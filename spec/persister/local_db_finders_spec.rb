@@ -13,7 +13,7 @@ describe InventoryRefresh::Persister do
   #
   before do
     @ems = FactoryBot.create(:ems_cloud,
-                              :network_manager => FactoryBot.create(:ems_network))
+                             :network_manager => FactoryBot.create(:ems_network))
   end
 
   before do
@@ -51,21 +51,21 @@ describe InventoryRefresh::Persister do
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
         :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
-        :location         => lazy_find_network1,
+        :location         => lazy_find_network1
       )
 
       @vm_data102 = vm_data(102).merge(
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
         :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
-        :location         => lazy_find_network2,
+        :location         => lazy_find_network2
       )
 
       @vm_data160 = vm_data(160).merge(
         :flavor           => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
         :genealogy_parent => persister.miq_templates.lazy_find(:ems_ref => image_data(1)[:ems_ref]),
         :key_pairs        => [persister.key_pairs.lazy_find(:name => key_pair_data(1)[:name])],
-        :location         => lazy_find_network60,
+        :location         => lazy_find_network60
       )
 
       persister.vms.build(@vm_data101)
@@ -81,7 +81,7 @@ describe InventoryRefresh::Persister do
 
       # Assert all references are loaded at once
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
+        match_array(%w[vm_ems_ref_1__public vm_ems_ref_2__public])
       )
 
       expect(lazy_find_network1.load).to eq "host_10_10_10_1.com"
@@ -102,15 +102,15 @@ describe InventoryRefresh::Persister do
       network1 = persister.networks.lazy_find(:hardware => lazy_find_hardware1, :description => "public").load
       # Assert all references are one by one
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public))
+        match_array(%w[vm_ems_ref_1__public])
       )
       network2 = persister.networks.find(:hardware => lazy_find_hardware2, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
+        match_array(%w[vm_ems_ref_1__public vm_ems_ref_2__public])
       )
       network60 = persister.networks.find(:hardware => lazy_find_hardware60, :description => "public")
       expect(persister.networks.index_proxy.send(:local_db_indexes)[:manager_ref].send(:index).keys).to(
-        match_array(%w(vm_ems_ref_1__public vm_ems_ref_2__public))
+        match_array(%w[vm_ems_ref_1__public vm_ems_ref_2__public])
       )
 
       # TODO(lsmola) known weakness, manager_uuid is wrong, but index is correct. So this doesn't affect a functionality
@@ -160,7 +160,7 @@ describe InventoryRefresh::Persister do
           :ems_ref => orchestration_stack_resource_data("1_12_1")[:ems_ref]
         },
         {:ref => :by_stack_and_ems_ref,
-         :key => :stack},
+         :key => :stack}
       )
 
       @network_port1 = network_port_data(1).merge(
@@ -189,11 +189,11 @@ describe InventoryRefresh::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
             stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
-          )
+          ]
         )
       )
 
@@ -208,11 +208,11 @@ describe InventoryRefresh::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
             stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
-          )
+          ]
         )
       )
 
@@ -244,9 +244,9 @@ describe InventoryRefresh::Persister do
       # Assert all references are one by one
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
-          )
+          ]
         )
       )
 
@@ -260,10 +260,10 @@ describe InventoryRefresh::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
-          )
+          ]
         )
       )
 
@@ -277,10 +277,10 @@ describe InventoryRefresh::Persister do
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
-          )
+          ]
         )
       )
 
@@ -290,16 +290,16 @@ describe InventoryRefresh::Persister do
           :ems_ref => orchestration_stack_resource_data("1_12_1")[:ems_ref]
         },
         {:ref => :by_stack_and_ems_ref,
-         :key => :stack},
+         :key => :stack}
       ).load
 
       expect(persister.orchestration_stacks_resources.index_proxy.send(:local_db_indexes)[:by_stack_and_ems_ref].send(:index).keys).to(
         match_array(
-          %w(
+          %w[
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_1
             stack_ems_ref_1_11__stack_resource_physical_resource_1_11_2
             stack_ems_ref_1_12__stack_resource_physical_resource_1_12_1
-          )
+          ]
         )
       )
 
@@ -318,14 +318,14 @@ describe InventoryRefresh::Persister do
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_name].send(:index).keys).to(
-        match_array(%w(vm_name_1))
+        match_array(%w[vm_name_1])
       )
 
       vm1 = persister.vms.find({:name => vm_data(1)[:name]}, {:ref => :by_name})
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_name].send(:index).keys).to(
-        match_array(%w(vm_name_1))
+        match_array(%w[vm_name_1])
       )
     end
 
@@ -334,14 +334,14 @@ describe InventoryRefresh::Persister do
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_uid_ems_and_name].send(:index).keys).to(
-        match_array(%w(vm_uid_ems_1__vm_name_1))
+        match_array(%w[vm_uid_ems_1__vm_name_1])
       )
 
       vm1 = persister.vms.find({:uid_ems => vm_data(1)[:uid_ems], :name => vm_data(1)[:name]}, {:ref => :by_uid_ems_and_name})
       expect(vm1[:ems_ref]).to eq "vm_ems_ref_1"
 
       expect(persister.vms.index_proxy.send(:local_db_indexes)[:by_uid_ems_and_name].send(:index).keys).to(
-        match_array(%w(vm_uid_ems_1__vm_name_1))
+        match_array(%w[vm_uid_ems_1__vm_name_1])
       )
     end
   end
@@ -367,7 +367,7 @@ describe InventoryRefresh::Persister do
       expect do
         persister.add_collection(:vms,
                                  persister.send(:cloud),
-                                 :manager_ref => %i(ems_ref ems_gref))
+                                 :manager_ref => %i[ems_ref ems_gref])
       end.to raise_error("Invalid definition of index :manager_ref, there is no attribute :ems_gref on model Vm")
     end
 
@@ -375,23 +375,23 @@ describe InventoryRefresh::Persister do
       expect do
         persister.add_collection(:vms,
                                  persister.send(:cloud),
-                                 :secondary_refs => {:by_uid_ems_and_name => %i(uid_emsa name)})
+                                 :secondary_refs => {:by_uid_ems_and_name => %i[uid_emsa name]})
       end.to raise_error("Invalid definition of index :by_uid_ems_and_name, there is no attribute :uid_emsa on model Vm")
     end
 
     it "checks relation is allowed in index" do
       persister.add_collection(:vms, persister.send(:cloud)) do |builder|
         builder.add_properties(:model_class    => ::ManageIQ::Providers::CloudManager::Vm,
-                               :secondary_refs => {:by_availability_zone_and_name => %i(availability_zone name)})
+                               :secondary_refs => {:by_availability_zone_and_name => %i[availability_zone name]})
       end
 
-      expect(persister.vms.index_proxy.send(:data_indexes).keys).to match_array(%i(manager_ref by_availability_zone_and_name))
+      expect(persister.vms.index_proxy.send(:data_indexes).keys).to match_array(%i[manager_ref by_availability_zone_and_name])
     end
 
     it "checks relation is on model class" do
       expect do
         persister.add_collection(:vms, persister.send(:cloud)) do |builder|
-          builder.add_properties(:secondary_refs => {:by_availability_zone_and_name => %i(availability_zone name)})
+          builder.add_properties(:secondary_refs => {:by_availability_zone_and_name => %i[availability_zone name]})
         end
       end.to raise_error("Invalid definition of index :by_availability_zone_and_name, there is no attribute :availability_zone on model Vm")
     end
@@ -400,7 +400,7 @@ describe InventoryRefresh::Persister do
       persister.add_collection(:vms, persister.send(:cloud)) do |builder|
         builder.add_properties(
           :custom_save_block => ->(ems, _ic) { ems },
-          :manager_ref       => %i(a b c)
+          :manager_ref       => %i[a b c]
         )
       end
 

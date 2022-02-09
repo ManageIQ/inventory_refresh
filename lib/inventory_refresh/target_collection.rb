@@ -28,11 +28,11 @@ module InventoryRefresh
     # @param options [Hash] A free form options hash
     def add_target(association:, manager_ref:, manager: nil, manager_id: nil, event_id: nil, options: {})
       self << InventoryRefresh::Target.new(:association => association,
-                                         :manager_ref => manager_ref,
-                                         :manager     => manager || @manager,
-                                         :manager_id  => manager_id || @manager_id || @manager.try(:id),
-                                         :event_id    => event_id || @event.try(:id),
-                                         :options     => options)
+                                           :manager_ref => manager_ref,
+                                           :manager     => manager || @manager,
+                                           :manager_id  => manager_id || @manager_id || @manager.try(:id),
+                                           :event_id    => event_id || @event.try(:id),
+                                           :options     => options)
     end
 
     # @return [String] A String containing a summary

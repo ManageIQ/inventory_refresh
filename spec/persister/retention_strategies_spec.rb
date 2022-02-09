@@ -13,7 +13,7 @@ describe InventoryRefresh::Persister do
   #
   before do
     @ems = FactoryBot.create(:ems_cloud,
-                              :network_manager => FactoryBot.create(:ems_network))
+                             :network_manager => FactoryBot.create(:ems_network))
   end
 
   before do
@@ -26,7 +26,7 @@ describe InventoryRefresh::Persister do
   context "testing delete_complement" do
     [{:saver_strategy => 'batch'}, {:saver_strategy => 'concurrent_safe_batch'}].each do |extra_options|
       it "archives the data with :retention_strategy => 'archive' and different values of all_manager_uuids" do
-        %i(nil blank filled).each do |all_manager_uuids_status|
+        %i[nil blank filled].each do |all_manager_uuids_status|
           Vm.destroy_all
           persister = create_persister(extra_options.merge(:retention_strategy => "archive"))
 
@@ -38,7 +38,7 @@ describe InventoryRefresh::Persister do
           persister.vms.all_manager_uuids = case all_manager_uuids_status
                                             when :nil    then nil
                                             when :blank  then []
-                                            when :filled then [{ 'ems_ref' => vm1.ems_ref }]
+                                            when :filled then [{'ems_ref' => vm1.ems_ref}]
                                             end
 
           persister.persist!
@@ -68,41 +68,41 @@ describe InventoryRefresh::Persister do
           region3 = FactoryBot.create(:source_region, :ems_ref => "region3", :ext_management_system => @ems)
 
           vm1 = FactoryBot.create(:vm_cloud,
-                                   vm_data(1).merge(
+                                  vm_data(1).merge(
+                                    :ext_management_system => @ems,
+                                    :subscription          => subscription1,
+                                    :source_region         => region1
+                                  ))
+          _vm2 = FactoryBot.create(:vm_cloud,
+                                   vm_data(2).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription2,
+                                     :source_region         => region2
+                                   ))
+          _vm3 = FactoryBot.create(:vm_cloud,
+                                   vm_data(3).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription2,
+                                     :source_region         => region3
+                                   ))
+          _vm4 = FactoryBot.create(:vm_cloud,
+                                   vm_data(4).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription2,
+                                     :source_region         => region1
+                                   ))
+          _vm5 = FactoryBot.create(:vm_cloud,
+                                   vm_data(5).merge(
                                      :ext_management_system => @ems,
                                      :subscription          => subscription1,
-                                     :source_region         => region1,
+                                     :source_region         => region2
                                    ))
-          _vm2 = FactoryBot.create(:vm_cloud,
-                                    vm_data(2).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription2,
-                                      :source_region         => region2,
-                                    ))
-          _vm3 = FactoryBot.create(:vm_cloud,
-                                    vm_data(3).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription2,
-                                      :source_region         => region3,
-                                    ))
-          _vm4 = FactoryBot.create(:vm_cloud,
-                                    vm_data(4).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription2,
-                                      :source_region         => region1,
-                                    ))
-          _vm5 = FactoryBot.create(:vm_cloud,
-                                    vm_data(5).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription1,
-                                      :source_region         => region2,
-                                    ))
           _vm6 = FactoryBot.create(:vm_cloud,
-                                    vm_data(6).merge(
-                                      :ext_management_system => @ems,
-                                      :subscription          => subscription1,
-                                      :source_region         => region1,
-                                    ))
+                                   vm_data(6).merge(
+                                     :ext_management_system => @ems,
+                                     :subscription          => subscription1,
+                                     :source_region         => region1
+                                   ))
 
           expect(Vm.active.pluck(:ems_ref)).to(
             match_array([vm_data(1)[:ems_ref], vm_data(2)[:ems_ref], vm_data(3)[:ems_ref], vm_data(4)[:ems_ref],
@@ -217,7 +217,7 @@ describe InventoryRefresh::Persister do
             :archived_hardwares     => 2,
             :archived_network_ports => 2,
             :archived_networks      => 2,
-            :archived_vms           => 2,
+            :archived_vms           => 2
           )
         end
 
@@ -249,7 +249,7 @@ describe InventoryRefresh::Persister do
             :archived_hardwares     => 0,
             :archived_network_ports => 0,
             :archived_networks      => 0,
-            :archived_vms           => 0,
+            :archived_vms           => 0
           )
         end
       end
@@ -281,9 +281,10 @@ describe InventoryRefresh::Persister do
           )
 
           # Skeletal precreate is causing the lazy linked models to be created
-          active_hardwares = if extra_options[:saver_strategy] == "batch"
+          active_hardwares = case extra_options[:saver_strategy]
+                             when "batch"
                                1
-                             elsif extra_options[:saver_strategy] == "concurrent_safe_batch"
+                             when "concurrent_safe_batch"
                                2
                              end
 
@@ -297,7 +298,7 @@ describe InventoryRefresh::Persister do
             :archived_hardwares     => 2,
             :archived_network_ports => 2,
             :archived_networks      => 2,
-            :archived_vms           => 2,
+            :archived_vms           => 2
           )
         end
 
@@ -369,7 +370,7 @@ describe InventoryRefresh::Persister do
         :archived_hardwares     => 0,
         :archived_network_ports => 0,
         :archived_networks      => 0,
-        :archived_vms           => 0,
+        :archived_vms           => 0
       )
     end
   end
@@ -438,7 +439,7 @@ describe InventoryRefresh::Persister do
       :archived_hardwares     => 0,
       :archived_network_ports => 0,
       :archived_networks      => 0,
-      :archived_vms           => 0,
+      :archived_vms           => 0
     )
 
     lazy_find_vm1        = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
@@ -468,17 +469,17 @@ describe InventoryRefresh::Persister do
 
     vm_data1 = vm_data(1).merge(
       :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network1,
+      :location => lazy_find_network1
     )
 
     vm_data2 = vm_data(2).merge(
       :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network2,
+      :location => lazy_find_network2
     )
 
     vm_data60 = vm_data(60).merge(
       :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network60,
+      :location => lazy_find_network60
     )
 
     all_network_port_uuids = []
@@ -520,7 +521,7 @@ describe InventoryRefresh::Persister do
       :archived_hardwares     => 0,
       :archived_network_ports => 0,
       :archived_networks      => 0,
-      :archived_vms           => 0,
+      :archived_vms           => 0
     )
 
     lazy_find_vm1  = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
@@ -546,9 +547,10 @@ describe InventoryRefresh::Persister do
 
   def assert_result_with_nested_refs_and_destroy(extra_options)
     # Skeletal precreate is causing the lazy linked models to be created
-    active_hardwares = if extra_options[:saver_strategy] == "batch"
+    active_hardwares = case extra_options[:saver_strategy]
+                       when "batch"
                          0
-                       elsif extra_options[:saver_strategy] == "concurrent_safe_batch"
+                       when "concurrent_safe_batch"
                          3
                        end
 
@@ -562,7 +564,7 @@ describe InventoryRefresh::Persister do
       :archived_hardwares     => 0,
       :archived_network_ports => 0,
       :archived_networks      => 0,
-      :archived_vms           => 0,
+      :archived_vms           => 0
     )
   end
 end

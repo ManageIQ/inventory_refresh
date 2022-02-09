@@ -2,7 +2,7 @@ require_relative "../test_builder"
 class TestBuilder::NetworkManager < TestBuilder
   def network_ports
     add_properties(
-      :use_ar_object  => true,
+      :use_ar_object => true
     )
 
     add_common_default_values

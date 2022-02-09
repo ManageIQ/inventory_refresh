@@ -66,7 +66,7 @@ module InventoryRefresh
     # @return [InventoryRefresh::InventoryCollection] returns a defined InventoryCollection or undefined method
     def method_missing(method_name, *arguments, &block)
       if inventory_collections_names.include?(method_name)
-        self.define_collections_reader(method_name)
+        define_collections_reader(method_name)
         send(method_name)
       else
         super
@@ -96,7 +96,7 @@ module InventoryRefresh
 
     # Returns serialized Persisted object to JSON
     # @return [String] serialized Persisted object to JSON
-    def to_json
+    def to_json(*_args)
       JSON.dump(to_hash)
     end
 

@@ -9,12 +9,12 @@ module ArchivedMixin
   def archived?
     !active?
   end
-  alias_method :archived, :archived?
+  alias archived archived?
 
   def active?
     archived_at.nil?
   end
-  alias_method :active, :active?
+  alias active active?
 
   def archive!
     update!(:archived_at => Time.now.utc)
