@@ -1,13 +1,10 @@
 source "https://rubygems.org"
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+plugin "bundler-inject", "~> 2.0"
+require File.join(Bundler::Plugin.index.load_paths("bundler-inject")[0], "bundler-inject") rescue nil
 
 # Specify your gem's dependencies in inventory_refresh.gemspec
 gemspec
-
-# Load other additional Gemfiles
-#   Developers can create a file ending in .rb under bundler.d/ to specify additional development dependencies
-Dir.glob(File.join(__dir__, 'bundler.d/*.rb')).each { |f| eval_gemfile(File.expand_path(f, __dir__)) }
 
 case ENV['TEST_RAILS_VERSION']
 when "5.2"
