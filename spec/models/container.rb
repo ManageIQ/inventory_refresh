@@ -13,6 +13,7 @@ class Container < ActiveRecord::Base
 
   def disconnect_inv
     return if archived?
+
     _log.info("Disconnecting Container [#{name}] id [#{id}] from EMS")
     self.archived_at = Time.now.utc
     save

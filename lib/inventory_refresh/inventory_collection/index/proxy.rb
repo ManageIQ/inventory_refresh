@@ -59,7 +59,7 @@ module InventoryRefresh
         end
 
         def build_secondary_indexes_for(inventory_object)
-          secondary_refs.keys.each do |ref|
+          secondary_refs.each_key do |ref|
             data_index(ref).store_index_for(inventory_object)
           end
         end
@@ -80,6 +80,7 @@ module InventoryRefresh
           # TODO(lsmola) lazy_find will support only hash, then we can remove the _by variant
           # TODO(lsmola) this method should return lazy too, the rest of the finders should be deprecated
           return if reference.nil?
+
           assert_index(reference, ref)
 
           reference = inventory_collection.build_reference(reference, ref)
@@ -110,14 +111,15 @@ module InventoryRefresh
           # access the data
           # TODO(lsmola) lazy_find will support only hash, then we can remove the _by variant
           return if manager_uuid.nil?
+
           assert_index(manager_uuid, ref)
 
           ::InventoryRefresh::InventoryObjectLazy.new(inventory_collection,
-                                                    manager_uuid,
-                                                    :ref                         => ref,
-                                                    :key                         => key,
-                                                    :default                     => default,
-                                                    :transform_nested_lazy_finds => transform_nested_lazy_finds)
+                                                      manager_uuid,
+                                                      :ref                         => ref,
+                                                      :key                         => key,
+                                                      :default                     => default,
+                                                      :transform_nested_lazy_finds => transform_nested_lazy_finds)
         end
 
         def named_ref(ref = primary_index_ref)
@@ -182,6 +184,7 @@ module InventoryRefresh
             next unless association_to_foreign_key_mapping[key]
             # Skip if data on key are nil or InventoryObject or InventoryObjectLazy
             next if data[key].nil? || data[key].kind_of?(InventoryRefresh::InventoryObject) || data[key].kind_of?(InventoryRefresh::InventoryObjectLazy)
+
             # Raise error since relation must be nil or InventoryObject or InventoryObjectLazy
             raise "Wrong index for key :#{key}, the value must be of type Nil or InventoryObject or InventoryObjectLazy, got: #{data[key]}"
           end
@@ -207,6 +210,7 @@ module InventoryRefresh
             unless required_index_keys_present?(manager_uuid.keys, ref)
               raise "Finder has missing keys for index :#{ref}, missing indexes are: #{missing_keys(manager_uuid.keys, ref)}"
             end
+
             # Test that keys, that are relations, are nil or InventoryObject or InventoryObjectlazy class
             assert_relation_keys(manager_uuid, ref)
           else
@@ -224,7 +228,7 @@ module InventoryRefresh
             assert_relation_keys({named_ref(ref).first => manager_uuid}, ref)
           end
         rescue => e
-          #_log.error("Error when asserting index: #{manager_uuid}, with ref: #{ref} of: #{inventory_collection}")
+          logger.error("Error when asserting index: #{manager_uuid}, with ref: #{ref} of: #{inventory_collection}")
           raise e
         end
       end

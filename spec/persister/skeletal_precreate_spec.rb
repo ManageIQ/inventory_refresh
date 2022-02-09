@@ -28,7 +28,7 @@ describe InventoryRefresh::Persister do
           container_data(
             1,
             :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
-            :container_image => persister.container_images.lazy_find("container_image_image_ref_1"),
+            :container_image => persister.container_images.lazy_find("container_image_image_ref_1")
           )
         )
 
@@ -38,7 +38,7 @@ describe InventoryRefresh::Persister do
         assert_containers_counts(
           :container       => 1,
           :container_group => 1,
-          :container_image => 1,
+          :container_image => 1
         )
 
         container = Container.first
@@ -46,7 +46,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_ems_ref_1",
+            :ems_ref => "container_ems_ref_1"
           )
         )
 
@@ -54,7 +54,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => nil,
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
 
@@ -62,7 +62,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name      => nil,
             :ems_id    => @ems.id,
-            :image_ref => "container_image_image_ref_1",
+            :image_ref => "container_image_image_ref_1"
           )
         )
 
@@ -90,7 +90,7 @@ describe InventoryRefresh::Persister do
           :container                => 1,
           :container_group          => 1,
           :container_image          => 1,
-          :container_image_registry => 1,
+          :container_image_registry => 1
         )
 
         container = Container.first
@@ -98,7 +98,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_ems_ref_1",
+            :ems_ref => "container_ems_ref_1"
           )
         )
 
@@ -106,7 +106,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_group_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
 
@@ -114,7 +114,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name      => "container_image_name_1",
             :ems_id    => @ems.id,
-            :image_ref => "container_image_image_ref_1",
+            :image_ref => "container_image_image_ref_1"
           )
         )
 
@@ -122,7 +122,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name => nil,
             :host => "container_image_registry_host_1",
-            :port => "container_image_registry_name_1",
+            :port => "container_image_registry_name_1"
           )
         )
       end
@@ -134,7 +134,7 @@ describe InventoryRefresh::Persister do
         persister.container_groups.build(
           container_group_data(
             1,
-            :container_project => persister.container_projects.lazy_find("container_project_ems_ref_1"),
+            :container_project => persister.container_projects.lazy_find("container_project_ems_ref_1")
           )
         )
         persister.container_projects.build(container_project_data(2))
@@ -144,7 +144,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container_group   => 1,
-          :container_project => 2,
+          :container_project => 2
         )
 
         # The batch saving must not save full record and skeletal record together, otherwise that would
@@ -153,14 +153,14 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_project_name_1", # This has to be "container_project_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_project_ems_ref_1",
+            :ems_ref => "container_project_ems_ref_1"
           )
         )
         expect(ContainerProject.find_by(:ems_ref => "container_project_ems_ref_2")).to(
           have_attributes(
             :name    => "container_project_name_2",
             :ems_id  => @ems.id,
-            :ems_ref => "container_project_ems_ref_2",
+            :ems_ref => "container_project_ems_ref_2"
           )
         )
       end
@@ -173,7 +173,7 @@ describe InventoryRefresh::Persister do
         persister.containers.build(
           container_data(
             1,
-            :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
+            :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1")
           )
         )
 
@@ -187,7 +187,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container       => 1,
-          :container_group => 1,
+          :container_group => 1
         )
 
         container = Container.first
@@ -195,7 +195,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_ems_ref_1",
+            :ems_ref => "container_ems_ref_1"
           )
         )
 
@@ -204,7 +204,7 @@ describe InventoryRefresh::Persister do
             :type    => "ContainerGroup",
             :name    => nil,
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
 
@@ -228,7 +228,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are updated
         assert_containers_counts(
           :container       => 1,
-          :container_group => 1,
+          :container_group => 1
         )
 
         container = Container.first
@@ -236,7 +236,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_ems_ref_1",
+            :ems_ref => "container_ems_ref_1"
           )
         )
 
@@ -245,7 +245,7 @@ describe InventoryRefresh::Persister do
             :type    => "ContainerGroup",
             :name    => "container_group_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
 
@@ -255,7 +255,7 @@ describe InventoryRefresh::Persister do
         persister.containers.build(
           container_data(
             1,
-            :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1"),
+            :container_group => persister.container_groups.lazy_find("container_group_ems_ref_1")
           )
         )
 
@@ -269,7 +269,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container       => 1,
-          :container_group => 1,
+          :container_group => 1
         )
 
         container = Container.first
@@ -277,7 +277,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_ems_ref_1",
+            :ems_ref => "container_ems_ref_1"
           )
         )
 
@@ -286,23 +286,23 @@ describe InventoryRefresh::Persister do
             :type    => "ContainerGroup",
             :name    => "container_group_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
       end
 
       it "we prec-create object that was already disconnected and the relation is filled but not reconnected" do
         FactoryBot.create(:container_project, container_project_data(1).merge(
-          :ems_id      => @ems.id,
-          :archived_at => Time.now.utc
-        ))
+                                                :ems_id      => @ems.id,
+                                                :archived_at => Time.now.utc
+                                              ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
 
         persister.container_groups.build(
           container_group_data(
             1,
-            :container_project => lazy_find_container_project,
+            :container_project => lazy_find_container_project
           )
         )
 
@@ -310,7 +310,7 @@ describe InventoryRefresh::Persister do
 
         assert_containers_counts(
           :container_group   => 1,
-          :container_project => 1,
+          :container_project => 1
         )
 
         container_group = ContainerGroup.first
@@ -324,7 +324,7 @@ describe InventoryRefresh::Persister do
         expect(container_group.container_project).to(
           have_attributes(
             :name    => "container_project_name_1",
-            :ems_ref => "container_project_ems_ref_1",
+            :ems_ref => "container_project_ems_ref_1"
           )
         )
         expect(container_group.container_project).not_to be_nil
@@ -346,14 +346,14 @@ describe InventoryRefresh::Persister do
               }, {
                 :ref => :by_container_project_and_name
               }
-            ),
+            )
           )
         )
 
         persister.persist!
 
         assert_containers_counts(
-          :container_group => 1,
+          :container_group => 1
         )
 
         container_group = ContainerGroup.first
@@ -361,7 +361,7 @@ describe InventoryRefresh::Persister do
           have_attributes(
             :name    => "container_group_name_1",
             :ems_id  => @ems.id,
-            :ems_ref => "container_group_ems_ref_1",
+            :ems_ref => "container_group_ems_ref_1"
           )
         )
 
@@ -374,9 +374,9 @@ describe InventoryRefresh::Persister do
         container_project = FactoryBot.create(:container_project, container_project_data(1).merge(:ems_id => @ems.id))
         FactoryBot.create(:container_node, container_node_data(1).merge(:ems_id => @ems.id))
         FactoryBot.create(:container_replicator, container_replicator_data(1).merge(
-                                                    :ems_id            => @ems.id,
-                                                    :container_project => container_project
-        ))
+                                                   :ems_id            => @ems.id,
+                                                   :container_project => container_project
+                                                 ))
         # TODO(lsmola) we miss VCR data for this
         # FactoryBot.create(:container_build_pod, container_build_pod_data(1).merge(:ems_id => @ems.id))
 
@@ -409,7 +409,7 @@ describe InventoryRefresh::Persister do
           :container_group      => 1,
           :container_project    => 1,
           :container_node       => 1,
-          :container_replicator => 1,
+          :container_replicator => 1
         )
 
         container_group = ContainerGroup.first
@@ -446,7 +446,7 @@ describe InventoryRefresh::Persister do
           container_group_data(
             1,
             :container_project => lazy_find_container_project,
-            :container_node    => lazy_find_container_node,
+            :container_node    => lazy_find_container_node
           )
         )
 
@@ -455,7 +455,7 @@ describe InventoryRefresh::Persister do
         assert_containers_counts(
           :container_group   => 1,
           :container_project => 1,
-          :container_node    => 1,
+          :container_node    => 1
         )
 
         container_group = ContainerGroup.first
@@ -469,20 +469,20 @@ describe InventoryRefresh::Persister do
         # do not want to solve this in general? If yes, we would have to allow this to be settable in parser. E.g.
         # for OpenShift pods watch targeted refresh, we can refresh already disconnected entity
         FactoryBot.create(:container_group, container_group_data(1).merge(
-          :ems_id      => @ems.id,
-          :archived_at => Time.now.utc
-        ))
+                                              :ems_id      => @ems.id,
+                                              :archived_at => Time.now.utc
+                                            ))
         FactoryBot.create(:container_project, container_project_data(1).merge(
-          :ems_id      => @ems.id,
-          :archived_at => Time.now.utc
-        ))
+                                                :ems_id      => @ems.id,
+                                                :archived_at => Time.now.utc
+                                              ))
 
         lazy_find_container_project = persister.container_projects.lazy_find("container_project_ems_ref_1")
 
         persister.container_groups.build(
           container_group_data(
             1,
-            :container_project => lazy_find_container_project,
+            :container_project => lazy_find_container_project
           )
         )
 
@@ -490,7 +490,7 @@ describe InventoryRefresh::Persister do
 
         assert_containers_counts(
           :container_group   => 1,
-          :container_project => 1,
+          :container_project => 1
         )
 
         container_group = ContainerGroup.first
@@ -505,7 +505,7 @@ describe InventoryRefresh::Persister do
         expect(container_group.container_project).to(
           have_attributes(
             :name    => "container_project_name_1",
-            :ems_ref => "container_project_ems_ref_1",
+            :ems_ref => "container_project_ems_ref_1"
           )
         )
         expect(container_group.container_project).not_to be_nil
@@ -529,7 +529,7 @@ describe InventoryRefresh::Persister do
 
         assert_containers_counts(
           :container_group   => 1,
-          :container_project => 1,
+          :container_project => 1
         )
 
         container_group = ContainerGroup.first
@@ -565,7 +565,7 @@ describe InventoryRefresh::Persister do
         persister.persist!
 
         assert_containers_counts(
-          :container_group => 1,
+          :container_group => 1
         )
       end
 
@@ -586,7 +586,7 @@ describe InventoryRefresh::Persister do
           persister.persist!
 
           assert_containers_counts(
-            :container_group => 1,
+            :container_group => 1
           )
         end.to(raise_error("A lazy_find with a :key can't be a part of the manager_uuid"))
       end

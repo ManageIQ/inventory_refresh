@@ -71,8 +71,8 @@ module InventoryRefresh
         #        this attribute, the db_collection_for_comparison will be automatically limited by the manager_uuids, in a
         #        case of a simple relation. In a case of a complex relation, we can leverage :manager_uuids in a
         #        custom :targeted_arel. We can pass also lambda, for lazy_evaluation.
-        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs,  manager_uuids)
-          @manager_ref             = manager_ref || %i(ems_ref)
+        def init_references(manager_ref, manager_ref_allowed_nil, secondary_refs, manager_uuids)
+          @manager_ref             = manager_ref || %i[ems_ref]
           @manager_ref_allowed_nil = manager_ref_allowed_nil || []
           @secondary_refs          = secondary_refs || {}
           @manager_uuids           = manager_uuids || []
@@ -230,7 +230,7 @@ module InventoryRefresh
           @attributes_whitelist             = Set.new
           @batch_extra_attributes           = batch_extra_attributes || []
           @inventory_object_attributes      = inventory_object_attributes
-          @internal_attributes              = %i(__feedback_edge_set_parent __parent_inventory_collections __all_manager_uuids_scope)
+          @internal_attributes              = %i[__feedback_edge_set_parent __parent_inventory_collections __all_manager_uuids_scope]
           @transitive_dependency_attributes = Set.new
 
           blacklist_attributes!(attributes_blacklist) if attributes_blacklist.present?
@@ -405,7 +405,7 @@ module InventoryRefresh
             saver_strategy
           else
             raise "Unknown InventoryCollection saver strategy: :#{saver_strategy}, allowed strategies are "\
-              ":default, :batch and :concurrent_safe_batch"
+                  ":default, :batch and :concurrent_safe_batch"
           end
         end
 
@@ -429,7 +429,7 @@ module InventoryRefresh
             nil
           else
             raise "Unknown InventoryCollection strategy: :#{strategy_name}, allowed strategies are :local_db_cache_all, "\
-              ":local_db_find_references and :local_db_find_missing_references."
+                  ":local_db_find_references and :local_db_find_missing_references."
           end
           strategy_name
         end
@@ -447,7 +447,7 @@ module InventoryRefresh
             retention_strategy
           else
             raise "Unknown InventoryCollection retention strategy: :#{retention_strategy}, allowed strategies are "\
-              ":destroy and :archive"
+                  ":destroy and :archive"
           end
         end
       end

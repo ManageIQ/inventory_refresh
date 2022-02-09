@@ -142,7 +142,7 @@ describe InventoryRefresh::InventoryCollection::Builder do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
       builder.add_dependency_attributes(:ic1 => 'ic1')
       builder.add_dependency_attributes(:ic2 => 'ic2', :ic1 => 'ic')
-      builder.add_dependency_attributes({ :ic2 => 'ic20_000' }, :if_missing)
+      builder.add_dependency_attributes({:ic2 => 'ic20_000'}, :if_missing)
     end.to_hash
 
     expect(data[:dependency_attributes]).to include(:ic1 => 'ic', :ic2 => 'ic2')
@@ -186,24 +186,24 @@ describe InventoryRefresh::InventoryCollection::Builder do
 
   it 'can add inventory_object_attributes manually' do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_inventory_attributes(%i(attr1 attr2 attr3))
+      builder.add_inventory_attributes(%i[attr1 attr2 attr3])
     end.to_hash
 
-    expect(data[:inventory_object_attributes]).to match_array(%i(attr1 attr2 attr3))
+    expect(data[:inventory_object_attributes]).to match_array(%i[attr1 attr2 attr3])
   end
 
   it 'can remove inventory_object_attributes' do
     data = described_class.prepare_data(:tmp, persister_class) do |builder|
-      builder.add_inventory_attributes(%i(attr1 attr2 attr3))
-      builder.remove_inventory_attributes(%i(attr2))
+      builder.add_inventory_attributes(%i[attr1 attr2 attr3])
+      builder.remove_inventory_attributes(%i[attr2])
     end.to_hash
 
-    expect(data[:inventory_object_attributes]).to match_array(%i(attr1 attr3))
+    expect(data[:inventory_object_attributes]).to match_array(%i[attr1 attr3])
   end
 
   it 'can clear all inventory_object_attributes' do
     data = described_class.prepare_data(:vms, persister_class) do |builder|
-      builder.add_inventory_attributes(%i(attr1 attr2 attr3))
+      builder.add_inventory_attributes(%i[attr1 attr2 attr3])
       builder.clear_inventory_attributes!
     end.to_hash
 

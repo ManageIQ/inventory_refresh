@@ -12,7 +12,7 @@ namespace :spec do
 
   task :db_load_schema do
     require "active_record"
-    with_connection(test_database_name) { load File.join(__dir__, %w{spec schema.rb}) }
+    with_connection(test_database_name) { load File.join(__dir__, %w[spec schema.rb]) }
   end
 
   desc "Setup test database"
@@ -20,7 +20,7 @@ namespace :spec do
 
   def connection_spec
     require 'yaml'
-    @connection_spec ||= YAML.load_file(File.join(__dir__, %w(config database.yml)))
+    @connection_spec ||= YAML.load_file(File.join(__dir__, %w[config database.yml]))
   end
 
   def test_database_name

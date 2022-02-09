@@ -379,7 +379,7 @@ describe InventoryRefresh::SaveInventory do
             :flavor                => @flavor_1,
             :key_pairs             => [@key_pair1],
             :location              => 'host_10_10_10_1.com',
-            :ext_management_system => @ems,
+            :ext_management_system => @ems
           )
         )
       end.to(
@@ -396,8 +396,8 @@ describe InventoryRefresh::SaveInventory do
       end
       @persister.add_collection(:hardwares) do |builder|
         builder.add_properties(
-          :manager_ref                  => %i(virtualization_type),
-          :parent_inventory_collections => %i(vms)
+          :manager_ref                  => %i[virtualization_type],
+          :parent_inventory_collections => %i[vms]
         )
       end
     end
@@ -480,8 +480,8 @@ describe InventoryRefresh::SaveInventory do
       end
       @persister.add_collection(:hardwares) do |builder|
         builder.add_properties(
-          :manager_ref                  => %i(vm_or_template virtualization_type),
-          :parent_inventory_collections => %i(vms)
+          :manager_ref                  => %i[vm_or_template virtualization_type],
+          :parent_inventory_collections => %i[vms]
         )
       end
 
@@ -518,7 +518,7 @@ describe InventoryRefresh::SaveInventory do
     expect(vm1.hardware.networks.collect(&:ipaddress)).to match_array(["10.10.10.1"])
 
     expect(vm12.hardware.virtualization_type).to eq("virtualization_type_12")
-    expect(vm12.hardware.disks.collect(&:device_name)).to match_array(%w(disk_name_12 disk_name_13))
+    expect(vm12.hardware.disks.collect(&:device_name)).to match_array(%w[disk_name_12 disk_name_13])
     expect(vm12.hardware.networks.collect(&:ipaddress)).to match_array(["10.10.10.12", "10.10.10.13"])
 
     expect(vm2.hardware.virtualization_type).to eq("virtualization_type_2")
@@ -551,7 +551,7 @@ describe InventoryRefresh::SaveInventory do
     @persister.add_collection(:key_pairs) do |builder|
       builder.add_properties(
         :model_class => ManageIQ::Providers::CloudManager::AuthKeyPair,
-        :manager_ref => %i(name)
+        :manager_ref => %i[name]
       )
     end
     @persister.add_collection(:miq_templates) do |builder|
@@ -559,26 +559,26 @@ describe InventoryRefresh::SaveInventory do
     end
     @persister.add_collection(:hardwares) do |builder|
       builder.add_properties(
-        :manager_ref                  => %i(vm_or_template),
-        :parent_inventory_collections => %i(vms miq_templates)
+        :manager_ref                  => %i[vm_or_template],
+        :parent_inventory_collections => %i[vms miq_templates]
       )
     end
     @persister.add_collection(:disks) do |builder|
       builder.add_properties(
-        :manager_ref                  => %i(hardware device_name),
-        :parent_inventory_collections => %i(vms miq_templates)
+        :manager_ref                  => %i[hardware device_name],
+        :parent_inventory_collections => %i[vms miq_templates]
       )
     end
     @persister.add_collection(:networks) do |builder|
       builder.add_properties(
-        :manager_ref                  => %i(hardware description),
-        :parent_inventory_collections => %i(vms miq_templates)
+        :manager_ref                  => %i[hardware description],
+        :parent_inventory_collections => %i[vms miq_templates]
       )
     end
     @persister.add_collection(:flavors) do |builder|
       builder.add_properties(
         :model_class => ManageIQ::Providers::CloudManager::Flavor,
-        :manager_ref => %i(name)
+        :manager_ref => %i[name]
       )
     end
 
@@ -608,7 +608,7 @@ describe InventoryRefresh::SaveInventory do
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(1)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                   {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                   :default => 'default_value_unknown'})
     )
 
     @vm_data_12 = vm_data(12).merge(
@@ -618,7 +618,7 @@ describe InventoryRefresh::SaveInventory do
                      @persister.key_pairs.lazy_find(key_pair_data(12)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_1, :description => "public"},
                                                   {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                   :default => 'default_value_unknown'})
     )
 
     @vm_data_2 = vm_data(2).merge(
@@ -626,7 +626,7 @@ describe InventoryRefresh::SaveInventory do
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])],
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_2, :description => "public"},
                                                   {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                   :default => 'default_value_unknown'})
     )
 
     @vm_data_4 = vm_data(4).merge(
@@ -634,7 +634,7 @@ describe InventoryRefresh::SaveInventory do
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(4)[:name])].compact,
       :location  => @persister.networks.lazy_find({:hardware => lazy_find_hardware_4, :description => "public"},
                                                   {:key     => :hostname,
-                                                   :default => 'default_value_unknown'}),
+                                                   :default => 'default_value_unknown'})
     )
 
     @hardware_data_1 = hardware_data(1).merge(
@@ -653,27 +653,27 @@ describe InventoryRefresh::SaveInventory do
     )
 
     @disk_data_1 = disk_data(1).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]))
     )
 
     @disk_data_12 = disk_data(12).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref]))
     )
 
     @disk_data_13 = disk_data(13).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref]))
     )
 
     @disk_data_2 = disk_data(2).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref]))
     )
 
     @public_network_data_1 = public_network_data(1).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(1)[:ems_ref]))
     )
 
     @public_network_data_12 = public_network_data(12).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(12)[:ems_ref]))
     )
 
     @public_network_data_13 = public_network_data(13).merge(
@@ -687,7 +687,7 @@ describe InventoryRefresh::SaveInventory do
     )
 
     @public_network_data_2 = public_network_data(2).merge(
-      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref])),
+      :hardware => @persister.hardwares.lazy_find(@persister.vms.lazy_find(vm_data(2)[:ems_ref]))
     )
   end
 end

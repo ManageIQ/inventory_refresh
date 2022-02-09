@@ -135,6 +135,7 @@ module InventoryRefresh::SaveCollection
         # We need to set correct timestamps_max for this particular attribute, based on what is in timestamps
         batch.each do |x|
           next unless x[:__non_serialized_versions][column_name]
+
           x[comparables_max_name] = x[:__non_serialized_versions][column_name]
         end
       end

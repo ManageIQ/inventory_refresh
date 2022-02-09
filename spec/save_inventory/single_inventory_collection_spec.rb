@@ -203,7 +203,7 @@ describe InventoryRefresh::SaveInventory do
 
       it 'deletes missing and creates new VMs' do
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
-        %w(1 3).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
+        %w[1 3].each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
@@ -236,7 +236,7 @@ describe InventoryRefresh::SaveInventory do
 
       it 'disconnects a missing VM instead of deleting it' do
         # Fill the InventoryCollections with data, that have a modified name, new VM and a missing VM
-        %w(1 3).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
+        %w[1 3].each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
@@ -282,7 +282,7 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :attributes_blacklist => %i(ems_ref uid_ems name location)
+            :attributes_blacklist => %i[ems_ref uid_ems name location]
           )
         end
         # Check that :name and :location do have validate presence, those attributes will not be blacklisted
@@ -298,10 +298,10 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :attributes_blacklist => %i(ems_ref uid_ems name location vendor raw_power_state)
+            :attributes_blacklist => %i[ems_ref uid_ems name location vendor raw_power_state]
           )
         end
-        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor uid_ems raw_power_state))
+        expect(@persister.vms.attributes_blacklist).to match_array(%i[vendor uid_ems raw_power_state])
       end
 
       it 'has fixed and internal attributes amongst whitelisted_attributes with default manager_ref' do
@@ -309,29 +309,29 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :attributes_whitelist => %i(raw_power_state ext_management_system)
+            :attributes_whitelist => %i[raw_power_state ext_management_system]
           )
         end
 
-        expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+        expect(@persister.vms.attributes_whitelist).to match_array(%i[__feedback_edge_set_parent
                                                                       __parent_inventory_collections
                                                                       __all_manager_uuids_scope
                                                                       ems_ref
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system))
+                                                                      ext_management_system])
       end
 
       it 'does not blacklist fixed attributes when changing manager_ref' do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :manager_ref          => %i(uid_ems),
-            :attributes_blacklist => %i(ems_ref uid_ems name location vendor raw_power_state)
+            :manager_ref          => %i[uid_ems],
+            :attributes_blacklist => %i[ems_ref uid_ems name location vendor raw_power_state]
           )
         end
-        expect(@persister.vms.attributes_blacklist).to match_array(%i(vendor ems_ref raw_power_state))
+        expect(@persister.vms.attributes_blacklist).to match_array(%i[vendor ems_ref raw_power_state])
       end
 
       it 'has fixed and internal attributes amongst whitelisted_attributes when changing manager_ref' do
@@ -339,25 +339,25 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :manager_ref          => %i(uid_ems),
-            :attributes_whitelist => %i(raw_power_state ext_management_system)
+            :manager_ref          => %i[uid_ems],
+            :attributes_whitelist => %i[raw_power_state ext_management_system]
           )
         end
-        expect(@persister.vms.attributes_whitelist).to match_array(%i(__feedback_edge_set_parent
+        expect(@persister.vms.attributes_whitelist).to match_array(%i[__feedback_edge_set_parent
                                                                       __parent_inventory_collections
                                                                       __all_manager_uuids_scope
                                                                       uid_ems
                                                                       name
                                                                       location
                                                                       raw_power_state
-                                                                      ext_management_system))
+                                                                      ext_management_system])
       end
 
       it 'saves all attributes with blacklist and whitelist disabled' do
         # Initialize the InventoryCollections
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
-            :model_class => ManageIQ::Providers::CloudManager::Vm,
+            :model_class => ManageIQ::Providers::CloudManager::Vm
           )
         end
 
@@ -396,7 +396,7 @@ describe InventoryRefresh::SaveInventory do
         @persister.add_collection(:vms) do |builder|
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
-            :attributes_blacklist => %i(name location raw_power_state)
+            :attributes_blacklist => %i[name location raw_power_state]
           )
         end
         # Fill the InventoryCollections with data, that have a modified name, new VM and a missing VM
@@ -435,7 +435,7 @@ describe InventoryRefresh::SaveInventory do
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
             # TODO(lsmola) vendor is not getting caught by fixed attributes
-            :attributes_whitelist => %i(uid_ems vendor ext_management_system ems_id)
+            :attributes_whitelist => %i[uid_ems vendor ext_management_system ems_id]
           )
         end
 
@@ -475,8 +475,8 @@ describe InventoryRefresh::SaveInventory do
           builder.add_properties(
             :model_class          => ManageIQ::Providers::CloudManager::Vm,
             # TODO(lsmola) vendor is not getting caught by fixed attributes
-            :attributes_whitelist => %i(uid_ems raw_power_state vendor ems_id ext_management_system),
-            :attributes_blacklist => %i(name ems_ref raw_power_state)
+            :attributes_whitelist => %i[uid_ems raw_power_state vendor ems_id ext_management_system],
+            :attributes_blacklist => %i[name ems_ref raw_power_state]
           )
         end
         # Fill the InventoryCollections with data, that have a modified name, new VM and a missing VM
@@ -523,7 +523,7 @@ describe InventoryRefresh::SaveInventory do
 
       it 'updates only existing VMs and creates new VMs, does not delete or update missing VMs' do
         # Fill the InventoryCollections with data, that have a new VM
-        %w(1 3).each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
+        %w[1 3].each { |i| @persister.vms.build(vm_data(i).merge(:name => "vm_changed_name_#{i}")) }
 
         # Invoke the InventoryCollections saving
         InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
@@ -552,7 +552,7 @@ describe InventoryRefresh::SaveInventory do
           )
         end
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
-        %w(1 3).each do |i|
+        %w[1 3].each do |i|
           @persister.vms.build(vm_data(i).merge(:name                  => "vm_changed_name_#{i}",
                                                 :availability_zone     => availability_zone,
                                                 :ext_management_system => @ems))
@@ -582,7 +582,7 @@ describe InventoryRefresh::SaveInventory do
           )
         end
         # Fill the InventoryCollections with data, that have one new VM and are missing one VM
-        %w(1 3).each do |i|
+        %w[1 3].each do |i|
           @persister.vms.build(vm_data(i).merge(:name                  => "vm_changed_name_#{i}",
                                                 :cloud_tenant          => cloud_tenant,
                                                 :ext_management_system => @ems))
@@ -674,13 +674,13 @@ describe InventoryRefresh::SaveInventory do
         assert_all_records_match_hashes(
           [@ems.vms],
           {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
-          {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_name_2", :location => "vm_location_2"},
+          {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_name_2", :location => "vm_location_2"}
         )
       end
     end
   end
 
-  %i(default batch).each do |saver_strategy|
+  %i[default batch].each do |saver_strategy|
     context "testing reconnect logic with saver_strategy: :#{saver_strategy}" do
       it 'reconnects existing VM' do
         # Fill DB with test Vms
@@ -712,7 +712,7 @@ describe InventoryRefresh::SaveInventory do
           builder.add_properties(
             :model_class            => ManageIQ::Providers::CloudManager::Vm,
             :saver_strategy         => saver_strategy,
-            :custom_reconnect_block => vms_custom_reconnect_block,
+            :custom_reconnect_block => vms_custom_reconnect_block
           )
         end
         # Fill the InventoryCollections with data, that have a modified name

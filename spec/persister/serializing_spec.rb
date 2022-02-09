@@ -11,7 +11,7 @@ describe InventoryRefresh::Persister do
   #
   before do
     @ems = FactoryBot.create(:ems_cloud,
-                              :network_manager => FactoryBot.create(:ems_network))
+                             :network_manager => FactoryBot.create(:ems_network))
   end
 
   it "tests we can serialize inventory object with nested lazy references" do
@@ -99,7 +99,7 @@ describe InventoryRefresh::Persister do
         {:hardware => lazy_find_hardware, :description => "public"},
         {:key     => :hostname,
          :default => 'default_value_unknown'}
-      ),
+      )
     )
 
     @hardware_data1 = hardware_data(1).merge(
@@ -113,11 +113,11 @@ describe InventoryRefresh::Persister do
     )
 
     @public_network_data1 = public_network_data(1).merge(
-      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm),
+      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
     )
 
     @disk_data1 = disk_data(1).merge(
-      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm),
+      :hardware => persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm)
     )
 
     persister.miq_templates.build(@image_data1)

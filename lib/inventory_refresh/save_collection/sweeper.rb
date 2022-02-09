@@ -27,10 +27,7 @@ module InventoryRefresh::SaveCollection
 
       def in_scope?(inventory_collection, sweep_scope)
         return true unless sweep_scope
-
-        if sweep_scope.kind_of?(Array)
-          return true if sweep_scope.include?(inventory_collection&.name&.to_s)
-        end
+        return true if sweep_scope.kind_of?(Array) && sweep_scope.include?(inventory_collection&.name&.to_s)
 
         false
       end

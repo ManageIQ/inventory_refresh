@@ -7,7 +7,7 @@ class TestCollector
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
-      (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
+      (index_start * batch_size..(((index_start + 1) * batch_size) - 1)).each do |index|
         parse_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
                                       resource_version)
       end
@@ -20,7 +20,7 @@ class TestCollector
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
-      (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
+      (index_start * batch_size..(((index_start + 1) * batch_size) - 1)).each do |index|
         parse_another_partial_container_group(index, persister, settings, incremented_counter(settings, version, index),
                                               resource_version)
       end
@@ -33,7 +33,7 @@ class TestCollector
       ems = ExtManagementSystem.find_by(:name => ems_name)
       persister ||= new_persister(ems)
 
-      (index_start * batch_size..((index_start + 1) * batch_size - 1)).each do |index|
+      (index_start * batch_size..(((index_start + 1) * batch_size) - 1)).each do |index|
         parse_container_group(index, persister, settings, incremented_counter(settings, version, index), resource_version)
       end
 

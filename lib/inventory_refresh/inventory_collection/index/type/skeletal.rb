@@ -47,6 +47,7 @@ module InventoryRefresh
           def skeletonize_primary_index(index_value)
             inventory_object = primary_index.delete(index_value)
             return unless inventory_object
+
             fill_versions!(inventory_object.data)
 
             index[index_value] = inventory_object

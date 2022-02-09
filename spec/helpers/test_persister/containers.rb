@@ -2,7 +2,7 @@ require_relative '../test_persister'
 
 class TestPersister::Containers < ::TestPersister
   def initialize_inventory_collections
-    %i(containers
+    %i[containers
        container_build_pods
        container_groups
        container_image_registries
@@ -10,8 +10,7 @@ class TestPersister::Containers < ::TestPersister
        container_nodes
        container_projects
        container_replicators
-       nested_containers).each do |name|
-
+       nested_containers].each do |name|
       add_collection(name, container)
     end
   end

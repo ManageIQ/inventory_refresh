@@ -80,7 +80,7 @@ module InventoryRefresh::SaveCollection
       #        to fetch ApplicationRecord objects from the DB
       def legacy_destroy_records!(records)
         # Is the delete_method rails standard deleting method?
-        rails_delete = %i(destroy delete).include?(inventory_collection.delete_method)
+        rails_delete = %i[destroy delete].include?(inventory_collection.delete_method)
         if !rails_delete && inventory_collection.model_class.respond_to?(inventory_collection.delete_method)
           # We have custom delete method defined on a class, that means it supports batch destroy
           inventory_collection.store_deleted_records(records.map { |x| {:id => record_key(x, primary_key)} })

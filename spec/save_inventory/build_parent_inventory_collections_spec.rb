@@ -12,7 +12,7 @@ describe InventoryRefresh::SaveInventory do
   #
   before do
     @ems = FactoryBot.create(:ems_cloud,
-                              :network_manager => FactoryBot.create(:ems_network))
+                             :network_manager => FactoryBot.create(:ems_network))
   end
 
   let(:persister_class) { ::TestPersister::Cloud }
@@ -24,13 +24,13 @@ describe InventoryRefresh::SaveInventory do
       x.add_properties(:model_class => VmOrTemplate)
     end
     persister.add_collection(:hardwares) do |x|
-      x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => %i(vms_and_templates))
+      x.add_properties(:manager_ref => %i[vm_or_template], :parent_inventory_collections => %i[vms_and_templates])
     end
     persister.add_collection(:disks) do |x|
-      x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => %i(vms_and_templates))
+      x.add_properties(:manager_ref => %i[hardware device_name], :parent_inventory_collections => %i[vms_and_templates])
     end
     persister.add_collection(:networks) do |x|
-      x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => %i(vms_and_templates))
+      x.add_properties(:manager_ref => %i[hardware description], :parent_inventory_collections => %i[vms_and_templates])
     end
 
     indexed_ics = persister.inventory_collections.index_by(&:name)
@@ -68,13 +68,13 @@ describe InventoryRefresh::SaveInventory do
       x.add_properties(:model_class => VmOrTemplate)
     end
     persister.add_collection(:hardwares) do |x|
-      x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => nil)
+      x.add_properties(:manager_ref => %i[vm_or_template], :parent_inventory_collections => nil)
     end
     persister.add_collection(:disks) do |x|
-      x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => nil)
+      x.add_properties(:manager_ref => %i[hardware device_name], :parent_inventory_collections => nil)
     end
     persister.add_collection(:networks) do |x|
-      x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => nil)
+      x.add_properties(:manager_ref => %i[hardware description], :parent_inventory_collections => nil)
     end
 
     indexed_ics = persister.inventory_collections.index_by(&:name)
@@ -116,13 +116,13 @@ describe InventoryRefresh::SaveInventory do
       x.add_properties(:model_class => VmOrTemplate, :parent_inventory_collections => [])
     end
     persister.add_collection(:hardwares) do |x|
-      x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => [])
+      x.add_properties(:manager_ref => %i[vm_or_template], :parent_inventory_collections => [])
     end
     persister.add_collection(:disks) do |x|
-      x.add_properties(:manager_ref => %i(hardware device_name), :parent_inventory_collections => [])
+      x.add_properties(:manager_ref => %i[hardware device_name], :parent_inventory_collections => [])
     end
     persister.add_collection(:networks) do |x|
-      x.add_properties(:manager_ref => %i(hardware description), :parent_inventory_collections => [])
+      x.add_properties(:manager_ref => %i[hardware description], :parent_inventory_collections => [])
     end
 
     indexed_ics = persister.inventory_collections.index_by(&:name)
@@ -141,7 +141,7 @@ describe InventoryRefresh::SaveInventory do
 
   it "checks error is thrown for non-existent inventory collection" do
     persister.add_collection(:hardwares) do |x|
-      x.add_properties(:manager_ref => %i(vm_or_template), :parent_inventory_collections => %i(random_name))
+      x.add_properties(:manager_ref => %i[vm_or_template], :parent_inventory_collections => %i[random_name])
     end
 
     expect { InventoryRefresh::InventoryCollection::Scanner.scan!(persister.inventory_collections) }.to(

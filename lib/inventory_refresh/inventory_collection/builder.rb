@@ -4,17 +4,39 @@ module InventoryRefresh
       class MissingModelClassError < StandardError; end
 
       def self.allowed_properties
-        %i(all_manager_uuids            arel                    association
-           attributes_blacklist         attributes_whitelist    batch_extra_attributes
-           complete                     create_only             custom_save_block
-           custom_reconnect_block       default_values          delete_method
-           dependency_attributes        check_changed           inventory_object_attributes
-           manager_ref                  manager_ref_allowed_nil manager_uuids
-           model_class                  name                    parent
-           parent_inventory_collections retention_strategy      strategy
-           saver_strategy               secondary_refs          targeted
-           targeted_arel                update_only             use_ar_object
-           assert_graph_integrity).to_set
+        %i[
+          all_manager_uuids
+          arel
+          association
+          attributes_blacklist
+          attributes_whitelist
+          batch_extra_attributes
+          complete
+          create_only
+          custom_save_block
+          custom_reconnect_block
+          default_values
+          delete_method
+          dependency_attributes
+          check_changed
+          inventory_object_attributes
+          manager_ref
+          manager_ref_allowed_nil
+          manager_uuids
+          model_class
+          name
+          parent
+          parent_inventory_collections
+          retention_strategy
+          strategy
+          saver_strategy
+          secondary_refs
+          targeted
+          targeted_arel
+          update_only
+          use_ar_object
+          assert_graph_integrity
+        ].to_set
       end
 
       def allowed_properties
@@ -76,8 +98,8 @@ module InventoryRefresh
 
         send(@name.to_sym) if @name.respond_to?(:to_sym) && respond_to?(@name.to_sym)
 
-        if @properties[:model_class].nil?
-          add_properties(:model_class => auto_model_class) unless @options[:without_model_class]
+        if @properties[:model_class].nil? && !(@options[:without_model_class])
+          add_properties(:model_class => auto_model_class)
         end
       end
 
@@ -177,7 +199,7 @@ module InventoryRefresh
 
       def assert_allowed_property(name)
         unless allowed_properties.include?(name)
-          raise "InventoryCollection property :#{name} is not allowed. Allowed properties are:\n#{self.allowed_properties.to_a.map(&:to_s).join(', ')}"
+          raise "InventoryCollection property :#{name} is not allowed. Allowed properties are:\n#{allowed_properties.to_a.map(&:to_s).join(', ')}"
         end
       end
 
@@ -216,7 +238,7 @@ module InventoryRefresh
       def auto_inventory_attributes
         return if @properties[:model_class].nil?
 
-        (@properties[:model_class].new.methods - ar_base_class.methods).grep(/^[\w]+?\=$/).collect do |setter|
+        (@properties[:model_class].new.methods - ar_base_class.methods).grep(/^\w+?=$/).collect do |setter|
           setter.to_s[0..setter.length - 2].to_sym
         end
       end

@@ -23,7 +23,7 @@ module InventoryRefresh::SaveCollection
         connection = get_connection
 
         # We want to ignore create timestamps when updating
-        all_attribute_keys_array = all_attribute_keys.to_a.delete_if { |x| %i(created_at created_on).include?(x) }
+        all_attribute_keys_array = all_attribute_keys.to_a.delete_if { |x| %i[created_at created_on].include?(x) }
         all_attribute_keys_array << :id
 
         # If there is not version attribute, the version conditions will be ignored

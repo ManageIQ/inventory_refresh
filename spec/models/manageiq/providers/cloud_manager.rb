@@ -6,7 +6,7 @@ module ManageIQ
       has_many :availability_zones, :foreign_key => :ems_id
       has_many :cloud_tenants, :foreign_key => :ems_id
       has_many :flavors, :foreign_key => :ems_id
-      has_many :key_pairs, :class_name  => "AuthKeyPair", :as => :resource
+      has_many :key_pairs, :class_name => "AuthKeyPair", :as => :resource
       has_many :orchestration_stacks, :foreign_key => :ems_id
       has_many :orchestration_stacks_resources, :through => :orchestration_stacks, :source => :resources
       has_one :network_manager,

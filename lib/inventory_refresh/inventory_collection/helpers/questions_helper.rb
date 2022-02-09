@@ -52,13 +52,14 @@ module InventoryRefresh
 
         # @return [Boolean] true if we are using a saver strategy that allows saving in parallel processes
         def parallel_safe?
-          @parallel_safe_cache ||= %i(concurrent_safe concurrent_safe_batch).include?(saver_strategy)
+          return @parallel_safe unless @parallel_safe.nil?
+          @parallel_safe = %i[concurrent_safe concurrent_safe_batch].include?(saver_strategy)
         end
 
         # @return [Boolean] true if the model_class supports STI
         def supports_sti?
-          @supports_sti_cache = model_class&.column_names.to_a.include?("type") if @supports_sti_cache.nil?
-          @supports_sti_cache
+          return @supports_sti unless @supports_sti.nil?
+          @supports_sti = model_class&.column_names.to_a.include?("type")
         end
 
         # @param column_name [Symbol, String]
@@ -68,7 +69,7 @@ module InventoryRefresh
           return @supported_cols_cache[column_name.to_sym] unless @supported_cols_cache[column_name.to_sym].nil?
 
           include_col = model_class&.column_names.to_a.include?(column_name.to_s)
-          if %w(created_on created_at updated_on updated_at).include?(column_name.to_s)
+          if %w[created_on created_at updated_on updated_at].include?(column_name.to_s)
             include_col &&= ActiveRecord::Base.record_timestamps
           end
 

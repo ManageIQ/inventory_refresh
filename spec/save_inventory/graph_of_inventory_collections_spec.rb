@@ -401,7 +401,7 @@ describe InventoryRefresh::SaveInventory do
       @persister.add_collection(:network_ports) do |builder|
         builder.add_properties(
           :model_class => NetworkPort,
-          :parent      => @ems.network_manager,
+          :parent      => @ems.network_manager
         )
       end
       initialize_inventory_collections(:reversed => true)
@@ -452,7 +452,7 @@ describe InventoryRefresh::SaveInventory do
       @persister.add_collection(:network_ports) do |builder|
         builder.add_properties(
           :model_class => NetworkPort,
-          :parent      => @ems.network_manager,
+          :parent      => @ems.network_manager
         )
       end
 
@@ -807,7 +807,7 @@ describe InventoryRefresh::SaveInventory do
     (opts[:reversed] ? collections.reverse : collections).each do |params|
       @persister.add_collection(params[0]) do |builder|
         builder.add_properties(
-          :model_class => params[1],
+          :model_class => params[1]
         )
       end
     end
@@ -816,7 +816,7 @@ describe InventoryRefresh::SaveInventory do
       @persister.add_collection(:network_ports) do |builder|
         builder.add_properties(
           :model_class => NetworkPort,
-          :parent      => @ems.network_manager,
+          :parent      => @ems.network_manager
         )
       end
     end
@@ -915,41 +915,41 @@ describe InventoryRefresh::SaveInventory do
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("1_11").merge(
         :ems_ref => orchestration_stack_data("1_11")[:ems_ref],
-        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("1_11_1").merge(
-        :stack => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+        :stack => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("1_12").merge(
         :ems_ref => orchestration_stack_data("1_12")[:ems_ref],
-        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("1_12_1").merge(
-        :stack => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+        :stack => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("11_21").merge(
         :ems_ref => orchestration_stack_data("11_21")[:ems_ref],
-        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_11")[:ems_ref]),
+        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_11")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("12_22").merge(
         :ems_ref => orchestration_stack_data("12_22")[:ems_ref],
-        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_12")[:ems_ref]),
+        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_12")[:ems_ref])
       )
     )
     @persister.orchestration_stacks_resources.build(
       orchestration_stack_resource_data("12_23").merge(
         :ems_ref => orchestration_stack_data("12_23")[:ems_ref],
-        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_12")[:ems_ref]),
+        :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("1_12")[:ems_ref])
       )
     )
   end
@@ -1009,47 +1009,47 @@ describe InventoryRefresh::SaveInventory do
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_11").merge(
         :ems_ref => orchestration_stack_data("1_11")[:ems_ref],
-        :stack   => @orchestration_stack_0_1,
+        :stack   => @orchestration_stack_0_1
       )
     )
     @orchestration_stack_resource_1_11_1 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_11_1").merge(
-        :stack => @orchestration_stack_0_1,
+        :stack => @orchestration_stack_0_1
       )
     )
     @orchestration_stack_resource_1_12 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_12").merge(
         :ems_ref => orchestration_stack_data("1_12")[:ems_ref],
-        :stack   => @orchestration_stack_0_1,
+        :stack   => @orchestration_stack_0_1
       )
     )
     @orchestration_stack_resource_1_12_1 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("1_12_1").merge(
-        :stack => @orchestration_stack_0_1,
+        :stack => @orchestration_stack_0_1
       )
     )
     @orchestration_stack_resource_11_21 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("11_21").merge(
         :ems_ref => orchestration_stack_data("11_21")[:ems_ref],
-        :stack   => @orchestration_stack_1_11,
+        :stack   => @orchestration_stack_1_11
       )
     )
     @orchestration_stack_resource_12_22 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("12_22").merge(
         :ems_ref => orchestration_stack_data("12_22")[:ems_ref],
-        :stack   => @orchestration_stack_1_12,
+        :stack   => @orchestration_stack_1_12
       )
     )
     @orchestration_stack_resource_12_23 = FactoryBot.create(
       :orchestration_stack_resource,
       orchestration_stack_resource_data("12_23").merge(
         :ems_ref => orchestration_stack_data("12_23")[:ems_ref],
-        :stack   => @orchestration_stack_1_12,
+        :stack   => @orchestration_stack_1_12
       )
     )
   end

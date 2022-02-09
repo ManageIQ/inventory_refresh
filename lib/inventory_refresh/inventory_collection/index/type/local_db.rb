@@ -31,6 +31,7 @@ module InventoryRefresh
               return index[reference.stringified_reference]
             else
               return index[reference.stringified_reference] if index && index[reference.stringified_reference]
+
               # We haven't found the reference, lets add it to the list of references and load it
               add_reference(reference)
             end
@@ -271,6 +272,7 @@ module InventoryRefresh
               # and find used in parser
               # TODO(lsmola) the last usage of this should be lazy_find_by with :key specified, maybe we can get rid of this?
               next unless (foreign_key = association_to_foreign_key_mapping[ref])
+
               base_class_name = attributes[association_to_foreign_type_mapping[ref].try(:to_sym)] || association_to_base_class_mapping[ref]
               id              = attributes[foreign_key.to_sym]
               attributes[ref] = InventoryRefresh::ApplicationRecordReference.new(base_class_name, id)

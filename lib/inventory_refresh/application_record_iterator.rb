@@ -26,11 +26,9 @@ module InventoryRefresh
     #
     # @param batch_size [Integer] A batch size we want to fetch from DB
     # @yield Code processing the batches
-    def find_in_batches(batch_size: 1000)
+    def find_in_batches(batch_size: 1000, &block)
       if iterator
-        iterator.call do |batch|
-          yield(batch)
-        end
+        iterator.call(&block)
       elsif query
         manager_uuids_set.each_slice(batch_size) do |batch|
           yield(query.where(inventory_collection.targeted_selection_for(batch)))
@@ -45,11 +43,9 @@ module InventoryRefresh
     # Iterator that mimics find_each of ActiveRecord::Relation using find_in_batches (see #find_in_batches)
     #
     # @yield Code processing the batches
-    def find_each
+    def find_each(&block)
       find_in_batches do |batch|
-        batch.each do |item|
-          yield(item)
-        end
+        batch.each(&block)
       end
     end
   end

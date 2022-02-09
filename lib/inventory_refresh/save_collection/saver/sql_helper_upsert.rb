@@ -19,7 +19,7 @@ module InventoryRefresh::SaveCollection
       #        columns of a row, :partial is when we save only few columns, so a partial row.
       # @param on_conflict [Symbol, NilClass] defines behavior on conflict with unique index constraint, allowed values
       #        are :do_update, :do_nothing, nil
-      def build_insert_query(all_attribute_keys, hashes, on_conflict: nil, mode:, column_name: nil)
+      def build_insert_query(all_attribute_keys, hashes, mode:, on_conflict: nil, column_name: nil)
         logger.debug("Building insert query for #{inventory_collection} of size #{inventory_collection.size}...")
 
         # Cache the connection for the batch
@@ -65,11 +65,12 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_on_conflict_do(on_conflict)
-        if on_conflict == :do_nothing
+        case on_conflict
+        when :do_nothing
           <<-SQL
             ON CONFLICT DO NOTHING
           SQL
-        elsif on_conflict == :do_update
+        when :do_update
           index_where_condition = unique_index_for(unique_index_keys).where
           where_to_sql          = index_where_condition ? "WHERE #{index_where_condition}" : ""
 
@@ -107,10 +108,12 @@ module InventoryRefresh::SaveCollection
       end
 
       def insert_query_on_conflict_update_mode(mode, version_attribute, column_name)
-        if mode == :full
+        case mode
+        when :full
           full_update_condition(version_attribute)
-        elsif mode == :partial
+        when :partial
           raise "Column name must be provided" unless column_name
+
           partial_update_condition(version_attribute, column_name)
         end
       end
@@ -137,9 +140,10 @@ module InventoryRefresh::SaveCollection
       def partial_update_condition(attr_full, column_name)
         attr_partial     = attr_full.to_s.pluralize # Changes resource_counter/timestamp to resource_counters/timestamps
         attr_partial_max = "#{attr_partial}_max"
-        cast             = if attr_full == :resource_timestamp
+        cast             = case attr_full
+                           when :resource_timestamp
                              "timestamp"
-                           elsif attr_full == :resource_counter
+                           when :resource_counter
                              "integer"
                            end
 

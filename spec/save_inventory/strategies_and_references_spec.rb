@@ -11,11 +11,11 @@ describe InventoryRefresh::SaveInventory do
   # Spec scenarios for different strategies and optimizations using references
   ######################################################################################################################
 
-  %i(local_db_find_references local_db_cache_all).each do |db_strategy|
+  %i[local_db_find_references local_db_cache_all].each do |db_strategy|
     context "with db strategy #{db_strategy}" do
       before do
         @ems = FactoryBot.create(:ems_cloud,
-                                  :network_manager => FactoryBot.create(:ems_network))
+                                 :network_manager => FactoryBot.create(:ems_network))
 
         allow(@ems.class).to receive(:ems_type).and_return(:mock)
         @persister = persister_class.new(@ems, InventoryRefresh::TargetCollection.new(:manager => @ems))
@@ -58,7 +58,7 @@ describe InventoryRefresh::SaveInventory do
           vm_data(1).merge(
             :flavor    => @flavor_1,
             :key_pairs => [@key_pair1],
-            :location  => 'host_10_10_10_1.com',
+            :location  => 'host_10_10_10_1.com'
           )
         )
         @vm12 = FactoryBot.create(
@@ -66,7 +66,7 @@ describe InventoryRefresh::SaveInventory do
           vm_data(12).merge(
             :flavor    => @flavor1,
             :key_pairs => [@key_pair1, @key_pair12],
-            :location  => 'host_10_10_10_12.com',
+            :location  => 'host_10_10_10_12.com'
           )
         )
         @vm2 = FactoryBot.create(
@@ -74,7 +74,7 @@ describe InventoryRefresh::SaveInventory do
           vm_data(2).merge(
             :flavor    => @flavor2,
             :key_pairs => [@key_pair2],
-            :location  => 'host_10_10_10_2.com',
+            :location  => 'host_10_10_10_2.com'
           )
         )
         @vm4 = FactoryBot.create(
@@ -137,8 +137,8 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it "tests that a key pointing to a relation is filled correctly when coming from db" do
-        vm_refs = %w(vm_ems_ref_3 vm_ems_ref_4)
-        network_port_refs = %w(network_port_ems_ref_1)
+        vm_refs = %w[vm_ems_ref_3 vm_ems_ref_4]
+        network_port_refs = %w[network_port_ems_ref_1]
 
         # Setup InventoryCollections
 
@@ -155,7 +155,7 @@ describe InventoryRefresh::SaveInventory do
         hardwares_init_data(
           :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
           :strategy                     => db_strategy,
-          :parent_inventory_collections => %i(vms)
+          :parent_inventory_collections => %i[vms]
         )
 
         # Parse data for InventoryCollections
@@ -182,7 +182,7 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it "tests that a key pointing to a polymorphic relation is filled correctly when coming from db" do
-        network_port_refs = %w(network_port_ems_ref_1)
+        network_port_refs = %w[network_port_ems_ref_1]
 
         # Setup InventoryCollections
         network_ports_init_data(
@@ -220,8 +220,8 @@ describe InventoryRefresh::SaveInventory do
       end
 
       it "saves records correctly with complex interconnection" do
-        vm_refs           = %w(vm_ems_ref_3 vm_ems_ref_4)
-        network_port_refs = %w(network_port_ems_ref_1 network_port_ems_ref_12)
+        vm_refs           = %w[vm_ems_ref_3 vm_ems_ref_4]
+        network_port_refs = %w[network_port_ems_ref_1 network_port_ems_ref_12]
 
         # Setup InventoryCollections
         miq_templates_init_data(
@@ -239,12 +239,12 @@ describe InventoryRefresh::SaveInventory do
         )
         vms_init_data(
           :arel     => @ems.vms.where(:ems_ref => vm_refs),
-          :strategy => :local_db_find_missing_references,
+          :strategy => :local_db_find_missing_references
         )
         hardwares_init_data(
           :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
           :strategy                     => :local_db_find_missing_references,
-          :parent_inventory_collections => %i(vms)
+          :parent_inventory_collections => %i[vms]
         )
         network_ports_init_data(
           :parent   => @ems.network_manager,

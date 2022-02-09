@@ -30,7 +30,7 @@ describe InventoryRefresh::Persister do
             1,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(1)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
         persister.container_groups.build(
@@ -38,7 +38,7 @@ describe InventoryRefresh::Persister do
             2,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(2)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
         persister.container_groups.build(
@@ -46,7 +46,7 @@ describe InventoryRefresh::Persister do
             3,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(3)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
 
@@ -57,7 +57,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container_group   => 3,
-          :container_project => 2,
+          :container_project => 2
         )
 
         expect(persister.container_groups.unconnected_edges.size).to eq(1)
@@ -79,7 +79,7 @@ describe InventoryRefresh::Persister do
             1,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(1)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
         persister.container_groups.build(
@@ -87,7 +87,7 @@ describe InventoryRefresh::Persister do
             2,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(2)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
         persister.container_groups.build(
@@ -95,7 +95,7 @@ describe InventoryRefresh::Persister do
             3,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(3)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
 
@@ -106,7 +106,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container_group   => 3,
-          :container_project => 2,
+          :container_project => 2
         )
 
         expect(persister.container_groups.unconnected_edges.size).to eq(1)
@@ -128,7 +128,7 @@ describe InventoryRefresh::Persister do
             1,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(1)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
         persister.container_groups.build_partial(
@@ -136,7 +136,7 @@ describe InventoryRefresh::Persister do
             2,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(2)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
         persister.container_groups.build_partial(
@@ -144,7 +144,7 @@ describe InventoryRefresh::Persister do
             3,
             :container_project => persister.container_projects.lazy_find(
               {:name => container_project_data(3)[:name]}, {:ref => :by_name}
-            ),
+            )
           )
         )
 
@@ -155,7 +155,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container_group   => 3,
-          :container_project => 2,
+          :container_project => 2
         )
 
         expect(persister.container_groups.unconnected_edges.size).to eq(1)
@@ -177,7 +177,7 @@ describe InventoryRefresh::Persister do
             1,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(1)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
         persister.container_groups.build_partial(
@@ -185,7 +185,7 @@ describe InventoryRefresh::Persister do
             2,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(2)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
         persister.container_groups.build_partial(
@@ -193,7 +193,7 @@ describe InventoryRefresh::Persister do
             3,
             :dns_policy => persister.container_projects.lazy_find(
               {:name => container_project_data(3)[:name]}, {:ref => :by_name, :key => :display_name}
-            ),
+            )
           )
         )
 
@@ -204,7 +204,7 @@ describe InventoryRefresh::Persister do
         # Assert container_group and container_image are pre-created using the lazy_find data
         assert_containers_counts(
           :container_group   => 3,
-          :container_project => 2,
+          :container_project => 2
         )
 
         expect(persister.container_groups.unconnected_edges.size).to eq(1)

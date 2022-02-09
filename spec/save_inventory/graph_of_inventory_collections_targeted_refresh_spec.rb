@@ -45,7 +45,7 @@ describe InventoryRefresh::SaveInventory do
 
     ### Second refresh ###
     # Initialize the InventoryCollections and data for a new VM hardware and disks
-    initialize_inventory_collections(%i(vms hardwares disks))
+    initialize_inventory_collections(%i[vms hardwares disks])
 
     @vm_data_3 = vm_data(3).merge(
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
@@ -132,7 +132,7 @@ describe InventoryRefresh::SaveInventory do
 
     ### Second refresh ###
     # Initialize the InventoryCollections and data for a new VM
-    initialize_inventory_collections(%i(vms hardwares))
+    initialize_inventory_collections(%i[vms hardwares])
 
     @vm_data_3 = vm_data(3).merge(
       :key_pairs => [@persister.key_pairs.lazy_find(key_pair_data(2)[:name])]
@@ -160,12 +160,12 @@ describe InventoryRefresh::SaveInventory do
 
     @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
 
-    initialize_inventory_collections(%i(disks))
+    initialize_inventory_collections(%i[disks])
 
     @persister.add_collection(:disks) do |builder|
       builder.add_properties(
         :parent                       => @vm3,
-        :manager_ref                  => %i(hardware device_name),
+        :manager_ref                  => %i[hardware device_name],
         :parent_inventory_collections => []
       )
     end
@@ -231,10 +231,10 @@ describe InventoryRefresh::SaveInventory do
 
     @vm3 = Vm.find_by(:ems_ref => "vm_ems_ref_3")
 
-    initialize_inventory_collections(%i(disks))
+    initialize_inventory_collections(%i[disks])
     @persister.add_collection(:disks) do |builder|
       builder.add_properties(:parent                       => @vm3,
-                             :manager_ref                  => %i(hardware device_name),
+                             :manager_ref                  => %i[hardware device_name],
                              :parent_inventory_collections => [])
     end
     @disk_data_3 = disk_data(3).merge(
@@ -308,9 +308,9 @@ describe InventoryRefresh::SaveInventory do
 
     ### Second refresh ###
     # Do a targeted refresh for couple of VMs, hardwares and disks using arel comparison
-    initialize_inventory_collections(%i(vms hardwares disks))
+    initialize_inventory_collections(%i[vms hardwares disks])
 
-    vm_refs = %w(vm_ems_ref_3 vm_ems_ref_4)
+    vm_refs = %w[vm_ems_ref_3 vm_ems_ref_4]
 
     vms_init_data(
       :arel => @ems.vms.where(:ems_ref => vm_refs)
@@ -319,13 +319,13 @@ describe InventoryRefresh::SaveInventory do
     hardwares_init_data(
       :arel                         => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
       :strategy                     => :local_db_find_missing_references,
-      :manager_ref                  => %i(vm_or_template),
-      :parent_inventory_collections => %i(vms)
+      :manager_ref                  => %i[vm_or_template],
+      :parent_inventory_collections => %i[vms]
     )
 
     disks_init_data(
       :arel                         => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-      :parent_inventory_collections => %i(vms)
+      :parent_inventory_collections => %i[vms]
     )
 
     @vm_data_3 = vm_data(3).merge(
@@ -403,23 +403,23 @@ describe InventoryRefresh::SaveInventory do
 
     ### Third refresh ###
     # Do a targeted refresh again with some new data and some data missing
-    initialize_inventory_collections(%i(vms hardwares disks))
+    initialize_inventory_collections(%i[vms hardwares disks])
 
-    vm_refs = %w(vm_ems_ref_3 vm_ems_ref_5)
+    vm_refs = %w[vm_ems_ref_3 vm_ems_ref_5]
 
     @persister.add_collection(:vms) do |builder|
       builder.add_properties(
         :association => nil,
         :arel        => @ems.vms.where(:ems_ref => vm_refs),
-        :model_class => ManageIQ::Providers::CloudManager::Vm,
+        :model_class => ManageIQ::Providers::CloudManager::Vm
       )
     end
     @persister.add_collection(:hardwares) do |builder|
       builder.add_properties(
         :association => nil,
         :arel        => @ems.hardwares.joins(:vm_or_template).where(:vms => {:ems_ref => vm_refs}),
-        :manager_ref => %i(vm_or_template),
-        :model_class => Hardware,
+        :manager_ref => %i[vm_or_template],
+        :model_class => Hardware
       )
     end
     @persister.add_collection(:disks) do |builder|
@@ -427,17 +427,17 @@ describe InventoryRefresh::SaveInventory do
         :association => nil,
         :model_class => Disk,
         :arel        => @ems.disks.joins(:hardware => :vm_or_template).where('hardware' => {'vms' => {'ems_ref' => vm_refs}}),
-        :manager_ref => %i(hardware device_name),
+        :manager_ref => %i[hardware device_name]
       )
     end
     @persister.add_collection(:image_hardwares) do |builder|
       builder.add_properties(
         :association => nil,
         :arel        => @ems.hardwares,
-        :manager_ref => %i(vm_or_template),
+        :manager_ref => %i[vm_or_template],
         :model_class => Hardware,
         :name        => :image_hardwares,
-        :strategy    => :local_db_cache_all,
+        :strategy    => :local_db_cache_all
       )
     end
 
@@ -700,7 +700,7 @@ describe InventoryRefresh::SaveInventory do
   end
 
   def all_collections
-    %i(orchestration_stacks orchestration_stacks_resources vms miq_templates key_pairs hardwares disks)
+    %i[orchestration_stacks orchestration_stacks_resources vms miq_templates key_pairs hardwares disks]
   end
 
   def initialize_inventory_collection_data
@@ -720,11 +720,11 @@ describe InventoryRefresh::SaveInventory do
     )
     @orchestration_stack_resource_data_1_11 = orchestration_stack_resource_data("1_11").merge(
       :ems_ref => orchestration_stack_data("1_11")[:ems_ref],
-      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
     )
     @orchestration_stack_resource_data_1_12 = orchestration_stack_resource_data("1_12").merge(
       :ems_ref => orchestration_stack_data("1_12")[:ems_ref],
-      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref]),
+      :stack   => @persister.orchestration_stacks.lazy_find(orchestration_stack_data("0_1")[:ems_ref])
     )
 
     @key_pair_data_1  = key_pair_data(1)
