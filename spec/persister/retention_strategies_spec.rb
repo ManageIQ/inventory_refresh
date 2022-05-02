@@ -442,44 +442,41 @@ describe InventoryRefresh::Persister do
       :archived_vms           => 0
     )
 
-    lazy_find_vm1        = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
-    lazy_find_vm2        = persister.vms.lazy_find(:ems_ref => vm_data(2)[:ems_ref])
-    lazy_find_vm60       = persister.vms.lazy_find(:ems_ref => vm_data(60)[:ems_ref])
-    lazy_find_hardware1  = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm1)
-    lazy_find_hardware2  = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm2)
-    lazy_find_hardware60 = persister.hardwares.lazy_find(:vm_or_template => lazy_find_vm60)
+    lazy_find_vm1        = persister.vms.lazy_find({:ems_ref => vm_data(1)[:ems_ref]})
+    lazy_find_vm2        = persister.vms.lazy_find({:ems_ref => vm_data(2)[:ems_ref]})
+    lazy_find_vm60       = persister.vms.lazy_find({:ems_ref => vm_data(60)[:ems_ref]})
+    lazy_find_hardware1  = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm1})
+    lazy_find_hardware2  = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm2})
+    lazy_find_hardware60 = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm60})
 
     lazy_find_network1 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware1, :description => "public"},
-      {:key     => :hostname,
-       :default => 'default_value_unknown'}
+      :key     => :hostname,
+      :default => 'default_value_unknown'
     )
 
     lazy_find_network2 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware2, :description => "public"},
-      {:key     => :hostname,
-       :default => 'default_value_unknown'}
+      :key     => :hostname,
+      :default => 'default_value_unknown'
     )
 
     lazy_find_network60 = persister.networks.lazy_find(
       {:hardware => lazy_find_hardware60, :description => "public"},
-      {:key     => :hostname,
-       :default => 'default_value_unknown'}
+      :key     => :hostname,
+      :default => 'default_value_unknown'
     )
 
     vm_data1 = vm_data(1).merge(
-      :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network1
+      :flavor   => persister.flavors.lazy_find({:ems_ref => flavor_data(1)[:name], :location => lazy_find_network1})
     )
 
     vm_data2 = vm_data(2).merge(
-      :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network2
+      :flavor   => persister.flavors.lazy_find({:ems_ref => flavor_data(1)[:name], :location => lazy_find_network2})
     )
 
     vm_data60 = vm_data(60).merge(
-      :flavor   => persister.flavors.lazy_find(:ems_ref => flavor_data(1)[:name]),
-      :location => lazy_find_network60
+      :flavor   => persister.flavors.lazy_find({:ems_ref => flavor_data(1)[:name], :location => lazy_find_network60})
     )
 
     all_network_port_uuids = []
@@ -524,9 +521,9 @@ describe InventoryRefresh::Persister do
       :archived_vms           => 0
     )
 
-    lazy_find_vm1  = persister.vms.lazy_find(:ems_ref => vm_data(1)[:ems_ref])
-    lazy_find_vm2  = persister.vms.lazy_find(:ems_ref => vm_data(2)[:ems_ref])
-    lazy_find_vm60 = persister.vms.lazy_find(:ems_ref => vm_data(60)[:ems_ref])
+    lazy_find_vm1  = persister.vms.lazy_find({:ems_ref => vm_data(1)[:ems_ref]})
+    lazy_find_vm2  = persister.vms.lazy_find({:ems_ref => vm_data(2)[:ems_ref]})
+    lazy_find_vm60 = persister.vms.lazy_find({:ems_ref => vm_data(60)[:ems_ref]})
 
     vm_data1  = vm_data(1)
     vm_data2  = vm_data(2)

@@ -23,8 +23,8 @@ module InventoryRefresh
 
     # A Rails recommended interface for deserializing an object
     # @return [InventoryRefresh::Target] InventoryRefresh::Target instance
-    def self.load(*args)
-      new(*args)
+    def self.load(**args)
+      new(**args)
     end
 
     # A Rails recommended interface for serializing an object
