@@ -77,7 +77,6 @@ module InventoryRefresh
         end
 
         def find(reference, ref: primary_index_ref)
-          # TODO(lsmola) lazy_find will support only hash, then we can remove the _by variant
           # TODO(lsmola) this method should return lazy too, the rest of the finders should be deprecated
           return if reference.nil?
 
@@ -95,21 +94,9 @@ module InventoryRefresh
           end
         end
 
-        def find_by(manager_uuid_hash, ref: primary_index_ref)
-          # TODO(lsmola) deprecate this, it's enough to have find method
-          find(manager_uuid_hash, :ref => ref)
-        end
-
-        def lazy_find_by(manager_uuid_hash, ref: primary_index_ref, key: nil, default: nil)
-          # TODO(lsmola) deprecate this, it's enough to have lazy_find method
-
-          lazy_find(manager_uuid_hash, :ref => ref, :key => key, :default => default)
-        end
-
         def lazy_find(manager_uuid, ref: primary_index_ref, key: nil, default: nil, transform_nested_lazy_finds: false)
           # TODO(lsmola) also, it should be enough to have only 1 find method, everything can be lazy, until we try to
           # access the data
-          # TODO(lsmola) lazy_find will support only hash, then we can remove the _by variant
           return if manager_uuid.nil?
 
           assert_index(manager_uuid, ref)
