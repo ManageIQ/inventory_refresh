@@ -95,13 +95,14 @@ module InventoryRefresh
         end
 
         def lazy_find(manager_uuid = nil, ref: primary_index_ref, key: nil, default: nil, transform_nested_lazy_finds: false, **manager_uuid_hash)
+          # TODO(lsmola) also, it should be enough to have only 1 find method, everything can be lazy, until we try to
+          # access the data
+
+          # Skip if no manager_uuid is provided
+          return if manager_uuid.nil? && manager_uuid_hash.blank?
           raise ArgumentError, "only one of manager_uuid or manager_uuid_hash must be passed" unless !!manager_uuid ^ !!manager_uuid_hash.present?
 
           manager_uuid ||= manager_uuid_hash
-
-          # TODO(lsmola) also, it should be enough to have only 1 find method, everything can be lazy, until we try to
-          # access the data
-          return if manager_uuid.nil?
 
           assert_index(manager_uuid, ref)
 
