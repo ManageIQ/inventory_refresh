@@ -72,6 +72,37 @@ describe InventoryRefresh::Persister do
     expect(vm_lazy2.to_s).to eq("ems_ref")
   end
 
+  it "checks passing a hash manager_uuid and a hash options" do
+    vm_lazy = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, {:ref => :by_uid_ems_and_name, :default => :default, :transform_nested_lazy_finds => true, :key => :uid_ems})
+
+    expect(vm_lazy.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy.ref).to eq(:by_uid_ems_and_name)
+    expect(vm_lazy.default).to eq(:default)
+    expect(vm_lazy.key).to eq(:uid_ems)
+    expect(vm_lazy.transform_nested_lazy_finds).to be_truthy
+    expect(vm_lazy.to_s).to eq("uid_ems__name")
+
+    opts = {:ref => :by_uid_ems_and_name, :default => :default, :transform_nested_lazy_finds => true, :key => :uid_ems}
+    vm_lazy = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, opts)
+
+    expect(vm_lazy.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy.ref).to eq(:by_uid_ems_and_name)
+    expect(vm_lazy.default).to eq(:default)
+    expect(vm_lazy.key).to eq(:uid_ems)
+    expect(vm_lazy.transform_nested_lazy_finds).to be_truthy
+    expect(vm_lazy.to_s).to eq("uid_ems__name")
+
+    opts = {:ref => :by_uid_ems_and_name, :default => :default, :transform_nested_lazy_finds => true, :key => :uid_ems}
+    vm_lazy = persister.vms.lazy_find({:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref"}, **opts)
+
+    expect(vm_lazy.reference.full_reference).to eq(:name => "name", :uid_ems => "uid_ems", :ems_ref => "ems_ref")
+    expect(vm_lazy.ref).to eq(:by_uid_ems_and_name)
+    expect(vm_lazy.default).to eq(:default)
+    expect(vm_lazy.key).to eq(:uid_ems)
+    expect(vm_lazy.transform_nested_lazy_finds).to be_truthy
+    expect(vm_lazy.to_s).to eq("uid_ems__name")
+  end
+
   it "checks passing composite index doesn't depend on order" do
     lazy_find_vm       = persister.vms.lazy_find({:ems_ref => "ems_ref_1"})
     lazy_find_hardware = persister.hardwares.lazy_find({:vm_or_template => lazy_find_vm})
