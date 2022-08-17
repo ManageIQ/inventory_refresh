@@ -3,6 +3,7 @@ require "inventory_refresh/inventory_collection/index/type/local_db"
 require "inventory_refresh/inventory_collection/index/type/skeletal"
 require "inventory_refresh/logging"
 require "active_support/core_ext/module/delegation"
+require "active_support/deprecation"
 
 module InventoryRefresh
   class InventoryCollection
@@ -109,6 +110,8 @@ module InventoryRefresh
           return if manager_uuid.nil? && manager_uuid_hash.blank?
 
           raise ArgumentError, "only one of manager_uuid or manager_uuid_hash must be passed" unless !!manager_uuid ^ !!manager_uuid_hash.present?
+
+          ActiveSupport::Deprecation.warn("Passing a hash for options is deprecated and will be removed in an upcoming release.") if opts.present?
 
           manager_uuid ||= manager_uuid_hash
 
