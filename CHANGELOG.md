@@ -5,6 +5,22 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2022-09-06
+### Added
+- Add timeout-minutes to setup-ruby job (#110)
+- Add ruby3 compliant parameters for lazy_find (#112)
+- Handle two hash arguments to lazy_find (#114)
+
+### Removed
+- **BREAKING** Remove deprecated find_by/lazy_find_by methods
+
+## [1.1.0] - 2022-05-03
+### Changed
+- Ruby 3 keyword arguments (#109)
+
+### Added
+- Cron for GitHub Actions (#108)
+
 ## [1.0.0] - 2022-02-09
 ### Changed
 - Run rubocop -A (#102)
