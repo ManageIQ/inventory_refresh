@@ -94,7 +94,7 @@ module InventoryRefresh
 
     attr_accessor :attributes_blacklist, :attributes_whitelist
 
-    attr_reader :model_class, :strategy, :custom_save_block, :parent, :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only, :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel, :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values, :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object, :created_records, :updated_records, :deleted_records, :retention_strategy, :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges, :assert_graph_integrity
+    attr_reader :model_class, :strategy, :custom_save_block, :parent, :internal_attributes, :delete_method, :dependency_attributes, :manager_ref, :create_only, :association, :complete, :update_only, :transitive_dependency_attributes, :check_changed, :arel, :inventory_object_attributes, :name, :saver_strategy, :targeted_scope, :default_values, :targeted_arel, :targeted, :manager_ref_allowed_nil, :use_ar_object, :created_records, :updated_records, :deleted_records, :retention_strategy, :custom_reconnect_block, :batch_extra_attributes, :references_storage, :unconnected_edges, :assert_graph_integrity, :track_record_changes, :record_changes
 
     delegate :<<,
              :build,
@@ -149,7 +149,8 @@ module InventoryRefresh
                  properties[:update_only],
                  properties[:use_ar_object],
                  properties[:targeted],
-                 properties[:assert_graph_integrity])
+                 properties[:assert_graph_integrity],
+                 properties[:track_record_changes])
 
       init_strategies(properties[:strategy],
                       properties[:saver_strategy],
@@ -212,6 +213,11 @@ module InventoryRefresh
     # @param records [Array<ApplicationRecord, Hash>] list of stored records
     def store_deleted_records(records)
       @deleted_records.concat(records_identities(records))
+    end
+
+    def store_record_changes(records)
+      records = [records] unless records.respond_to?(:map)
+      @record_changes.concat(records.map { |r| {record_identity(r)[:id] => record.changes} })
     end
 
     # @return [Array<Symbol>] all columns that are part of the best fit unique index
