@@ -217,7 +217,7 @@ module InventoryRefresh
 
     def store_record_changes(records)
       records = [records] unless records.respond_to?(:map)
-      @record_changes.merge!(records.to_h { |r| [record_identity(r)[:id], r.changes] })
+      @record_changes.merge!(records.map { |r| [record_identity(r)[:id], r.changes.slice(*track_record_changes)] }.to_h)
     end
 
     # @return [Array<Symbol>] all columns that are part of the best fit unique index

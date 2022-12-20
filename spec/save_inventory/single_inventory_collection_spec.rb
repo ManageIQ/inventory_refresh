@@ -258,6 +258,97 @@ describe InventoryRefresh::SaveInventory do
       end
     end
 
+    describe "#track_record_changes" do
+      context 'with VM InventoryCollection track_record_changes not used' do
+        let :changed_data do
+          [
+            vm_data(1).merge(:name            => "vm_changed_name_1",
+                             :location        => "vm_changed_location_1",
+                             :uid_ems         => "uid_ems_changed_1",
+                             :raw_power_state => "raw_power_state_changed_1"),
+            vm_data(2).merge(:name            => "vm_changed_name_2",
+                             :location        => "vm_changed_location_2",
+                             :uid_ems         => "uid_ems_changed_2",
+                             :raw_power_state => "raw_power_state_changed_2"),
+            vm_data(3).merge(:name            => "vm_changed_name_3",
+                             :location        => "vm_changed_location_3",
+                             :uid_ems         => "uid_ems_changed_3",
+                             :raw_power_state => "raw_power_state_changed_3")
+          ]
+        end
+
+        it "doesn't track record changes" do
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(
+              :model_class          => ManageIQ::Providers::CloudManager::Vm,
+              :track_record_changes => false
+            )
+          end
+
+          changed_data.each { |vm_data| @persister.vms.build(vm_data) }
+
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+          expect(@persister.vms.record_changes).to be_blank
+        end
+      end
+
+      context 'with VM InventoryCollection track_record_changes used' do
+        let :changed_data do
+          [
+            vm_data(1).merge(:name            => "vm_changed_name_1",
+                             :location        => "vm_changed_location_1",
+                             :uid_ems         => "uid_ems_changed_1",
+                             :raw_power_state => "raw_power_state_changed_1"),
+            vm_data(2).merge(:name            => "vm_changed_name_2",
+                             :location        => "vm_changed_location_2",
+                             :uid_ems         => "uid_ems_changed_2",
+                             :raw_power_state => "raw_power_state_changed_2"),
+            vm_data(3).merge(:name            => "vm_changed_name_3",
+                             :location        => "vm_changed_location_3",
+                             :uid_ems         => "uid_ems_changed_3",
+                             :raw_power_state => "raw_power_state_changed_3")
+          ]
+        end
+
+        it 'records changes to the records' do
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(
+              :model_class          => ManageIQ::Providers::CloudManager::Vm,
+              :track_record_changes => %i[location raw_power_state]
+            )
+          end
+
+          changed_data.each { |vm_data| @persister.vms.build(vm_data) }
+
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+          vm_1_changes = @persister.vms.record_changes[@vm1.id]
+          expect(vm_1_changes).to include(
+            "location"        => ["vm_location_1", "vm_changed_location_1"],
+            "raw_power_state" => ["unknown", "raw_power_state_changed_1"]
+          )
+        end
+
+        it 'ignores changes not in the filter' do
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(
+              :model_class          => ManageIQ::Providers::CloudManager::Vm,
+              :track_record_changes => %i[location raw_power_state]
+            )
+          end
+
+          changed_data.each { |vm_data| @persister.vms.build(vm_data) }
+
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+          vm_1_changes = @persister.vms.record_changes[@vm1.id]
+
+          expect(vm_1_changes.keys).not_to include("uid_ems", "name")
+        end
+      end
+    end
+
     context 'with VM InventoryCollection blacklist or whitelist used' do
       let :changed_data do
         [

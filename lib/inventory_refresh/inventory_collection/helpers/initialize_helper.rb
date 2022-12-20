@@ -177,8 +177,9 @@ module InventoryRefresh
         #        for the batch saver strategy.
         # @param targeted [Boolean] True if the collection is targeted, in that case it will be leveraging :manager_uuids
         #        :parent_inventory_collections and :targeted_arel to save a subgraph of a data.
-        # @param track_record_changes [Boolean] By default false.  If true changes to the InventoryObject will be stored for use
-        #        by other inventory collections
+        # @param track_record_changes [Boolean/Array] By default false.  If false no changes to the InventoryObject will be stored,
+        #        otherwise changes to properties enumerated in the array will be stored for use by other inventory collections
+        #        Example: :track_record_changes => [:name, :raw_power_state]
         def init_flags(complete, create_only, check_changed,
                        update_only, use_ar_object, targeted,
                        assert_graph_integrity, track_record_changes)
@@ -190,7 +191,7 @@ module InventoryRefresh
           @use_ar_object          = use_ar_object || false
           @targeted               = !!targeted
           @assert_graph_integrity = assert_graph_integrity.nil? ? true : assert_graph_integrity
-          @track_record_changes   = track_record_changes.nil? ? false : track_record_changes.map(&:to_s)
+          @track_record_changes   = process_track_record_changes(track_record_changes)
         end
 
         # @param attributes_blacklist [Array] Attributes we do not want to include into saving. We cannot blacklist an
@@ -453,6 +454,16 @@ module InventoryRefresh
             raise "Unknown InventoryCollection retention strategy: :#{retention_strategy}, allowed strategies are "\
                   ":destroy and :archive"
           end
+        end
+
+        def process_track_record_changes(track_record_changes)
+          return false unless track_record_changes
+
+          if !track_record_changes.kind_of?(Array)
+            raise "Invalid value for track_record_changes: #{track_record_changes}, allowed values are false or an Array"
+          end
+
+          track_record_changes.map(&:to_s)
         end
       end
     end
