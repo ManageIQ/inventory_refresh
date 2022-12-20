@@ -190,7 +190,7 @@ module InventoryRefresh
           @use_ar_object          = use_ar_object || false
           @targeted               = !!targeted
           @assert_graph_integrity = assert_graph_integrity.nil? ? true : assert_graph_integrity
-          @track_record_changes   = track_record_changes.nil? ? false : track_record_changes
+          @track_record_changes   = track_record_changes.nil? ? false : track_record_changes.map(&:to_s)
         end
 
         # @param attributes_blacklist [Array] Attributes we do not want to include into saving. We cannot blacklist an
@@ -393,7 +393,7 @@ module InventoryRefresh
           @created_records = []
           @updated_records = []
           @deleted_records = []
-          @record_changes  = []
+          @record_changes  = {}
         end
 
         # Processes passed saver strategy
