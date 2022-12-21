@@ -231,7 +231,9 @@ module InventoryRefresh::SaveCollection
                                   # otherwise we would nullify the not sent attributes. Test e.g. on disks in cloud
                                   hash
                                 end
+
               assign_attributes_for_update!(hash_for_update, update_time)
+              store_record_changes!(record, hash_for_update) if inventory_collection.track_record_changes?
 
               hash_for_update[:id] = primary_key_value
               indexed_inventory_objects[index] = inventory_object
@@ -281,6 +283,19 @@ module InventoryRefresh::SaveCollection
         # end
 
         true
+      end
+
+      def store_record_changes!(record, hash_for_update)
+        changes = inventory_collection.track_record_changes.map do |col|
+          previous = record_key(record, col)
+          current  = hash_for_update[col.to_sym]
+
+          next if previous == current
+
+          [col, [previous, current]]
+        end.compact
+
+        inventory_collection.record_changes[record_key(record, primary_key)] = changes.to_h
       end
 
       def db_columns_index(record, pure_sql: false)

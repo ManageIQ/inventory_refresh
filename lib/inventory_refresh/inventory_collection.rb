@@ -312,6 +312,10 @@ module InventoryRefresh
       @base_columns ||= (unique_index_columns + internal_columns + not_null_columns).uniq
     end
 
+    def track_changed_columns
+      @track_changed_columns ||= track_record_changes? ? track_record_changes : []
+    end
+
     # @param value [Object] Object we want to test
     # @return [Boolean] true is value is kind of InventoryRefresh::InventoryObject
     def inventory_object?(value)

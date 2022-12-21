@@ -92,6 +92,23 @@ describe InventoryRefresh::SaveInventory do
         {:id => vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_changed_name_2", :location => "vm_location_2"}
       )
     end
+
+    describe '#track_record_changes' do
+      it "doesn't track changes for new records" do
+        # Initialize the InventoryCollections
+        @persister.add_collection(:vms) do |builder|
+          builder.add_properties(
+            :model_class => ManageIQ::Providers::CloudManager::Vm
+          )
+        end
+        (1..2).each { |i| @persister.vms.build(vm_data(i)) }
+
+        # Invoke the InventoryCollections saving
+        InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+        expect(@persister.vms.record_changes).to be_empty
+      end
+    end
   end
 
   context 'with existing Vms in the DB' do
@@ -193,6 +210,7 @@ describe InventoryRefresh::SaveInventory do
         expect(@persister.vms.created_records).to match_array([])
         expect(@persister.vms.updated_records).to match_array([{:id => @vm1.id}])
         expect(@persister.vms.deleted_records).to match_array([{:id => @vm2.id}])
+        expect(@persister.vms.record_changes).to be_empty
 
         # Assert that saved data do miss the deleted VM
         assert_all_records_match_hashes(
@@ -771,7 +789,7 @@ describe InventoryRefresh::SaveInventory do
     end
   end
 
-  %i[default batch].each do |saver_strategy|
+  %i[default batch concurrent_safe_batch].each do |saver_strategy|
     context "testing reconnect logic with saver_strategy: :#{saver_strategy}" do
       it 'reconnects existing VM' do
         # Fill DB with test Vms
@@ -823,6 +841,46 @@ describe InventoryRefresh::SaveInventory do
           {:id => @vm1.id, :ems_ref => "vm_ems_ref_1", :name => "vm_changed_name_1", :location => "vm_location_1"},
           {:id => @vm2.id, :ems_ref => "vm_ems_ref_2", :name => "vm_changed_name_2", :location => "vm_location_2"}
         )
+      end
+    end
+
+    context "testing track_record_changes with saver_strategy: :#{saver_strategy}" do
+      let :changed_data do
+        [
+          vm_data(1).merge(:name            => "vm_changed_name_1",
+                           :raw_power_state => "raw_power_state_changed_1"),
+          vm_data(2).merge(:name            => "vm_changed_name_2",
+                           :raw_power_state => "raw_power_state_changed_2"),
+        ]
+      end
+
+      context "with existing VMS" do
+        before do
+          # Fill DB with test Vms
+          @vm1 = FactoryBot.create(:vm_cloud, vm_data(1).merge(:ext_management_system => @ems))
+          @vm2 = FactoryBot.create(:vm_cloud, vm_data(2).merge(:ext_management_system => @ems))
+        end
+
+        it "tracks changes to records" do
+          # Initialize the InventoryCollections
+          @persister.add_collection(:vms) do |builder|
+            builder.add_properties(
+              :model_class          => ManageIQ::Providers::CloudManager::Vm,
+              :saver_strategy       => saver_strategy,
+              :track_record_changes => %i[name raw_power_state]
+            )
+          end
+          changed_data.each { |vm_data| @persister.vms.build(vm_data) }
+
+          # Invoke the InventoryCollections saving
+          InventoryRefresh::SaveInventory.save_inventory(@ems, @persister.inventory_collections)
+
+          vm_1_changes = @persister.vms.record_changes[@vm1.id]
+          expect(vm_1_changes).to include(
+            "name"            => ["vm_name_1", "vm_changed_name_1"],
+            "raw_power_state" => ["unknown", "raw_power_state_changed_1"]
+          )
+        end
       end
     end
   end
