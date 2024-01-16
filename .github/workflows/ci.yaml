@@ -14,13 +14,13 @@ jobs:
         ruby-version:
         - '2.7'
         - '3.0'
+        - '3.1'
         rails-version:
         # rails 6.1 supports ruby >= 2.5
+        # rails 7.0 supports ruby >= 2.7
         - '6.1'
+        - '7.0'
         include:
-        # rails 5.2 (EOL 6/22) supports ruby < 2.7 (2.6 EOL 3/22)
-        - ruby-version: '2.5'
-          rails-version: '5.2'
         # rails 6.0 (security EOL 6/23?) supports ruby < 2.8 (2.7 EOL 3/23?;)
         - ruby-version: '2.6'
           rails-version: '6.0'

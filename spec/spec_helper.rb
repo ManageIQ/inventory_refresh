@@ -28,5 +28,10 @@ puts
 puts "\e[93mUsing ActiveRecord #{ActiveRecord.version}\e[0m"
 
 require 'yaml'
-connection_spec = YAML.load_file(File.join(__dir__, %w[.. config database.yml]))
+connection_spec =
+  if YAML.respond_to?(:safe_load)
+    YAML.safe_load(File.read(File.join(__dir__, %w[.. config database.yml])), :aliases => true)
+  else
+    YAML.load_file(File.join(__dir__, %w[.. config database.yml]))
+  end
 ActiveRecord::Base.establish_connection(connection_spec["test"])
