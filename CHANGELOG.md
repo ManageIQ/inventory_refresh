@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2024-02-08
+### Changed
+- Update GitHub Actions versions ([#117](https://github.com/ManageIQ/inventory_refresh/pull/117))
+- Update actions/checkout version to v4 ([#118](https://github.com/ManageIQ/inventory_refresh/pull/118))
+- Allow rails 7 gems in gemspec ([#119](https://github.com/ManageIQ/inventory_refresh/pull/119))
+
 ## [2.0.0] - 2022-09-06
 ### Added
 - Add timeout-minutes to setup-ruby job (#110)
