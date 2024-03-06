@@ -269,14 +269,8 @@ module InventoryRefresh::SaveCollection
         true
       end
 
-      # @return [Time] A rails friendly time getting config from ActiveRecord::Base.default_timezone (can be :local
-      #         or :utc)
       def time_now
-        if ActiveRecord::Base.default_timezone == :utc
-          Time.now.utc
-        else
-          Time.zone.now
-        end
+        Time.current
       end
 
       # Enriches data hash with timestamp columns
