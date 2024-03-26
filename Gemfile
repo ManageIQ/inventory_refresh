@@ -10,7 +10,7 @@ case ENV['TEST_RAILS_VERSION']
 when "5.2"
   gem "activerecord", "~>5.2.6"
 when "6.0"
-  gem "activerecord", "~>6.0.4"
+  gem "activerecord", "~>7.1.0"
 when "6.1"
-  gem "activerecord", "~>6.1.4"
+  gem "activerecord", "~>7.1.0"
 end
