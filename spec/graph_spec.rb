@@ -1,4 +1,6 @@
 describe InventoryRefresh::Graph do
+  require "ostruct"
+
   let(:node1) { OpenStruct.new(:whatever => 'foo') }
   let(:node2) { OpenStruct.new(:name => 'bar', :x => 2) }
   let(:node3) { OpenStruct.new(:name => 'bar', :x => 3) }
