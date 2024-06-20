@@ -13,7 +13,9 @@ module InventoryRefresh::SaveCollection
       #        key value
       def update_record!(record, hash, inventory_object)
         record.assign_attributes(hash.except(:id))
+
         if !inventory_collection.check_changed? || record.changed?
+          inventory_collection.store_record_changes(record) if inventory_collection.track_record_changes?
           record.save
           inventory_collection.store_updated_records(record)
         end
