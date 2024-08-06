@@ -5,6 +5,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.1] - 2024-08-06
+### Fixed
+- Fix rails 7 deprecation on ActiveRecord::Base.default_timezone ([#124](https://github.com/ManageIQ/inventory_refresh/pull/124))
+- Fix missing constant OpenStruct in tests ([#131](https://github.com/ManageIQ/inventory_refresh/pull/131))
+
+### Added
+- Test with ruby 3.2 and rails 7.1 ([#122](https://github.com/ManageIQ/inventory_refresh/pull/122))
+- Log destroy result when duplicate record is found ([#120](https://github.com/ManageIQ/inventory_refresh/pull/120))
+- Use ruby 3.1 and rails 7 for code coverage ([#136](https://github.com/ManageIQ/inventory_refresh/pull/136))
+
 ## [2.1.0] - 2024-02-08
 ### Changed
 - Update GitHub Actions versions ([#117](https://github.com/ManageIQ/inventory_refresh/pull/117))
