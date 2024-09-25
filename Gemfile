@@ -6,11 +6,14 @@ require File.join(Bundler::Plugin.index.load_paths("bundler-inject")[0], "bundle
 # Specify your gem's dependencies in inventory_refresh.gemspec
 gemspec
 
-case ENV['TEST_RAILS_VERSION']
-when "5.2"
-  gem "activerecord", "~>5.2.6"
-when "6.0"
-  gem "activerecord", "~>6.0.4"
-when "6.1"
-  gem "activerecord", "~>6.1.4"
-end
+minimum_version =
+  case ENV['TEST_RAILS_VERSION']
+  when "7.2"
+    "~>7.2.1"
+  when "7.1"
+    "~>7.1.4"
+  else
+    "~>7.0.8"
+  end
+
+gem "activerecord", minimum_version
