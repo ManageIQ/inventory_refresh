@@ -111,7 +111,8 @@ module InventoryRefresh
 
           raise ArgumentError, "only one of manager_uuid or manager_uuid_hash must be passed" unless !!manager_uuid ^ !!manager_uuid_hash.present?
 
-          ActiveSupport::Deprecation.warn("Passing a hash for options is deprecated and will be removed in an upcoming release.") if opts.present?
+          # TODO: switch to ActiveSupport.deprecator.warn once 7.1+ is a minimum, see: https://github.com/rails/rails/pull/47354
+          ActiveSupport::Deprecation.new.warn("Passing a hash for options is deprecated and will be removed in an upcoming release.") if opts.present?
 
           manager_uuid ||= manager_uuid_hash
 
