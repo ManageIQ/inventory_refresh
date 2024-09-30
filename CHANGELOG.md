@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2024-09-30
+### Changed
+- Drop old versions of ruby and rails, add ruby 3.3 and rails 7.2 ([#139](https://github.com/ManageIQ/inventory_refresh/pull/139))
+
 ## [2.1.1] - 2024-08-06
 ### Fixed
 - Fix rails 7 deprecation on ActiveRecord::Base.default_timezone ([#124](https://github.com/ManageIQ/inventory_refresh/pull/124))
