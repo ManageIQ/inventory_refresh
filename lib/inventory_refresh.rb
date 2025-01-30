@@ -1,3 +1,5 @@
+require "logger" # Require logger due to active_record breaking on Rails <= 7.0. See https://github.com/rails/rails/pull/54264
+
 require "inventory_refresh/graph"
 require "inventory_refresh/inventory_collection"
 require "inventory_refresh/inventory_object"
