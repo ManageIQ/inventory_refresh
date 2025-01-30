@@ -11,7 +11,6 @@ namespace :spec do
   end
 
   task :db_load_schema do
-    require "active_record"
     with_connection(test_database_name) { load File.join(__dir__, %w[spec schema.rb]) }
   end
 
@@ -33,6 +32,7 @@ namespace :spec do
   end
 
   def with_connection(database_name)
+    require "logger" # Require logger due to active_record breaking on Rails <= 7.0. See https://github.com/rails/rails/pull/54264
     require "active_record"
     pool = ActiveRecord::Base.establish_connection(connection_spec["test"].merge("database" => database_name))
     yield ActiveRecord::Base.connection
