@@ -53,3 +53,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Fix InventoryCollection missing cache returns (#107)
+
+[Unreleased]: https://github.com/ManageIQ/inventory_refresh/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/ManageIQ/inventory_refresh/compare/v2.1.1...v2.2.0
+[2.1.1]: https://github.com/ManageIQ/inventory_refresh/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/ManageIQ/inventory_refresh/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/ManageIQ/inventory_refresh/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/ManageIQ/inventory_refresh/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/ManageIQ/inventory_refresh/compare/v0.3.6...v1.0.0
