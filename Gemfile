@@ -8,6 +8,8 @@ gemspec
 
 minimum_version =
   case ENV['TEST_RAILS_VERSION']
+  when "8.0"
+    "~>8.0.4"
   when "7.2"
     "~>7.2.1"
   when "7.1"
