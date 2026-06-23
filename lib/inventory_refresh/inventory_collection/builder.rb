@@ -36,6 +36,7 @@ module InventoryRefresh
           update_only
           use_ar_object
           assert_graph_integrity
+          track_record_changes
         ].to_set
       end
 
