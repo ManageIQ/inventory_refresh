@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-08-19
+### Added
+- Support rails 8.1 ([#150](https://github.com/ManageIQ/inventory_refresh/pull/150))
+
 ## [2.3.0] - 2026-01-20
 ### Added
 - Support rails 8.0 ([#148](https://github.com/ManageIQ/inventory_refresh/pull/148))
@@ -58,7 +62,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix InventoryCollection missing cache returns (#107)
 
-[Unreleased]: https://github.com/ManageIQ/inventory_refresh/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/inventory_refresh/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/ManageIQ/inventory_refresh/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/ManageIQ/inventory_refresh/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/ManageIQ/inventory_refresh/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/ManageIQ/inventory_refresh/compare/v2.1.0...v2.1.1
