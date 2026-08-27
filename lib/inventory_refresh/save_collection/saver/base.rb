@@ -24,7 +24,7 @@ module InventoryRefresh::SaveCollection
         @arel_primary_key       = @model_class.arel_table[@primary_key]
         @unique_index_keys      = inventory_collection.unique_index_keys
         @unique_index_keys_to_s = inventory_collection.manager_ref_to_cols.map(&:to_s)
-        @select_keys            = [@primary_key] + @unique_index_keys_to_s + internal_columns.map(&:to_s)
+        @select_keys            = [@primary_key] + @unique_index_keys_to_s + internal_columns.map(&:to_s) + track_changed_columns.map(&:to_s)
         @unique_db_primary_keys = Set.new
         @unique_db_indexes      = Set.new
 
@@ -93,6 +93,7 @@ module InventoryRefresh::SaveCollection
                :build_stringified_reference_for_record,
                :resource_version_column,
                :internal_columns,
+               :track_changed_columns,
                :to => :inventory_collection
 
       # Applies serialize method for each relevant attribute, which will cast the value to the right type.

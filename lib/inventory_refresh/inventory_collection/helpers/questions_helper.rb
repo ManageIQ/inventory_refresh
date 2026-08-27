@@ -87,6 +87,11 @@ module InventoryRefresh
           targeted
         end
 
+        # @return [Boolean] if true will store changes to the InventoryObject
+        def track_record_changes?
+          track_record_changes.present?
+        end
+
         # True if processing of this InventoryCollection object would lead to no operations. Then we use this marker to
         # stop processing of the InventoryCollector object very soon, to avoid a lot of unnecessary Db queries, etc.
         #
