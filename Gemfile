@@ -23,4 +23,4 @@ minimum_version =
 gem "activerecord", minimum_version
 
 # ActiveSupport < 8.1 passes the removed `quirks_mode` option to JSON.generate, which json 3.x rejects
-gem "json", "< 3" unless ENV['TEST_RAILS_VERSION'] == "8.1"
+gem "json", "< 4" unless ENV['TEST_RAILS_VERSION'] == "8.1"
